@@ -8,7 +8,21 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./training-tracker.css" />
   </head>
-  <body>
+  <body class="locked">
+    <section class="auth-screen" aria-label="Вход">
+      <form id="authForm" class="auth-card">
+        <p class="eyebrow">Закрытый доступ</p>
+        <h1>Вход в трекер</h1>
+        <p class="lead">Введи пароль, чтобы открыть тренировки.</p>
+        <label>
+          Пароль
+          <input id="authPasswordInput" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="button primary" type="submit">Открыть</button>
+        <p id="authError" class="auth-error" role="alert"></p>
+      </form>
+    </section>
+
     <main class="app">
       <section class="hero">
         <div>

@@ -1,4 +1,6 @@
 const STORAGE_KEY = "training-tracker-v3";
+const AUTH_KEY = "training-tracker-auth";
+const APP_PASSCODE = "train2026";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -47,6 +49,9 @@ let state = loadState();
 let selected = [];
 
 const elements = {
+  authForm: document.querySelector("#authForm"),
+  authPasswordInput: document.querySelector("#authPasswordInput"),
+  authError: document.querySelector("#authError"),
   statsGrid: document.querySelector("#statsGrid"),
   seedButton: document.querySelector("#seedButton"),
   resetButton: document.querySelector("#resetButton"),
@@ -78,10 +83,30 @@ const elements = {
 boot();
 
 function boot() {
+  setupAuth();
   fillExerciseSelects();
   loadFridayPlan();
   bindEvents();
   render();
+}
+
+function setupAuth() {
+  if (localStorage.getItem(AUTH_KEY) === "ok") {
+    document.body.classList.remove("locked");
+  }
+
+  elements.authForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (elements.authPasswordInput.value === APP_PASSCODE) {
+      localStorage.setItem(AUTH_KEY, "ok");
+      elements.authPasswordInput.value = "";
+      elements.authError.textContent = "";
+      document.body.classList.remove("locked");
+      return;
+    }
+
+    elements.authError.textContent = "Неверный пароль";
+  });
 }
 
 function entry(exerciseId, rows) {
