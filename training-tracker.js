@@ -1,4 +1,4 @@
-const STORAGE_KEY = "training-tracker-v2";
+const STORAGE_KEY = "training-tracker-v3";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -58,6 +58,7 @@ const elements = {
   exerciseSelect: document.querySelector("#exerciseSelect"),
   addExerciseButton: document.querySelector("#addExerciseButton"),
   copyReportButton: document.querySelector("#copyReportButton"),
+  copyDataButton: document.querySelector("#copyDataButton"),
   selectedExercises: document.querySelector("#selectedExercises"),
   exerciseTemplate: document.querySelector("#exerciseTemplate"),
   coachBox: document.querySelector("#coachBox"),
@@ -91,23 +92,26 @@ function entry(exerciseId, rows) {
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return { version: 2, workouts: [] };
+  if (!raw) return { version: 3, workouts: window.trainingHistory || [] };
 
   try {
     const parsed = JSON.parse(raw);
-    return { version: 2, workouts: Array.isArray(parsed.workouts) ? parsed.workouts : [] };
+    const saved = Array.isArray(parsed.workouts) ? parsed.workouts : [];
+    return { version: 3, workouts: mergeWorkouts(window.trainingHistory || [], saved) };
   } catch {
-    return { version: 2, workouts: [] };
+    return { version: 3, workouts: window.trainingHistory || [] };
   }
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 2, workouts: state.workouts }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 3, workouts: state.workouts }));
 }
 
 function bindEvents() {
   elements.seedButton.addEventListener("click", () => {
+    state.workouts = window.trainingHistory || [];
     loadFridayPlan();
+    saveState();
     render();
   });
 
@@ -124,6 +128,7 @@ function bindEvents() {
   });
 
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
+  elements.copyDataButton.addEventListener("click", copyFullHistory);
   elements.readinessInput.addEventListener("change", renderCoach);
   elements.chartExerciseSelect.addEventListener("change", renderCharts);
 
@@ -171,19 +176,19 @@ function addExercise(exerciseId) {
 function loadFridayPlan() {
   elements.dateInput.value = nextFridayAfterLatestWorkout();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Верх + функциональный блок без отказа. Если устал — минус один жим и греблю скипнуть.";
+  elements.notesInput.value = "Пятница: верх + функциональный блок без отказа после среды ноги+спина. Если устал — минус один жим и греблю скипнуть.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
-    planEntry("elliptical", [["", 1, 5]]),
-    planEntry("bench", [["", 8, 7], ["", 6, 8], ["", 5, 8]]),
-    planEntry("incline-db-press", [["", 8, 7], ["", 8, 8], ["", 8, 8]]),
-    planEntry("shoulder-press", [["", 10, 7], ["", 8, 8], ["", 8, 8]]),
-    planEntry("lat-pulldown", [["", 10, 7], ["", 8, 8], ["", 8, 8]]),
-    planEntry("kettlebell-swing", [["", 10, 7], ["", 10, 7], ["", 10, 7]]),
-    planEntry("triceps-pushdown", [["", 10, 7], ["", 10, 8], ["", 10, 8]]),
+    planEntry("elliptical", [[12, 1, 5]]),
+    planEntry("bench", [[50, 8, 7], [60, 6, 8], [65, 5, 8]]),
+    planEntry("incline-db-press", [[18, 8, 7], [20, 8, 8], [20, 8, 8]]),
+    planEntry("shoulder-press", [[17.5, 10, 7], [20, 8, 8], [20, 8, 8]]),
+    planEntry("lat-pulldown", [[56, 10, 7], [60, 8, 8], [60, 8, 8]]),
+    planEntry("kettlebell-swing", [[24, 10, 7], [24, 10, 7], [24, 10, 7]]),
+    planEntry("triceps-pushdown", [[65, 10, 7], [75, 10, 8], [75, 10, 8]]),
     planEntry("ab-wheel", [[0, 10, 7], [0, 10, 7], [0, 10, 7]]),
-    planEntry("rowing", [["", 1, 6]]),
+    planEntry("rowing", [[5, 1, 6]]),
   ];
 }
 
@@ -328,8 +333,20 @@ function renderSetRow(uid, index, set, exercise) {
   row.className = "set-row";
   row.innerHTML = `
     <label class="done-cell">Готово<input type="checkbox" ${set.done ? "checked" : ""} data-field="done" /></label>
-    <label>Вес<input type="number" step="0.5" value="${set.weight}" data-field="weight" /></label>
-    <label>Повторы<input type="number" step="1" value="${set.reps}" data-field="reps" /></label>
+    <label>Вес
+      <span class="stepper">
+        <input type="number" step="0.5" value="${set.weight}" data-field="weight" />
+        <button type="button" data-adjust="weight" data-delta="${-Math.abs(exercise.step || 2.5)}">−</button>
+        <button type="button" data-adjust="weight" data-delta="${Math.abs(exercise.step || 2.5)}">+</button>
+      </span>
+    </label>
+    <label>Повторы
+      <span class="stepper">
+        <input type="number" step="1" value="${set.reps}" data-field="reps" />
+        <button type="button" data-adjust="reps" data-delta="-1">−</button>
+        <button type="button" data-adjust="reps" data-delta="1">+</button>
+      </span>
+    </label>
     <label>RPE<input type="number" step="0.5" min="1" max="10" placeholder="7-10" value="${set.rpe}" data-field="rpe" /></label>
     <label>Метка
       <select data-field="mark">
@@ -346,6 +363,17 @@ function renderSetRow(uid, index, set, exercise) {
     input.addEventListener("input", () => {
       const item = selected.find((selectedItem) => selectedItem.uid === uid);
       item.sets[index][input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
+    });
+  });
+
+  row.querySelectorAll("button[data-adjust]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = selected.find((selectedItem) => selectedItem.uid === uid);
+      const field = button.dataset.adjust;
+      const delta = Number(button.dataset.delta);
+      const current = Number(item.sets[index][field]) || 0;
+      item.sets[index][field] = Math.max(0, current + delta);
+      renderSelectedExercises();
     });
   });
 
@@ -395,6 +423,25 @@ async function copyWorkoutReport() {
     }, 1800);
   } catch {
     window.prompt("Скопируй отчет для чата:", report);
+  }
+}
+
+async function copyFullHistory() {
+  const report = [
+    "Полная история из трекера:",
+    JSON.stringify(state.workouts, null, 2),
+    "",
+    "Прочитай это состояние и помоги скорректировать следующие тренировки.",
+  ].join("\n");
+
+  try {
+    await navigator.clipboard.writeText(report);
+    elements.copyDataButton.textContent = "История скопирована";
+    setTimeout(() => {
+      elements.copyDataButton.textContent = "Скопировать историю";
+    }, 1800);
+  } catch {
+    window.prompt("Скопируй историю для чата:", report);
   }
 }
 

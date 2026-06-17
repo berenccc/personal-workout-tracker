@@ -306,6 +306,20 @@ select {
   padding: 9px 10px;
 }
 
+.stepper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px 38px;
+  gap: 6px;
+}
+
+.stepper button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 800;
+}
+
 .done-cell {
   align-items: center;
   justify-items: center;
@@ -550,7 +564,8 @@ select {
 
   .button,
   input,
-  select {
+  select,
+  .stepper button {
     min-height: 46px;
     font-size: 16px;
   }

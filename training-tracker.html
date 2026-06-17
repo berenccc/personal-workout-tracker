@@ -20,7 +20,8 @@
           </p>
         </div>
         <div class="hero-actions">
-          <button id="seedButton" class="button secondary">Восстановить план</button>
+          <button id="seedButton" class="button secondary">Загрузить историю</button>
+          <button id="copyDataButton" class="button secondary">Скопировать историю</button>
           <button id="resetButton" class="button ghost">Очистить</button>
         </div>
       </section>
@@ -203,6 +204,7 @@
       </article>
     </template>
 
+    <script src="./training-history.js"></script>
     <script src="./training-tracker.js"></script>
     <script>
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
