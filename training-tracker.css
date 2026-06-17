@@ -304,15 +304,24 @@ select {
 }
 
 .set-row {
+  position: relative;
   display: grid;
   grid-template-columns: 76px repeat(4, minmax(0, 1fr)) 36px;
   gap: 8px;
   align-items: end;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 8px;
 }
 
 .set-row input,
 .set-row select {
   padding: 9px 10px;
+}
+
+.set-done {
+  border-color: rgba(157, 210, 116, 0.28);
+  background: rgba(157, 210, 116, 0.06);
 }
 
 .stepper {
@@ -331,14 +340,26 @@ select {
 }
 
 .done-cell {
+  display: flex;
   align-items: center;
-  justify-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 800;
 }
 
 .done-cell input {
   width: 28px;
   height: 28px;
+  margin: 0;
   accent-color: var(--accent-2);
+}
+
+.done-cell span {
+  display: none;
 }
 
 .mobile-actions {
@@ -348,6 +369,21 @@ select {
 
 .mobile-actions .button {
   flex: 1;
+}
+
+.save-hint {
+  margin: 2px 0 0;
+  border: 1px solid rgba(122, 162, 255, 0.28);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(122, 162, 255, 0.08);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.save-hint strong {
+  color: var(--text);
 }
 
 .chart-grid {
@@ -592,8 +628,52 @@ select {
   }
 
   .done-cell {
-    grid-template-columns: 1fr auto;
-    justify-items: stretch;
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .done-cell span {
+    display: inline;
+  }
+
+  .set-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    border-color: var(--line);
+    background: var(--panel);
+    padding: 12px;
+  }
+
+  .set-row > label {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .set-row .delete-set {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+
+  .stepper {
+    grid-template-columns: minmax(0, 1fr) 42px 42px;
+  }
+
+  .stepper input,
+  .set-row select,
+  .set-row input {
+    border-radius: 12px;
+  }
+
+  .set-row label:nth-of-type(4),
+  .set-row label:nth-of-type(5) {
+    grid-column: span 1;
+  }
+
+  .set-done {
+    background: rgba(157, 210, 116, 0.08);
   }
 
   .mobile-actions {

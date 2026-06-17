@@ -331,11 +331,11 @@ function renderSelectedExercises() {
 
 function renderSetRow(uid, index, set, exercise) {
   const row = document.createElement("div");
-  row.className = "set-row";
+  row.className = `set-row${set.done ? " set-done" : ""}`;
   const loadLabel = exercise.cardio ? "Минуты" : "Вес";
   const repsLabel = exercise.cardio ? "Инт." : "Повторы";
   row.innerHTML = `
-    <label class="done-cell">Готово<input type="checkbox" ${set.done ? "checked" : ""} data-field="done" /></label>
+    <label class="done-cell"><input type="checkbox" ${set.done ? "checked" : ""} data-field="done" /><span>${set.done ? "Готово" : `Подход ${index + 1}`}</span></label>
     <label>${loadLabel}
       <span class="stepper">
         <input type="number" step="0.5" value="${set.weight}" data-field="weight" />
