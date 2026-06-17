@@ -106,6 +106,12 @@ h3 {
   gap: 12px;
 }
 
+.form-row > *,
+.exercise-picker > *,
+.panel-header > * {
+  min-width: 0;
+}
+
 .hero-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -238,6 +244,7 @@ h3 {
 label {
   display: grid;
   flex: 1;
+  min-width: 0;
   gap: 8px;
   color: var(--muted);
   font-size: 13px;
@@ -247,6 +254,8 @@ label {
 input,
 select {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 11px 12px;
@@ -296,7 +305,7 @@ select {
 
 .set-row {
   display: grid;
-  grid-template-columns: 76px repeat(4, minmax(0, 1fr)) 32px;
+  grid-template-columns: 76px repeat(4, minmax(0, 1fr)) 36px;
   gap: 8px;
   align-items: end;
 }
@@ -309,6 +318,7 @@ select {
 .stepper {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 38px 38px;
+  min-width: 0;
   gap: 6px;
 }
 
@@ -548,6 +558,13 @@ select {
   .exercise-picker,
   .panel-header {
     display: grid;
+  }
+
+  input[type="date"] {
+    display: block;
+    min-width: 0;
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   body {

@@ -40,6 +40,7 @@ const exercises = [
   { id: "box-jump", name: "Прыжки на блок", group: "Плиометрика", unit: "см/кг", step: 5, bodyweight: true, defaultSets: [[75, 10], [75, 10], [75, 10]] },
   { id: "rowing", name: "Гребля", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[5, 1]] },
   { id: "elliptical", name: "Эллипсоид / вело", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[12, 1]] },
+  { id: "treadmill", name: "Дорожка", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[10, 1]] },
 ];
 
 let state = loadState();
@@ -331,16 +332,18 @@ function renderSelectedExercises() {
 function renderSetRow(uid, index, set, exercise) {
   const row = document.createElement("div");
   row.className = "set-row";
+  const loadLabel = exercise.cardio ? "Минуты" : "Вес";
+  const repsLabel = exercise.cardio ? "Инт." : "Повторы";
   row.innerHTML = `
     <label class="done-cell">Готово<input type="checkbox" ${set.done ? "checked" : ""} data-field="done" /></label>
-    <label>Вес
+    <label>${loadLabel}
       <span class="stepper">
         <input type="number" step="0.5" value="${set.weight}" data-field="weight" />
         <button type="button" data-adjust="weight" data-delta="${-Math.abs(exercise.step || 2.5)}">−</button>
         <button type="button" data-adjust="weight" data-delta="${Math.abs(exercise.step || 2.5)}">+</button>
       </span>
     </label>
-    <label>Повторы
+    <label>${repsLabel}
       <span class="stepper">
         <input type="number" step="1" value="${set.reps}" data-field="reps" />
         <button type="button" data-adjust="reps" data-delta="-1">−</button>
@@ -356,7 +359,7 @@ function renderSetRow(uid, index, set, exercise) {
         <option value="skip" ${set.mark === "skip" ? "selected" : ""}>скип</option>
       </select>
     </label>
-    <button class="icon-button" type="button" aria-label="Удалить подход">×</button>
+    <button class="icon-button delete-set" type="button" aria-label="Удалить подход">×</button>
   `;
 
   row.querySelectorAll("input[data-field], select[data-field]").forEach((input) => {
@@ -377,7 +380,7 @@ function renderSetRow(uid, index, set, exercise) {
     });
   });
 
-  row.querySelector("button").addEventListener("click", () => {
+  row.querySelector(".delete-set").addEventListener("click", () => {
     const item = selected.find((selectedItem) => selectedItem.uid === uid);
     item.sets.splice(index, 1);
     renderSelectedExercises();
@@ -461,9 +464,11 @@ function buildWorkoutReport(workout) {
     lines.push(`- ${exercise.name}`);
     item.sets.forEach((set, index) => {
       const status = set.done ? "✓" : "□";
-      const weight = set.weight ? `${formatNumber(set.weight)} ${exercise.unit}, ` : "";
+      const workload = exercise.cardio
+        ? `${formatNumber(set.weight)} мин`
+        : `${set.weight ? `${formatNumber(set.weight)} ${exercise.unit}, ` : ""}${set.reps} повт`;
       const rpe = set.rpe ? `, RPE ${set.rpe}` : "";
-      lines.push(`  ${status} ${index + 1}. ${weight}${set.reps} повт${rpe}, ${setMarkLabel(set.mark)}`);
+      lines.push(`  ${status} ${index + 1}. ${workload}${rpe}, ${setMarkLabel(set.mark)}`);
     });
   });
 
