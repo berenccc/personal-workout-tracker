@@ -1,5 +1,6 @@
 *
 !.gitignore
+!index.html
 !training-tracker.html
 !training-tracker.css
 !training-tracker.js
