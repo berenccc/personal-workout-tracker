@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111315" />
+    <title>Тренировки</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./training-tracker.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Личный трекер</p>
+          <h1>Тренировки без выгорания</h1>
+          <p class="lead">
+            Журнал, графики прогресса, контроль RPE и подсказки по следующей тренировке.
+            Данные хранятся только в браузере.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button id="seedButton" class="button secondary">Восстановить план</button>
+          <button id="resetButton" class="button ghost">Очистить</button>
+        </div>
+      </section>
+
+      <section class="stats-grid" id="statsGrid"></section>
+
+      <section class="layout">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Ближайшая тренировка</p>
+              <h2>План на пятницу</h2>
+            </div>
+            <span id="readinessPill" class="pill">Готовность</span>
+          </div>
+
+          <form id="workoutForm" class="form">
+            <div class="form-row">
+              <label>
+                Дата
+                <input id="dateInput" type="date" required />
+              </label>
+              <label>
+                Самочувствие
+                <select id="readinessInput">
+                  <option value="good">Норм / хочу тренить</option>
+                  <option value="okay">Средне / без героизма</option>
+                  <option value="bad">Плохо / только лайт</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              Заметки
+              <input id="notesInput" placeholder="Например: сон плохой, работа съела голову" />
+            </label>
+
+            <div class="exercise-picker">
+              <label>
+                Упражнение
+                <select id="exerciseSelect"></select>
+              </label>
+              <button id="addExerciseButton" class="button secondary" type="button">Добавить</button>
+            </div>
+
+            <div id="selectedExercises" class="selected-exercises"></div>
+
+            <div class="form-row">
+              <label>
+                Итог по ощущениям
+                <select id="sessionEffortInput">
+                  <option value="fresh">Вышел бодрее, чем зашел</option>
+                  <option value="normal" selected>Нормально, без перегруза</option>
+                  <option value="hard">Тяжело, но контролируемо</option>
+                  <option value="too-hard">Перебор / надо облегчить</option>
+                </select>
+              </label>
+              <label>
+                Комментарий после
+                <input id="afterNotesInput" placeholder="Пульс, настроение, что забилось, что скипнул" />
+              </label>
+            </div>
+
+            <div class="mobile-actions">
+              <button class="button primary" type="submit">Сохранить тренировку</button>
+              <button id="copyReportButton" class="button secondary" type="button">Скопировать отчет</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Рекомендация</p>
+              <h2>Что делать дальше</h2>
+            </div>
+          </div>
+          <div id="coachBox" class="coach-box"></div>
+        </div>
+      </section>
+
+      <section class="layout dashboard-layout">
+        <div class="panel wide">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Динамика</p>
+              <h2>Регулярность по месяцам</h2>
+            </div>
+          </div>
+          <div id="monthlyChart" class="chart tall"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Лучшие маркеры</p>
+              <h2>PR и ориентиры</h2>
+            </div>
+          </div>
+          <div id="prBoard" class="pr-board"></div>
+        </div>
+      </section>
+
+      <section class="layout dashboard-layout">
+        <div class="panel wide">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Нагрузка</p>
+              <h2>RPE и объем по последним тренировкам</h2>
+            </div>
+          </div>
+          <div id="fatigueChart" class="chart tall"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Календарь</p>
+              <h2>Тренировочные недели</h2>
+            </div>
+          </div>
+          <div id="calendarHeatmap" class="heatmap"></div>
+        </div>
+      </section>
+
+      <section class="layout">
+        <div class="panel wide">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Прогресс</p>
+              <h2>Графики</h2>
+            </div>
+            <select id="chartExerciseSelect"></select>
+          </div>
+          <div class="chart-grid">
+            <div>
+              <h3>Лучший вес по тренировкам</h3>
+              <div id="weightChart" class="chart"></div>
+            </div>
+            <div>
+              <h3>Объем нагрузки</h3>
+              <div id="volumeChart" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Баланс</p>
+              <h2>Группы движений</h2>
+            </div>
+          </div>
+          <div id="movementBalance" class="balance-list"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">История</p>
+            <h2>Последние тренировки</h2>
+          </div>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </main>
+
+    <template id="exerciseTemplate">
+      <article class="exercise-card">
+        <div class="exercise-card-header">
+          <div>
+            <h3></h3>
+            <p></p>
+          </div>
+          <button class="icon-button" type="button" aria-label="Удалить">×</button>
+        </div>
+        <div class="sets"></div>
+        <button class="button ghost add-set" type="button">+ подход</button>
+      </article>
+    </template>
+
+    <script src="./training-tracker.js"></script>
+    <script>
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        navigator.serviceWorker.register("./sw.js");
+      }
+    </script>
+  </body>
+</html>
