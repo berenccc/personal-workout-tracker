@@ -8,7 +8,9 @@ alwaysApply: true
 When the user asks to evaluate a completed workout, treat the app's recommendation block as the persistent output.
 
 - Read the latest workout data from `data/workouts.json` first when available; otherwise use the user's pasted report.
-- Give feedback in chat on recovery, workout quality, notable issues, and the next session.
+- Always include the full picture: `afterNotes`, pre-workout `notes`, exercise list, done/skipped sets, weights, reps, RPE, marks, duration, readiness, and session effort.
+- Account for Windows/PowerShell encoding issues: do not trust visually garbled Cyrillic like `����`; verify UTF-8 content through JSON parsing, codepoints, `ensure_ascii`, or a non-PowerShell read path before judging comments.
+- Give feedback in chat on recovery, workout quality, notable issues, RPE/load management, user comments, and the next session.
 - Update `training-feedback.js` so the app shows this feedback in the `Рекомендация` block.
 - If the next workout plan should change, update `loadMondayFunctionalPlan()` or the relevant plan data in `training-tracker.js`.
 - Keep the feedback concise and actionable for mobile viewing: 3-5 short cards max.

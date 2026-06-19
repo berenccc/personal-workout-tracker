@@ -265,7 +265,7 @@ function showFinishNotice(workout, pushedToGit) {
   elements.finishNotice.className = `finish-notice ${pushedToGit ? "is-synced" : "is-local"}`;
   elements.finishNotice.innerHTML = `
     <div class="finish-notice-header">
-      <span>${pushedToGit ? "Збс, красавчик" : "Тренировка сохранена локально"}</span>
+      <span>${pushedToGit ? "Готово, сильная работа" : "Тренировка сохранена локально"}</span>
       <strong>${doneSets}/${totalSets} подходов</strong>
     </div>
     <p>
