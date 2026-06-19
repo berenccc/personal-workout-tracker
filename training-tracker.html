@@ -2,11 +2,11 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#111315" />
     <title>Тренировки</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=8" />
-    <link rel="stylesheet" href="./training-tracker.css?v=8" />
+    <link rel="manifest" href="./manifest.webmanifest?v=9" />
+    <link rel="stylesheet" href="./training-tracker.css?v=9" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -55,8 +55,8 @@
         </div>
       </section>
 
-      <section class="layout">
-        <div class="panel">
+      <section class="layout workout-layout">
+        <div class="panel workout-panel">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Ближайшая тренировка</p>
@@ -64,6 +64,7 @@
             </div>
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
+          <p class="workout-helper">Идешь сверху вниз: галочка, вес/повторы, RPE. Кнопка завершения всегда снизу.</p>
 
           <form id="workoutForm" class="form">
             <div class="form-row">
@@ -96,10 +97,7 @@
 
             <div id="selectedExercises" class="selected-exercises"></div>
 
-            <p class="save-hint">
-              Отметь подходы галочками, поправь вес/повторы кнопками −/+, потом нажми
-              <strong>Завершить тренировку</strong> внизу экрана.
-            </p>
+            <p class="save-hint">Финиш: проверь галочки и нажми <strong>Завершить тренировку</strong>.</p>
 
             <div class="form-row">
               <label>
@@ -236,8 +234,8 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=8"></script>
-    <script src="./training-tracker.js?v=8"></script>
+    <script src="./training-history.js?v=9"></script>
+    <script src="./training-tracker.js?v=9"></script>
     <script>
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         navigator.serviceWorker.register("./sw.js");
