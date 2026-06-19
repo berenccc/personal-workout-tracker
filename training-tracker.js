@@ -138,14 +138,14 @@ function entry(exerciseId, rows) {
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return { version: 3, workouts: window.trainingHistory || [] };
+  if (!raw) return { version: 3, workouts: normalizeWorkoutDates(window.trainingHistory || []) };
 
   try {
     const parsed = JSON.parse(raw);
     const saved = Array.isArray(parsed.workouts) ? parsed.workouts : [];
     return { version: 3, workouts: mergeWorkouts(window.trainingHistory || [], saved) };
   } catch {
-    return { version: 3, workouts: window.trainingHistory || [] };
+    return { version: 3, workouts: normalizeWorkoutDates(window.trainingHistory || []) };
   }
 }
 
@@ -337,7 +337,7 @@ async function checkGithubTokenWrite() {
       ...(current?.data || {}),
       updatedAt: current?.data?.updatedAt || null,
       lastSavedWorkoutId: current?.data?.lastSavedWorkoutId || null,
-      workouts: Array.isArray(current?.data?.workouts) ? current.data.workouts : [],
+      workouts: Array.isArray(current?.data?.workouts) ? normalizeWorkoutDates(current.data.workouts) : [],
       syncCheckAt: new Date().toISOString(),
     };
     await putGitHubFile(token, payload, current?.sha, "Check workout sync token");
@@ -367,10 +367,32 @@ function fillExerciseSelects() {
 }
 
 function mergeWorkouts(current, incoming) {
+  current = normalizeWorkoutDates(current);
+  incoming = normalizeWorkoutDates(incoming);
   const keyFor = (workout) => workout.id || `${workout.date}-${workout.notes || ""}`;
   const byDate = new Map(current.map((workout) => [keyFor(workout), workout]));
   incoming.forEach((workout) => byDate.set(keyFor(workout), workout));
   return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function normalizeWorkoutDates(workouts) {
+  const dateFixes = {
+    "2026-06-23": "2026-06-19",
+    "2026-06-26": "2026-06-19",
+    "2026-06-30": "2026-06-19",
+    "2026-07-03": "2026-06-19",
+  };
+
+  return workouts.map((workout) => {
+    const fixedDate = dateFixes[workout.date];
+    if (!fixedDate) return workout;
+
+    const fixed = { ...workout, date: fixedDate };
+    if (typeof fixed.id === "string") {
+      fixed.id = fixed.id.replace(/^manual-\d{4}-\d{2}-\d{2}-/, `manual-${fixedDate}-`);
+    }
+    return fixed;
+  });
 }
 
 function addExercise(exerciseId) {

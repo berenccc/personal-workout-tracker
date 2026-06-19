@@ -1,11 +1,11 @@
-const CACHE_NAME = "training-tracker-v27";
+const CACHE_NAME = "training-tracker-v28";
 const ASSETS = [
-  "./training-tracker.html?v=27",
-  "./training-tracker.css?v=27",
-  "./training-tracker.js?v=27",
-  "./training-history.js?v=27",
-  "./training-feedback.js?v=27",
-  "./manifest.webmanifest?v=27",
+  "./training-tracker.html?v=28",
+  "./training-tracker.css?v=28",
+  "./training-tracker.js?v=28",
+  "./training-history.js?v=28",
+  "./training-feedback.js?v=28",
+  "./manifest.webmanifest?v=28",
   "./icon-192.svg",
   "./icon-512.svg",
 ];
@@ -40,7 +40,7 @@ self.addEventListener("fetch", (event) => {
       fetch(event.request)
         .then((response) => response)
         .catch(() =>
-          caches.match("./training-tracker.html?v=27").then((cached) => cached || caches.match("./training-tracker.html"))
+          caches.match("./training-tracker.html?v=28").then((cached) => cached || caches.match("./training-tracker.html"))
         )
     );
     return;
