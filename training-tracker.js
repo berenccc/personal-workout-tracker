@@ -30,6 +30,7 @@ const exercises = [
   { id: "single-leg-rdl", name: "Румынская тяга на одной ноге", group: "Задняя цепь", unit: "кг", step: 2, defaultSets: [[16, 10], [16, 10], [16, 10]] },
   { id: "back-extension", name: "Гиперэкстензия / разгибание спины", group: "Задняя цепь", unit: "кг", step: 5, defaultSets: [[15, 10], [15, 10], [15, 10]] },
   { id: "kettlebell-swing", name: "Махи гирей", group: "Задняя цепь", unit: "кг", step: 2, defaultSets: [[24, 10], [24, 10], [24, 10]] },
+  { id: "farmer-carry", name: "Фермерская прогулка", group: "Функционал", unit: "кг/рука", step: 2, defaultSets: [[24, 40], [24, 40], [24, 40]] },
   { id: "biceps", name: "Бицепс", group: "Руки", unit: "кг", step: 2.5, defaultSets: [[25, 10], [30, 8], [30, 8]] },
   { id: "triceps", name: "Трицепс гантель/лежа", group: "Руки", unit: "кг", step: 1, defaultSets: [[10, 10], [10, 10], [12, 8]] },
   { id: "triceps-pushdown", name: "Трицепс верхний блок", group: "Руки", unit: "кг", step: 2.5, defaultSets: [[55, 10], [65, 10], [75, 8]] },
@@ -85,7 +86,7 @@ boot();
 function boot() {
   setupAuth();
   fillExerciseSelects();
-  loadFridayPlan();
+  loadMondayFunctionalPlan();
   bindEvents();
   render();
 }
@@ -136,7 +137,7 @@ function saveState() {
 function bindEvents() {
   elements.seedButton.addEventListener("click", () => {
     state.workouts = window.trainingHistory || [];
-    loadFridayPlan();
+    loadMondayFunctionalPlan();
     saveState();
     render();
   });
@@ -169,7 +170,7 @@ function bindEvents() {
     state.workouts.push(workout);
     state.workouts.sort((a, b) => a.date.localeCompare(b.date));
     saveState();
-    loadFridayPlan();
+    loadMondayFunctionalPlan();
     render();
   });
 }
@@ -199,22 +200,21 @@ function addExercise(exerciseId) {
   });
 }
 
-function loadFridayPlan() {
-  elements.dateInput.value = nextFridayAfterLatestWorkout();
+function loadMondayFunctionalPlan() {
+  elements.dateInput.value = nextMondayAfterLatestWorkout();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Пятница: верх + функциональный блок без отказа после среды ноги+спина. Если устал — минус один жим и греблю скипнуть.";
+  elements.notesInput.value = "Понедельник: функционалка без жимов/трицепса после тяжелой жимовой. Цель — вспотеть, подвигаться, не уходить в отказ.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
-    planEntry("elliptical", [[12, 1, 5]]),
-    planEntry("bench", [[50, 8, 7], [60, 6, 8], [65, 5, 8]]),
-    planEntry("incline-db-press", [[18, 8, 7], [20, 8, 8], [20, 8, 8]]),
-    planEntry("shoulder-press", [[17.5, 10, 7], [20, 8, 8], [20, 8, 8]]),
-    planEntry("lat-pulldown", [[56, 10, 7], [60, 8, 8], [60, 8, 8]]),
-    planEntry("kettlebell-swing", [[24, 10, 7], [24, 10, 7], [24, 10, 7]]),
-    planEntry("triceps-pushdown", [[65, 10, 7], [75, 10, 8], [75, 10, 8]]),
-    planEntry("ab-wheel", [[0, 10, 7], [0, 10, 7], [0, 10, 7]]),
-    planEntry("rowing", [[5, 1, 6]]),
+    planEntry("elliptical", [[10, 1, 5]]),
+    planEntry("bird-dog", [[4, 8, 6], [4, 8, 6]]),
+    planEntry("kettlebell-swing", [[24, 12, 7], [24, 12, 7], [24, 12, 7], [24, 12, 7]]),
+    planEntry("step-lunge", [[16, 16, 8], [16, 16, 8], [16, 16, 8], [16, 16, 8]]),
+    planEntry("one-arm-row", [[24, 10, 7], [26, 10, 8], [26, 10, 8], [26, 10, 8]]),
+    planEntry("dead-bug", [[16, 20, 7], [16, 20, 7], [16, 20, 7], [16, 20, 7]]),
+    planEntry("farmer-carry", [[24, 40, 7], [24, 40, 7], [26, 40, 8]]),
+    planEntry("rowing", [[8, 1, 7]]),
   ];
 }
 
@@ -226,12 +226,12 @@ function planEntry(exerciseId, rows) {
   };
 }
 
-function nextFridayAfterLatestWorkout() {
+function nextMondayAfterLatestWorkout() {
   const latestDate = state.workouts.at(-1)?.date;
   const base = latestDate ? new Date(latestDate) : new Date();
   const next = new Date(base);
-  const daysUntilFriday = (5 - next.getDay() + 7) % 7 || 7;
-  next.setDate(next.getDate() + daysUntilFriday);
+  const daysUntilMonday = (1 - next.getDay() + 7) % 7 || 7;
+  next.setDate(next.getDate() + daysUntilMonday);
   return next.toISOString().slice(0, 10);
 }
 
