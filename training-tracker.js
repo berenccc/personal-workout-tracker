@@ -15,7 +15,7 @@ const exercises = [
   { id: "step-lunge", name: "Step-up + reverse lunge", group: "Ноги", unit: "кг", step: 2, defaultSets: [[16, 20], [16, 20], [16, 20]] },
   { id: "goblet-squat", name: "Присед с диском/гирей", group: "Ноги", unit: "кг", step: 2, defaultSets: [[20, 12], [20, 12], [20, 12]] },
   { id: "calf-flex", name: "Сгибание ступней / икры", group: "Икры", unit: "кг", step: 5, defaultSets: [[80, 12], [90, 12], [95, 12]] },
-  { id: "gravitron", name: "Гравитрон / подтягивания", group: "Спина", unit: "кг противовес", step: -2.5, lowerIsBetter: true, defaultSets: [[40, 8], [35, 8], [30, 8]] },
+  { id: "gravitron", name: "Гравитрон", group: "Спина", unit: "кг противовес", step: -2.5, lowerIsBetter: true, defaultSets: [[40, 8], [35, 8], [30, 8]] },
   { id: "lat-pulldown", name: "Тяга верхнего блока", group: "Спина", unit: "кг", step: 2.5, defaultSets: [[52, 10], [56, 10], [60, 8]] },
   { id: "row", name: "Тяга горизонтального блока", group: "Спина", unit: "кг", step: 2.5, defaultSets: [[57, 10], [67, 8], [67, 10]] },
   { id: "one-arm-row", name: "Тяга гантели одной рукой", group: "Спина", unit: "кг/рука", step: 2, defaultSets: [[22, 10], [26, 10], [28, 10]] },
