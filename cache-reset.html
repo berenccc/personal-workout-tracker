@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Обновление трекера</title>
+    <style>
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+        background: #101214;
+        color: #f1f3f5;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(420px, calc(100vw - 32px));
+        border: 1px solid #292d32;
+        border-radius: 18px;
+        padding: 22px;
+        background: #17191c;
+      }
+
+      p {
+        color: #939ba5;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Обновляю трекер</h1>
+      <p>Чищу кэш приложения и открываю свежую версию. Локальные данные и GitHub sync token не удаляются.</p>
+    </main>
+    <script>
+      async function resetAppCache() {
+        if ("serviceWorker" in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+        }
+
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((key) => caches.delete(key)));
+        }
+
+        window.location.replace(`./training-tracker.html?v=13&fresh=${Date.now()}`);
+      }
+
+      resetAppCache();
+    </script>
+  </body>
+</html>

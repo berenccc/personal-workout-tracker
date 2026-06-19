@@ -1,13 +1,19 @@
-const CACHE_NAME = "training-tracker-v12";
+const CACHE_NAME = "training-tracker-v13";
 const ASSETS = [
-  "./training-tracker.html",
-  "./training-tracker.css",
-  "./training-tracker.js",
-  "./training-history.js",
-  "./manifest.webmanifest",
+  "./training-tracker.html?v=13",
+  "./training-tracker.css?v=13",
+  "./training-tracker.js?v=13",
+  "./training-history.js?v=13",
+  "./manifest.webmanifest?v=13",
   "./icon-192.svg",
   "./icon-512.svg",
 ];
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -27,6 +33,17 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => response)
+        .catch(() =>
+          caches.match("./training-tracker.html?v=13").then((cached) => cached || caches.match("./training-tracker.html"))
+        )
+    );
+    return;
+  }
 
   event.respondWith(
     fetch(event.request)
