@@ -337,7 +337,7 @@ async function checkGithubTokenWrite() {
       ...(current?.data || {}),
       updatedAt: current?.data?.updatedAt || null,
       lastSavedWorkoutId: current?.data?.lastSavedWorkoutId || null,
-      workouts: Array.isArray(current?.data?.workouts) ? normalizeWorkoutDates(current.data.workouts) : [],
+      workouts: Array.isArray(current?.data?.workouts) ? removeFutureCompletedWorkouts(normalizeWorkoutDates(current.data.workouts)) : [],
       syncCheckAt: new Date().toISOString(),
     };
     await putGitHubFile(token, payload, current?.sha, "Check workout sync token");
@@ -372,7 +372,7 @@ function mergeWorkouts(current, incoming) {
   const keyFor = (workout) => workout.id || `${workout.date}-${workout.notes || ""}`;
   const byDate = new Map(current.map((workout) => [keyFor(workout), workout]));
   incoming.forEach((workout) => byDate.set(keyFor(workout), workout));
-  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+  return removeFutureCompletedWorkouts([...byDate.values()]).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function normalizeWorkoutDates(workouts) {
@@ -391,6 +391,11 @@ function normalizeWorkoutDates(workouts) {
     }
     return fixed;
   });
+}
+
+function removeFutureCompletedWorkouts(workouts) {
+  const today = formatInputDate(new Date());
+  return workouts.filter((workout) => !workout.date || workout.date <= today);
 }
 
 function addExercise(exerciseId) {
@@ -649,9 +654,10 @@ function renderSetRow(uid, index, set, exercise) {
 
 function collectWorkout() {
   const durationMs = getWorkoutDurationMs();
+  const completedDate = completedWorkoutDate(elements.dateInput.value);
   return {
-    id: `manual-${elements.dateInput.value}-${makeUid()}`,
-    date: elements.dateInput.value,
+    id: `manual-${completedDate}-${makeUid()}`,
+    date: completedDate,
     readiness: elements.readinessInput.value,
     notes: elements.notesInput.value.trim(),
     sessionEffort: elements.sessionEffortInput.value,
@@ -673,6 +679,11 @@ function collectWorkout() {
       }))
       .filter((item) => item.sets.length),
   };
+}
+
+function completedWorkoutDate(selectedDate) {
+  const today = formatInputDate(new Date());
+  return selectedDate && selectedDate <= today ? selectedDate : today;
 }
 
 async function copyWorkoutReport() {
