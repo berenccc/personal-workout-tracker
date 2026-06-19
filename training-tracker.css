@@ -34,6 +34,7 @@ body {
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at top left, rgba(142, 167, 232, 0.12), transparent 34rem),
     var(--bg);
@@ -46,8 +47,39 @@ body {
 button,
 input,
 select {
+  max-width: 100%;
   font: inherit;
   touch-action: manipulation;
+}
+
+h1,
+h2,
+h3,
+p,
+span,
+strong,
+small,
+label,
+button,
+input,
+select {
+  min-width: 0;
+}
+
+h1,
+h2,
+h3,
+p,
+span,
+strong,
+small,
+label,
+.button,
+.chip,
+.pill,
+.plan-summary-list span {
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .app {
@@ -110,6 +142,10 @@ select {
   gap: 10px;
 }
 
+.sync-controls > * {
+  min-width: 0;
+}
+
 .drawer {
   margin-bottom: 18px;
 }
@@ -117,6 +153,7 @@ select {
 .drawer > summary {
   display: grid;
   gap: 4px;
+  min-width: 0;
   list-style: none;
   cursor: pointer;
 }
@@ -432,7 +469,7 @@ h3 {
 
 .plan-summary-stats {
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 6px;
   align-items: baseline;
 }
@@ -456,6 +493,8 @@ h3 {
 }
 
 .plan-summary-list span {
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--workout-line);
   border-radius: 999px;
   padding: 7px 10px;
@@ -475,6 +514,10 @@ h3 {
   border-radius: 18px;
   padding: 12px;
   background: var(--workout-card);
+}
+
+.session-timer > * {
+  min-width: 0;
 }
 
 .session-timer span {
@@ -506,13 +549,14 @@ h3 {
 }
 
 .timer-state {
+  min-width: 0;
   border-radius: 999px;
   padding: 8px 11px;
   background: rgba(47, 111, 79, 0.12);
   color: var(--workout-good);
   font-size: 12px;
   font-weight: 900;
-  white-space: nowrap;
+  text-align: center;
 }
 
 .active-helper {
@@ -668,7 +712,12 @@ select {
 .exercise-card-header {
   align-items: flex-start;
   justify-content: space-between;
+  min-width: 0;
   margin-bottom: 12px;
+}
+
+.exercise-card-header > div {
+  min-width: 0;
 }
 
 .exercise-card-header p {
@@ -782,6 +831,7 @@ select {
 }
 
 .mobile-actions .button {
+  min-width: 0;
   flex: 1;
 }
 
@@ -1096,6 +1146,10 @@ select {
     gap: 8px;
   }
 
+  .sync-controls .button {
+    width: 100%;
+  }
+
   .layout {
     gap: 10px;
     margin-bottom: 10px;
@@ -1302,6 +1356,11 @@ select {
     padding: 8px;
     background: rgba(17, 19, 21, 0.96);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
+  }
+
+  .mobile-actions .button {
+    padding-inline: 10px;
+    line-height: 1.15;
   }
 
   .workout-panel .mobile-actions {
