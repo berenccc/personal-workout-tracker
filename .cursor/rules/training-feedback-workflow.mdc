@@ -1,0 +1,15 @@
+---
+description: Update workout app feedback after reviewing completed training
+alwaysApply: true
+---
+
+# Training Feedback Workflow
+
+When the user asks to evaluate a completed workout, treat the app's recommendation block as the persistent output.
+
+- Read the latest workout data from `data/workouts.json` first when available; otherwise use the user's pasted report.
+- Give feedback in chat on recovery, workout quality, notable issues, and the next session.
+- Update `training-feedback.js` so the app shows this feedback in the `Рекомендация` block.
+- If the next workout plan should change, update `loadMondayFunctionalPlan()` or the relevant plan data in `training-tracker.js`.
+- Keep the feedback concise and actionable for mobile viewing: 3-5 short cards max.
+- Preserve the user's goal: stay fit, look/feel good, avoid burnout, and avoid unnecessary failure work.

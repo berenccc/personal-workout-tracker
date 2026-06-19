@@ -782,6 +782,11 @@ function renderCoach() {
   elements.readinessPill.textContent = readinessLabel(readiness);
   elements.readinessPill.className = `pill ${readiness === "good" ? "good" : readiness === "bad" ? "bad" : "warn"}`;
 
+  if (window.trainingFeedback?.cards?.length) {
+    renderTrainingFeedback(window.trainingFeedback);
+    return;
+  }
+
   const fatigue = fatigueScore(state.workouts);
   const next = nextSessionSuggestion(state.workouts, readiness, fatigue);
   elements.coachBox.innerHTML = next.map((item) => `
@@ -790,6 +795,22 @@ function renderCoach() {
       <p>${item.text}</p>
     </article>
   `).join("");
+}
+
+function renderTrainingFeedback(feedback) {
+  const updated = feedback.updatedAt ? `<p class="feedback-meta">Обновлено: ${formatDate(feedback.updatedAt)}</p>` : "";
+  elements.coachBox.innerHTML = `
+    <article class="coach-card feedback-card">
+      <strong>${escapeHtml(feedback.title || "Фидбек после тренировки")}</strong>
+      ${updated}
+    </article>
+    ${feedback.cards.map((item) => `
+      <article class="coach-card">
+        <strong>${escapeHtml(item.title)}</strong>
+        <p>${escapeHtml(item.text)}</p>
+      </article>
+    `).join("")}
+  `;
 }
 
 function nextSessionSuggestion(workouts, readiness, fatigue) {

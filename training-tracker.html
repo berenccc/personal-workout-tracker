@@ -8,8 +8,8 @@
     <meta http-equiv="Expires" content="0" />
     <meta name="theme-color" content="#111315" />
     <title>Тренировки</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=19" />
-    <link rel="stylesheet" href="./training-tracker.css?v=19" />
+    <link rel="manifest" href="./manifest.webmanifest?v=20" />
+    <link rel="stylesheet" href="./training-tracker.css?v=20" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -255,10 +255,11 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=19"></script>
-    <script src="./training-tracker.js?v=19"></script>
+    <script src="./training-history.js?v=20"></script>
+    <script src="./training-feedback.js?v=20"></script>
+    <script src="./training-tracker.js?v=20"></script>
     <script>
-      const APP_VERSION = "v19";
+      const APP_VERSION = "v20";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {
