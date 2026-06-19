@@ -391,6 +391,45 @@ h3 {
   color: #8d3333;
 }
 
+.session-timer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin: 0 0 14px;
+  border: 1px solid var(--workout-line);
+  border-radius: 18px;
+  padding: 12px;
+  background: var(--workout-card);
+}
+
+.session-timer span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--workout-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.session-timer strong {
+  display: block;
+  color: var(--workout-text);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.timer-button {
+  border: 0;
+  background: var(--workout-accent);
+  color: #fff;
+}
+
+.timer-button:disabled {
+  cursor: default;
+  opacity: 0.78;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -978,6 +1017,17 @@ select {
     border-left: 3px solid rgba(38, 58, 102, 0.35);
     padding-left: 9px;
     font-size: 12px;
+  }
+
+  .session-timer {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 11px;
+  }
+
+  .session-timer strong {
+    font-size: 30px;
   }
 
   .button,

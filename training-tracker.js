@@ -53,6 +53,11 @@ const exercises = [
 
 let state = loadState();
 let selected = [];
+let workoutTimer = {
+  startedAt: null,
+  stoppedAt: null,
+  intervalId: null,
+};
 
 const elements = {
   authForm: document.querySelector("#authForm"),
@@ -65,6 +70,8 @@ const elements = {
   saveGithubTokenButton: document.querySelector("#saveGithubTokenButton"),
   pullRemoteButton: document.querySelector("#pullRemoteButton"),
   workoutForm: document.querySelector("#workoutForm"),
+  startWorkoutButton: document.querySelector("#startWorkoutButton"),
+  workoutTimerDisplay: document.querySelector("#workoutTimerDisplay"),
   dateInput: document.querySelector("#dateInput"),
   readinessInput: document.querySelector("#readinessInput"),
   notesInput: document.querySelector("#notesInput"),
@@ -158,11 +165,13 @@ function bindEvents() {
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
+  elements.startWorkoutButton.addEventListener("click", startWorkoutTimer);
   elements.readinessInput.addEventListener("change", renderCoach);
   elements.chartExerciseSelect.addEventListener("change", renderCharts);
 
   elements.workoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    stopWorkoutTimer();
     const workout = collectWorkout();
     if (!workout.exercises.length) {
       alert("Добавь хотя бы одно упражнение.");
@@ -183,8 +192,54 @@ function bindEvents() {
       // Saving is more important than clipboard availability.
     }
     loadMondayFunctionalPlan();
+    resetWorkoutTimer();
     render();
   });
+}
+
+function startWorkoutTimer() {
+  if (workoutTimer.startedAt) return;
+
+  workoutTimer = {
+    startedAt: Date.now(),
+    stoppedAt: null,
+    intervalId: window.setInterval(renderWorkoutTimer, 1000),
+  };
+  elements.startWorkoutButton.textContent = "Тренировка идет";
+  elements.startWorkoutButton.disabled = true;
+  renderWorkoutTimer();
+}
+
+function stopWorkoutTimer() {
+  if (!workoutTimer.startedAt || workoutTimer.stoppedAt) return;
+
+  workoutTimer.stoppedAt = Date.now();
+  if (workoutTimer.intervalId) {
+    window.clearInterval(workoutTimer.intervalId);
+    workoutTimer.intervalId = null;
+  }
+  renderWorkoutTimer();
+}
+
+function resetWorkoutTimer() {
+  if (workoutTimer.intervalId) window.clearInterval(workoutTimer.intervalId);
+  workoutTimer = {
+    startedAt: null,
+    stoppedAt: null,
+    intervalId: null,
+  };
+  elements.startWorkoutButton.textContent = "Начать тренировку";
+  elements.startWorkoutButton.disabled = false;
+  elements.workoutTimerDisplay.textContent = "00:00";
+}
+
+function renderWorkoutTimer() {
+  elements.workoutTimerDisplay.textContent = formatDuration(getWorkoutDurationMs());
+}
+
+function getWorkoutDurationMs() {
+  if (!workoutTimer.startedAt) return 0;
+  return (workoutTimer.stoppedAt || Date.now()) - workoutTimer.startedAt;
 }
 
 function initializeRemoteSync() {
@@ -281,12 +336,10 @@ function planEntry(exerciseId, rows) {
 }
 
 function nextMondayAfterLatestWorkout() {
-  const latestDate = state.workouts.at(-1)?.date;
-  const base = latestDate ? new Date(latestDate) : new Date();
-  const next = new Date(base);
+  const next = new Date();
   const daysUntilMonday = (1 - next.getDay() + 7) % 7 || 7;
   next.setDate(next.getDate() + daysUntilMonday);
-  return next.toISOString().slice(0, 10);
+  return formatInputDate(next);
 }
 
 function render() {
@@ -471,6 +524,7 @@ function renderSetRow(uid, index, set, exercise) {
 }
 
 function collectWorkout() {
+  const durationMs = getWorkoutDurationMs();
   return {
     id: `manual-${elements.dateInput.value}-${makeUid()}`,
     date: elements.dateInput.value,
@@ -478,6 +532,8 @@ function collectWorkout() {
     notes: elements.notesInput.value.trim(),
     sessionEffort: elements.sessionEffortInput.value,
     afterNotes: elements.afterNotesInput.value.trim(),
+    durationMs: durationMs || null,
+    durationMinutes: durationMs ? Math.round(durationMs / 60000) : null,
     exercises: selected
       .map((item) => ({
         exerciseId: item.exerciseId,
@@ -644,6 +700,7 @@ function buildWorkoutReport(workout) {
     `Итог: ${sessionEffortLabel(workout.sessionEffort)}`,
   ];
 
+  if (workout.durationMs) lines.push(`Длительность: ${formatDuration(workout.durationMs)}`);
   if (workout.notes) lines.push(`План/заметки до: ${workout.notes}`);
   if (workout.afterNotes) lines.push(`Заметки после: ${workout.afterNotes}`);
   lines.push("");
@@ -1072,6 +1129,26 @@ function formatNumber(value) {
 
 function formatDate(date) {
   return new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(date));
+}
+
+function formatInputDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDuration(durationMs) {
+  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function escapeHtml(value) {

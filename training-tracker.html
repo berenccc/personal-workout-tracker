@@ -8,8 +8,8 @@
     <meta http-equiv="Expires" content="0" />
     <meta name="theme-color" content="#111315" />
     <title>Тренировки</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=14" />
-    <link rel="stylesheet" href="./training-tracker.css?v=14" />
+    <link rel="manifest" href="./manifest.webmanifest?v=15" />
+    <link rel="stylesheet" href="./training-tracker.css?v=15" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -48,6 +48,14 @@
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
           <p class="workout-helper">Идешь сверху вниз: галочка, вес/повторы, RPE. Кнопка завершения всегда снизу.</p>
+
+          <div class="session-timer" aria-live="polite">
+            <div>
+              <span>Таймер тренировки</span>
+              <strong id="workoutTimerDisplay">00:00</strong>
+            </div>
+            <button id="startWorkoutButton" class="button timer-button" type="button">Начать тренировку</button>
+          </div>
 
           <form id="workoutForm" class="form">
             <div class="form-row">
@@ -239,10 +247,10 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=14"></script>
-    <script src="./training-tracker.js?v=14"></script>
+    <script src="./training-history.js?v=15"></script>
+    <script src="./training-tracker.js?v=15"></script>
     <script>
-      const APP_VERSION = "v14";
+      const APP_VERSION = "v15";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {
