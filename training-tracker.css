@@ -77,7 +77,7 @@ label,
 .button,
 .chip,
 .pill,
-.plan-summary-list span {
+.plan-summary-list li > span {
   overflow-wrap: anywhere;
   word-break: normal;
 }
@@ -487,21 +487,47 @@ h3 {
 }
 
 .plan-summary-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 8px;
+  margin: 0;
+  padding-left: 1.35rem;
 }
 
-.plan-summary-list span {
+.plan-summary-list li {
+  padding-left: 2px;
+}
+
+.plan-summary-list li::marker {
+  color: var(--workout-muted);
+  font-weight: 900;
+}
+
+.plan-summary-list li > span,
+.plan-summary-list li > strong {
   min-width: 0;
-  max-width: 100%;
+}
+
+.plan-summary-list li > span {
+  overflow-wrap: anywhere;
+}
+
+.plan-summary-list li > strong {
+  justify-self: end;
   border: 1px solid var(--workout-line);
   border-radius: 999px;
-  padding: 7px 10px;
+  padding: 5px 8px;
   background: var(--workout-card-2);
   color: var(--workout-text);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
+  white-space: nowrap;
+}
+
+.plan-summary-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
 }
 
 .session-timer {

@@ -468,21 +468,24 @@ function renderSelectedExercises() {
 
 function renderPlanSummary() {
   const totalSets = selected.reduce((sum, item) => sum + item.sets.length, 0);
-  const preview = selected.slice(0, 5).map((item) => {
+  const rows = selected.map((item) => {
     const exercise = findExercise(item.exerciseId);
-    return `<span>${escapeHtml(exercise.name)} · ${item.sets.length} подх.</span>`;
+    return `
+      <li>
+        <span>${escapeHtml(exercise.name)}</span>
+        <strong>${item.sets.length} подх.</strong>
+      </li>
+    `;
   });
-  const restCount = Math.max(0, selected.length - preview.length);
 
   elements.planSummary.innerHTML = `
     <div class="plan-summary-stats">
       <strong>${selected.length}</strong><span>упражнений</span>
       <strong>${totalSets}</strong><span>подходов</span>
     </div>
-    <div class="plan-summary-list">
-      ${preview.join("")}
-      ${restCount ? `<span>+ еще ${restCount}</span>` : ""}
-    </div>
+    <ol class="plan-summary-list">
+      ${rows.join("")}
+    </ol>
   `;
 }
 
