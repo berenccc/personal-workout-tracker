@@ -7,6 +7,8 @@
 !training-history.js
 !manifest.webmanifest
 !sw.js
+!data/
+!data/workouts.json
 !icon-192.svg
 !icon-512.svg
 !DEPLOY_TRAINING_APP.md

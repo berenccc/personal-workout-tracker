@@ -87,6 +87,27 @@ select {
   background: var(--panel);
 }
 
+.sync-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr);
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.sync-status {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sync-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+}
+
 .hero {
   display: flex;
   align-items: center;
@@ -601,7 +622,9 @@ select {
 @media (max-width: 900px) {
   .hero,
   .layout,
-  .chart-grid {
+  .chart-grid,
+  .sync-panel,
+  .sync-controls {
     grid-template-columns: 1fr;
   }
 

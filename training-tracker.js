@@ -1,6 +1,11 @@
 const STORAGE_KEY = "training-tracker-v3";
 const AUTH_KEY = "training-tracker-auth";
+const GITHUB_TOKEN_KEY = "training-tracker-github-token";
 const APP_PASSCODE = "train2026";
+const GITHUB_OWNER = "berenccc";
+const GITHUB_REPO = "personal-workout-tracker";
+const GITHUB_BRANCH = "main";
+const GITHUB_DATA_PATH = "data/workouts.json";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -56,6 +61,10 @@ const elements = {
   statsGrid: document.querySelector("#statsGrid"),
   seedButton: document.querySelector("#seedButton"),
   resetButton: document.querySelector("#resetButton"),
+  syncStatus: document.querySelector("#syncStatus"),
+  githubTokenInput: document.querySelector("#githubTokenInput"),
+  saveGithubTokenButton: document.querySelector("#saveGithubTokenButton"),
+  pullRemoteButton: document.querySelector("#pullRemoteButton"),
   workoutForm: document.querySelector("#workoutForm"),
   dateInput: document.querySelector("#dateInput"),
   readinessInput: document.querySelector("#readinessInput"),
@@ -89,6 +98,7 @@ function boot() {
   loadMondayFunctionalPlan();
   bindEvents();
   render();
+  initializeRemoteSync();
 }
 
 function setupAuth() {
@@ -154,12 +164,14 @@ function bindEvents() {
     renderSelectedExercises();
   });
 
+  elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
+  elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
   elements.copyDataButton.addEventListener("click", copyFullHistory);
   elements.readinessInput.addEventListener("change", renderCoach);
   elements.chartExerciseSelect.addEventListener("change", renderCharts);
 
-  elements.workoutForm.addEventListener("submit", (event) => {
+  elements.workoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const workout = collectWorkout();
     if (!workout.exercises.length) {
@@ -167,12 +179,54 @@ function bindEvents() {
       return;
     }
 
-    state.workouts.push(workout);
+    upsertWorkout(workout);
     state.workouts.sort((a, b) => a.date.localeCompare(b.date));
     saveState();
+    await pushRemoteWorkouts(workout);
+    try {
+      await copyText(buildWorkoutReport(workout));
+      elements.copyReportButton.textContent = "Отчет скопирован";
+      setTimeout(() => {
+        elements.copyReportButton.textContent = "Отчет";
+      }, 1800);
+    } catch {
+      // Saving is more important than clipboard availability.
+    }
     loadMondayFunctionalPlan();
     render();
   });
+}
+
+function initializeRemoteSync() {
+  const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+  if (token) {
+    elements.githubTokenInput.value = "••••••••";
+    setSyncStatus("GitHub token сохранен. После завершения тренировки данные улетят в git.");
+  }
+
+  pullRemoteWorkouts({ forceStatus: false });
+}
+
+function saveGithubToken() {
+  const token = elements.githubTokenInput.value.trim();
+  if (!token || token.includes("•")) {
+    setSyncStatus("Token не изменен.");
+    return;
+  }
+
+  localStorage.setItem(GITHUB_TOKEN_KEY, token);
+  elements.githubTokenInput.value = "••••••••";
+  setSyncStatus("Token сохранен в браузере. Теперь завершенные тренировки будут пушиться в git.");
+}
+
+function setSyncStatus(message) {
+  elements.syncStatus.textContent = message;
+}
+
+function upsertWorkout(workout) {
+  const key = workout.id || `${workout.date}-${workout.notes || ""}`;
+  state.workouts = state.workouts.filter((item) => (item.id || `${item.date}-${item.notes || ""}`) !== key);
+  state.workouts.push(workout);
 }
 
 function fillExerciseSelects() {
@@ -388,10 +442,12 @@ function renderSetRow(uid, index, set, exercise) {
   `;
 
   row.querySelectorAll("input[data-field], select[data-field]").forEach((input) => {
-    input.addEventListener("input", () => {
+    const updateSet = () => {
       const item = selected.find((selectedItem) => selectedItem.uid === uid);
       item.sets[index][input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
-    });
+    };
+    input.addEventListener("input", updateSet);
+    input.addEventListener("change", updateSet);
   });
 
   row.querySelectorAll("button[data-adjust]").forEach((button) => {
@@ -444,10 +500,10 @@ async function copyWorkoutReport() {
   const report = buildWorkoutReport(workout);
 
   try {
-    await navigator.clipboard.writeText(report);
+    await copyText(report);
     elements.copyReportButton.textContent = "Отчет скопирован";
     setTimeout(() => {
-      elements.copyReportButton.textContent = "Скопировать отчет";
+      elements.copyReportButton.textContent = "Отчет";
     }, 1800);
   } catch {
     window.prompt("Скопируй отчет для чата:", report);
@@ -463,7 +519,7 @@ async function copyFullHistory() {
   ].join("\n");
 
   try {
-    await navigator.clipboard.writeText(report);
+    await copyText(report);
     elements.copyDataButton.textContent = "История скопирована";
     setTimeout(() => {
       elements.copyDataButton.textContent = "Скопировать историю";
@@ -471,6 +527,133 @@ async function copyFullHistory() {
   } catch {
     window.prompt("Скопируй историю для чата:", report);
   }
+}
+
+async function pullRemoteWorkouts({ forceStatus } = { forceStatus: false }) {
+  try {
+    const response = await fetch(rawGitHubDataUrl(), { cache: "no-store" });
+    if (!response.ok) {
+      if (forceStatus) setSyncStatus("В git пока нет сохраненных тренировок.");
+      return;
+    }
+
+    const remote = await response.json();
+    const remoteWorkouts = Array.isArray(remote.workouts) ? remote.workouts : [];
+    if (!remoteWorkouts.length) {
+      if (forceStatus) setSyncStatus("В git пока пусто, используется встроенная история.");
+      return;
+    }
+
+    state.workouts = mergeWorkouts(state.workouts, remoteWorkouts);
+    saveState();
+    render();
+    setSyncStatus(`Обновлено из git: ${remoteWorkouts.length} тренировок.`);
+  } catch (error) {
+    if (forceStatus) setSyncStatus(`Не удалось обновить из git: ${error.message}`);
+  }
+}
+
+async function pushRemoteWorkouts(savedWorkout) {
+  const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+  if (!token) {
+    setSyncStatus("Сохранено локально. Чтобы отправлять в git, добавь GitHub token.");
+    return false;
+  }
+
+  setSyncStatus("Отправляю тренировку в git...");
+
+  try {
+    const current = await getGitHubFile(token);
+    const remoteWorkouts = current?.data?.workouts || [];
+    const merged = mergeWorkouts(remoteWorkouts, state.workouts);
+    const payload = {
+      updatedAt: new Date().toISOString(),
+      lastSavedWorkoutId: savedWorkout.id,
+      workouts: merged,
+    };
+
+    await putGitHubFile(token, payload, current?.sha);
+    state.workouts = merged;
+    saveState();
+    setSyncStatus("Готово: тренировка сохранена в git.");
+    return true;
+  } catch (error) {
+    setSyncStatus(`Не удалось отправить в git: ${error.message}`);
+    return false;
+  }
+}
+
+async function getGitHubFile(token) {
+  const response = await fetch(gitHubContentsUrl(), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+    },
+  });
+
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`GitHub GET ${response.status}`);
+
+  const file = await response.json();
+  const decoded = decodeUtf8Base64(file.content || "");
+  return {
+    sha: file.sha,
+    data: decoded ? JSON.parse(decoded) : { workouts: [] },
+  };
+}
+
+async function putGitHubFile(token, payload, sha) {
+  const body = {
+    message: `Save workout data ${new Date().toISOString()}`,
+    branch: GITHUB_BRANCH,
+    content: encodeUtf8Base64(JSON.stringify(payload, null, 2)),
+  };
+
+  if (sha) body.sha = sha;
+
+  const response = await fetch(gitHubContentsUrl(), {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`GitHub PUT ${response.status}: ${text.slice(0, 120)}`);
+  }
+}
+
+function gitHubContentsUrl() {
+  return `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
+}
+
+function rawGitHubDataUrl() {
+  return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_DATA_PATH}?t=${Date.now()}`;
+}
+
+function encodeUtf8Base64(value) {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+function decodeUtf8Base64(value) {
+  const normalized = value.replace(/\s/g, "");
+  if (!normalized) return "";
+  const binary = atob(normalized);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+async function copyText(value) {
+  await navigator.clipboard.writeText(value);
 }
 
 function buildWorkoutReport(workout) {
