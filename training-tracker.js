@@ -73,6 +73,7 @@ const elements = {
   workoutForm: document.querySelector("#workoutForm"),
   startWorkoutButton: document.querySelector("#startWorkoutButton"),
   workoutTimerDisplay: document.querySelector("#workoutTimerDisplay"),
+  finishNotice: document.querySelector("#finishNotice"),
   planSummary: document.querySelector("#planSummary"),
   dateInput: document.querySelector("#dateInput"),
   readinessInput: document.querySelector("#readinessInput"),
@@ -183,7 +184,7 @@ function bindEvents() {
     upsertWorkout(workout);
     state.workouts.sort((a, b) => a.date.localeCompare(b.date));
     saveState();
-    await pushRemoteWorkouts(workout);
+    const pushedToGit = await pushRemoteWorkouts(workout);
     try {
       await copyText(buildWorkoutReport(workout));
       elements.copyReportButton.textContent = "Отчет скопирован";
@@ -196,12 +197,14 @@ function bindEvents() {
     loadMondayFunctionalPlan();
     resetWorkoutTimer();
     render();
+    showFinishNotice(workout, pushedToGit);
   });
 }
 
 function startWorkoutTimer() {
   if (workoutTimer.startedAt) return;
 
+  hideFinishNotice();
   elements.workoutPanel.classList.add("is-active");
   workoutTimer = {
     startedAt: Date.now(),
@@ -243,6 +246,40 @@ function renderWorkoutTimer() {
 function getWorkoutDurationMs() {
   if (!workoutTimer.startedAt) return 0;
   return (workoutTimer.stoppedAt || Date.now()) - workoutTimer.startedAt;
+}
+
+function showFinishNotice(workout, pushedToGit) {
+  const doneSets = workout.exercises.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0);
+  const totalSets = workout.exercises.reduce((sum, item) => sum + item.sets.length, 0);
+  const rows = workout.exercises.map((item) => {
+    const exercise = findExercise(item.exerciseId);
+    const done = item.sets.filter((set) => set.done).length;
+    const total = item.sets.length;
+    const status = done === total ? "готово" : `${done}/${total}`;
+    return `<li><span>${escapeHtml(exercise.name)}</span><strong>${status}</strong></li>`;
+  });
+
+  elements.finishNotice.hidden = false;
+  elements.finishNotice.className = `finish-notice ${pushedToGit ? "is-synced" : "is-local"}`;
+  elements.finishNotice.innerHTML = `
+    <div class="finish-notice-header">
+      <span>${pushedToGit ? "Збс, красавчик" : "Тренировка сохранена локально"}</span>
+      <strong>${doneSets}/${totalSets} подходов</strong>
+    </div>
+    <p>
+      ${pushedToGit
+        ? "Тренировка сохранена и отправлена в git."
+        : "Тренировка сохранена на этом устройстве, но в git не ушла. Проверь GitHub token в синхронизации."}
+    </p>
+    ${workout.durationMs ? `<p>Длительность: <strong>${formatDuration(workout.durationMs)}</strong></p>` : ""}
+    <ol class="finish-summary-list">${rows.join("")}</ol>
+  `;
+  elements.finishNotice.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function hideFinishNotice() {
+  elements.finishNotice.hidden = true;
+  elements.finishNotice.innerHTML = "";
 }
 
 function initializeRemoteSync() {
@@ -445,6 +482,7 @@ function renderSelectedExercises() {
     const fragment = elements.exerciseTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".exercise-card");
     card.dataset.uid = item.uid;
+    if (isExerciseComplete(item)) card.classList.add("exercise-complete");
     card.querySelector("h3").textContent = exercise.name;
     card.querySelector("p").textContent = `${exercise.group} · ${exercise.unit}`;
     card.querySelector(".icon-button").addEventListener("click", () => {
@@ -489,6 +527,10 @@ function renderPlanSummary() {
   `;
 }
 
+function isExerciseComplete(item) {
+  return item.sets.length > 0 && item.sets.every((set) => set.done);
+}
+
 function renderSetRow(uid, index, set, exercise) {
   const row = document.createElement("div");
   row.className = `set-row${set.done ? " set-done" : ""}`;
@@ -519,13 +561,14 @@ function renderSetRow(uid, index, set, exercise) {
         <option value="skip" ${set.mark === "skip" ? "selected" : ""}>скип</option>
       </select>
     </label>
-    <button class="icon-button delete-set" type="button" aria-label="Удалить подход">×</button>
+    <button class="delete-set" type="button" aria-label="Убрать подход" title="Убрать подход">×</button>
   `;
 
   row.querySelectorAll("input[data-field], select[data-field]").forEach((input) => {
     const updateSet = () => {
       const item = selected.find((selectedItem) => selectedItem.uid === uid);
       item.sets[index][input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
+      if (input.dataset.field === "done") renderSelectedExercises();
     };
     input.addEventListener("input", updateSet);
     input.addEventListener("change", updateSet);
