@@ -10,6 +10,14 @@
   --accent-2: #9ac178;
   --warning: #f2c36b;
   --danger: #ef8b8b;
+  --workout-bg: #f1eee7;
+  --workout-card: #fffaf0;
+  --workout-card-2: #ffffff;
+  --workout-text: #17191c;
+  --workout-muted: #69707a;
+  --workout-line: #ddd6ca;
+  --workout-accent: #263a66;
+  --workout-good: #2f6f4f;
   --radius: 18px;
 }
 
@@ -26,7 +34,9 @@ body {
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top left, rgba(142, 167, 232, 0.12), transparent 34rem),
+    var(--bg);
   color: var(--text);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -94,25 +104,65 @@ select {
   background: var(--panel);
 }
 
-.sync-panel {
+.sync-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr);
-  gap: 16px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 10px;
+}
+
+.drawer {
   margin-bottom: 18px;
 }
 
-.sync-status {
-  margin-bottom: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
+.drawer > summary {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  cursor: pointer;
 }
 
-.sync-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 10px;
+.drawer > summary::-webkit-details-marker {
+  display: none;
+}
+
+.drawer > summary span {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.drawer > summary small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.drawer > summary::after {
+  content: "Открыть";
+  justify-self: start;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.drawer[open] > summary {
+  margin-bottom: 14px;
+}
+
+.drawer[open] > summary::after {
+  content: "Свернуть";
+}
+
+.analytics-drawer {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  background: var(--panel);
 }
 
 .hero {
@@ -282,14 +332,62 @@ h3 {
 }
 
 .workout-panel {
-  border-color: rgba(142, 167, 232, 0.32);
+  border-color: transparent;
+  background: var(--workout-bg);
+  color: var(--workout-text);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
 }
 
 .workout-helper {
   margin: -8px 0 14px;
-  color: var(--muted);
+  color: var(--workout-muted);
   font-size: 13px;
   line-height: 1.4;
+}
+
+.workout-panel .eyebrow {
+  color: var(--workout-accent);
+}
+
+.workout-panel label {
+  color: var(--workout-muted);
+}
+
+.workout-panel input,
+.workout-panel select {
+  border-color: var(--workout-line);
+  background: var(--workout-card-2);
+  color: var(--workout-text);
+}
+
+.workout-panel .button.secondary,
+.workout-panel .button.ghost {
+  border-color: var(--workout-line);
+  background: var(--workout-card);
+  color: var(--workout-text);
+}
+
+.workout-panel .pill {
+  border-color: var(--workout-line);
+  color: var(--workout-muted);
+}
+
+.workout-panel .pill.good {
+  border-color: rgba(47, 111, 79, 0.25);
+  background: rgba(47, 111, 79, 0.08);
+  color: var(--workout-good);
+}
+
+.workout-panel .pill.warn {
+  border-color: rgba(164, 112, 39, 0.25);
+  background: rgba(242, 195, 107, 0.18);
+  color: #7c561f;
+}
+
+.workout-panel .pill.bad {
+  border-color: rgba(176, 71, 71, 0.25);
+  background: rgba(239, 139, 139, 0.16);
+  color: #8d3333;
 }
 
 .pill {
@@ -370,6 +468,25 @@ select {
   padding: 12px;
 }
 
+.workout-panel .exercise-card {
+  border-color: var(--workout-line);
+  background: var(--workout-card);
+}
+
+.workout-panel .exercise-card-header {
+  border-bottom: 1px solid var(--workout-line);
+  padding-bottom: 10px;
+}
+
+.workout-panel .exercise-card-header p {
+  color: var(--workout-muted);
+}
+
+.workout-panel .icon-button {
+  background: #efe7da;
+  color: var(--workout-muted);
+}
+
 .exercise-card-header {
   align-items: flex-start;
   justify-content: space-between;
@@ -411,6 +528,16 @@ select {
   background: rgba(157, 210, 116, 0.06);
 }
 
+.workout-panel .set-row {
+  border-color: var(--workout-line);
+  background: var(--workout-card-2);
+}
+
+.workout-panel .set-done {
+  border-color: rgba(47, 111, 79, 0.28);
+  background: rgba(47, 111, 79, 0.08);
+}
+
 .stepper {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 34px 34px;
@@ -426,6 +553,12 @@ select {
   font-weight: 800;
 }
 
+.workout-panel .stepper button {
+  border-color: var(--workout-line);
+  background: #efe7da;
+  color: var(--workout-text);
+}
+
 .done-cell {
   display: flex;
   align-items: center;
@@ -438,11 +571,21 @@ select {
   font-weight: 800;
 }
 
+.workout-panel .done-cell {
+  border-color: var(--workout-line);
+  background: #efe7da;
+  color: var(--workout-text);
+}
+
 .done-cell input {
   width: 28px;
   height: 28px;
   margin: 0;
   accent-color: var(--accent-2);
+}
+
+.workout-panel .done-cell input {
+  accent-color: var(--workout-good);
 }
 
 .done-cell span {
@@ -467,6 +610,16 @@ select {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.workout-panel .save-hint {
+  border-color: rgba(38, 58, 102, 0.14);
+  background: rgba(38, 58, 102, 0.06);
+  color: var(--workout-muted);
+}
+
+.workout-panel .save-hint strong {
+  color: var(--workout-text);
 }
 
 .save-hint strong {
@@ -648,7 +801,6 @@ select {
   .hero,
   .layout,
   .chart-grid,
-  .sync-panel,
   .sync-controls {
     grid-template-columns: 1fr;
   }
@@ -747,17 +899,8 @@ select {
     line-height: 1.25;
   }
 
-  .sync-panel {
-    gap: 10px;
+  .drawer {
     margin-bottom: 10px;
-  }
-
-  .sync-panel h2 {
-    display: none;
-  }
-
-  .sync-status {
-    font-size: 12px;
   }
 
   .sync-controls {
@@ -780,7 +923,7 @@ select {
 
   .workout-helper {
     margin: -2px 0 10px;
-    border-left: 3px solid rgba(142, 167, 232, 0.45);
+    border-left: 3px solid rgba(38, 58, 102, 0.35);
     padding-left: 9px;
     font-size: 12px;
   }
@@ -803,6 +946,10 @@ select {
     border-radius: 13px;
     padding: 10px;
     background: #191c20;
+  }
+
+  .workout-panel .exercise-card {
+    background: var(--workout-card);
   }
 
   .exercise-card-header {
@@ -852,6 +999,11 @@ select {
     padding: 10px;
   }
 
+  .workout-panel .set-row {
+    border-color: var(--workout-line);
+    background: var(--workout-card-2);
+  }
+
   .set-row > label {
     gap: 6px;
     font-size: 12px;
@@ -883,11 +1035,21 @@ select {
     background: rgba(154, 193, 120, 0.07);
   }
 
+  .workout-panel .set-done {
+    border-color: rgba(47, 111, 79, 0.28);
+    background: rgba(47, 111, 79, 0.08);
+  }
+
   .save-hint {
     border-color: rgba(255, 255, 255, 0.08);
     padding: 9px 10px;
     background: #15171a;
     font-size: 12px;
+  }
+
+  .workout-panel .save-hint {
+    border-color: rgba(38, 58, 102, 0.14);
+    background: rgba(38, 58, 102, 0.06);
   }
 
   .mobile-actions {
