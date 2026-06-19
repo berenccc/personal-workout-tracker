@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#111315" />
     <title>Тренировки</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=9" />
-    <link rel="stylesheet" href="./training-tracker.css?v=9" />
+    <link rel="manifest" href="./manifest.webmanifest?v=10" />
+    <link rel="stylesheet" href="./training-tracker.css?v=10" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -45,8 +45,8 @@
       <section class="panel sync-panel">
         <div>
           <p class="eyebrow">Синхронизация</p>
-          <h2>GitHub backend</h2>
-          <p id="syncStatus" class="sync-status">Пока сохраняет локально. Добавь GitHub token, чтобы тренировки улетали в репозиторий.</p>
+          <h2>Синк между устройствами</h2>
+          <p id="syncStatus" class="sync-status">Пока сохраняет локально. После настройки телефон будет сам отправлять тренировки в git.</p>
         </div>
         <div class="sync-controls">
           <input id="githubTokenInput" type="password" placeholder="GitHub token для записи в repo" autocomplete="off" />
@@ -234,8 +234,8 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=9"></script>
-    <script src="./training-tracker.js?v=9"></script>
+    <script src="./training-history.js?v=10"></script>
+    <script src="./training-tracker.js?v=10"></script>
     <script>
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         navigator.serviceWorker.register("./sw.js");

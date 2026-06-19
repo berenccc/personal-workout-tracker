@@ -198,13 +198,23 @@ function bindEvents() {
 }
 
 function initializeRemoteSync() {
+  importGithubTokenFromUrl();
   const token = localStorage.getItem(GITHUB_TOKEN_KEY);
   if (token) {
     elements.githubTokenInput.value = "••••••••";
-    setSyncStatus("GitHub token сохранен. После завершения тренировки данные улетят в git.");
+    setSyncStatus("GitHub sync включен. После завершения тренировки данные сохранятся в git.");
   }
 
   pullRemoteWorkouts({ forceStatus: false });
+}
+
+function importGithubTokenFromUrl() {
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const token = hash.get("syncToken");
+  if (!token) return;
+
+  localStorage.setItem(GITHUB_TOKEN_KEY, token);
+  history.replaceState(null, document.title, window.location.pathname + window.location.search);
 }
 
 function saveGithubToken() {
