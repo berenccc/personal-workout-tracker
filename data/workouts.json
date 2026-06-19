@@ -1,5 +1,6 @@
 {
   "updatedAt": null,
   "lastSavedWorkoutId": null,
-  "workouts": []
+  "workouts": [],
+  "syncCheckAt": "2026-06-19T19:55:46.322Z"
 }
