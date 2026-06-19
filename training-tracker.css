@@ -1,12 +1,12 @@
 :root {
-  color-scheme: dark;
-  --bg: #101214;
-  --panel: #17191c;
-  --panel-2: #1c1f23;
-  --text: #f1f3f5;
-  --muted: #939ba5;
-  --line: #292d32;
-  --accent: #8ea7e8;
+  color-scheme: light;
+  --bg: #f1eee7;
+  --panel: #fffaf0;
+  --panel-2: #ffffff;
+  --text: #17191c;
+  --muted: #69707a;
+  --line: #ddd6ca;
+  --accent: #263a66;
   --accent-2: #9ac178;
   --warning: #f2c36b;
   --danger: #ef8b8b;
@@ -36,7 +36,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    radial-gradient(circle at top left, rgba(142, 167, 232, 0.12), transparent 34rem),
+    radial-gradient(circle at top left, rgba(38, 58, 102, 0.08), transparent 34rem),
+    linear-gradient(180deg, #f7f3ea 0%, var(--bg) 42rem),
     var(--bg);
   color: var(--text);
   font-family:
@@ -111,6 +112,7 @@ label,
   border-radius: var(--radius);
   padding: 22px;
   background: var(--panel);
+  box-shadow: 0 18px 42px rgba(46, 38, 24, 0.08);
 }
 
 .auth-card h1 {
@@ -134,6 +136,7 @@ label,
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);
+  box-shadow: 0 12px 32px rgba(46, 38, 24, 0.07);
 }
 
 .sync-controls {
@@ -200,6 +203,7 @@ label,
   border-radius: var(--radius);
   padding: 20px;
   background: var(--panel);
+  box-shadow: 0 12px 32px rgba(46, 38, 24, 0.07);
 }
 
 .hero {
@@ -296,7 +300,7 @@ h3 {
 
 .button.ghost {
   border: 1px solid var(--line);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .danger-action {
@@ -327,6 +331,7 @@ h3 {
   border-radius: var(--radius);
   padding: 18px;
   background: var(--panel);
+  box-shadow: 0 10px 24px rgba(46, 38, 24, 0.05);
 }
 
 .stat strong {
@@ -1419,7 +1424,7 @@ select {
   .exercise-card {
     border-radius: 13px;
     padding: 10px;
-    background: #191c20;
+    background: var(--panel);
   }
 
   .workout-panel .exercise-card {
@@ -1476,7 +1481,7 @@ select {
     min-height: 42px;
     border-color: transparent;
     background: transparent;
-    padding: 0;
+    padding: 2px 0 2px 8px;
   }
 
   .workout-panel .done-cell {
@@ -1492,8 +1497,8 @@ select {
   .set-row {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
-    border-color: rgba(255, 255, 255, 0.06);
-    background: #15171a;
+    border-color: var(--line);
+    background: var(--panel-2);
     padding: 10px;
   }
 
@@ -1539,9 +1544,9 @@ select {
   }
 
   .save-hint {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: var(--line);
     padding: 9px 10px;
-    background: #15171a;
+    background: rgba(255, 255, 255, 0.58);
     font-size: 12px;
   }
 
@@ -1559,8 +1564,9 @@ select {
     border: 1px solid var(--line);
     border-radius: 16px;
     padding: 8px;
-    background: rgba(17, 19, 21, 0.96);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
+    background: rgba(255, 250, 239, 0.96);
+    box-shadow: 0 12px 32px rgba(46, 38, 24, 0.22);
+    backdrop-filter: blur(10px);
   }
 
   .mobile-actions .button {

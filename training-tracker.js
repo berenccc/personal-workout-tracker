@@ -68,6 +68,7 @@ const elements = {
   syncStatus: document.querySelector("#syncStatus"),
   githubTokenInput: document.querySelector("#githubTokenInput"),
   saveGithubTokenButton: document.querySelector("#saveGithubTokenButton"),
+  checkGithubTokenButton: document.querySelector("#checkGithubTokenButton"),
   pullRemoteButton: document.querySelector("#pullRemoteButton"),
   workoutPanel: document.querySelector(".workout-panel"),
   workoutForm: document.querySelector("#workoutForm"),
@@ -166,6 +167,7 @@ function bindEvents() {
   });
 
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
+  elements.checkGithubTokenButton.addEventListener("click", checkGithubTokenWrite);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
   elements.startWorkoutButton.addEventListener("click", startWorkoutTimer);
@@ -269,7 +271,7 @@ function showFinishNotice(workout, pushedToGit) {
     <p>
       ${pushedToGit
         ? "Тренировка сохранена и отправлена в git."
-        : "Тренировка сохранена на этом устройстве, но в git не ушла. Проверь GitHub token в синхронизации."}
+        : "Тренировка сохранена на этом устройстве, но в git не ушла. Открой Синхронизацию и нажми Проверить запись."}
     </p>
     ${workout.durationMs ? `<p>Длительность: <strong>${formatDuration(workout.durationMs)}</strong></p>` : ""}
     <ol class="finish-summary-list">${rows.join("")}</ol>
@@ -302,7 +304,7 @@ function importGithubTokenFromUrl() {
   history.replaceState(null, document.title, window.location.pathname + window.location.search);
 }
 
-function saveGithubToken() {
+async function saveGithubToken() {
   const token = elements.githubTokenInput.value.trim();
   if (!token || token.includes("•")) {
     setSyncStatus("Token не изменен.");
@@ -311,11 +313,42 @@ function saveGithubToken() {
 
   localStorage.setItem(GITHUB_TOKEN_KEY, token);
   elements.githubTokenInput.value = "••••••••";
-  setSyncStatus("Token сохранен в браузере. Теперь завершенные тренировки будут пушиться в git.");
+  setSyncStatus("Token сохранен. Проверяю запись в git...");
+  await checkGithubTokenWrite();
 }
 
 function setSyncStatus(message) {
   elements.syncStatus.textContent = message;
+}
+
+async function checkGithubTokenWrite() {
+  const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+  if (!token) {
+    setSyncStatus("Token не найден на этом устройстве. Вставь token и нажми Сохранить.");
+    return false;
+  }
+
+  elements.checkGithubTokenButton.disabled = true;
+  setSyncStatus("Проверяю права записи в git...");
+
+  try {
+    const current = await getGitHubFile(token);
+    const payload = {
+      ...(current?.data || {}),
+      updatedAt: current?.data?.updatedAt || null,
+      lastSavedWorkoutId: current?.data?.lastSavedWorkoutId || null,
+      workouts: Array.isArray(current?.data?.workouts) ? current.data.workouts : [],
+      syncCheckAt: new Date().toISOString(),
+    };
+    await putGitHubFile(token, payload, current?.sha, "Check workout sync token");
+    setSyncStatus("GitHub token работает: запись в data/workouts.json прошла.");
+    return true;
+  } catch (error) {
+    setSyncStatus(`GitHub token не пишет: ${error.message}`);
+    return false;
+  } finally {
+    elements.checkGithubTokenButton.disabled = false;
+  }
 }
 
 function upsertWorkout(workout) {
@@ -680,7 +713,7 @@ async function pushRemoteWorkouts(savedWorkout) {
       workouts: merged,
     };
 
-    await putGitHubFile(token, payload, current?.sha);
+    await putGitHubFile(token, payload, current?.sha, `Save workout ${savedWorkout.date}`);
     state.workouts = merged;
     saveState();
     setSyncStatus("Готово: тренировка сохранена в git.");
@@ -710,9 +743,9 @@ async function getGitHubFile(token) {
   };
 }
 
-async function putGitHubFile(token, payload, sha) {
+async function putGitHubFile(token, payload, sha, message = `Save workout data ${new Date().toISOString()}`) {
   const body = {
-    message: `Save workout data ${new Date().toISOString()}`,
+    message,
     branch: GITHUB_BRANCH,
     content: encodeUtf8Base64(JSON.stringify(payload, null, 2)),
   };
