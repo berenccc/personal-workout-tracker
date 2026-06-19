@@ -8,8 +8,8 @@
     <meta http-equiv="Expires" content="0" />
     <meta name="theme-color" content="#111315" />
     <title>Тренировки</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=15" />
-    <link rel="stylesheet" href="./training-tracker.css?v=15" />
+    <link rel="manifest" href="./manifest.webmanifest?v=16" />
+    <link rel="stylesheet" href="./training-tracker.css?v=16" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -47,17 +47,9 @@
             </div>
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
-          <p class="workout-helper">Идешь сверху вниз: галочка, вес/повторы, RPE. Кнопка завершения всегда снизу.</p>
+          <p class="workout-helper">Сначала оцени состояние и посмотри короткий план. Полный лог откроется после старта.</p>
 
-          <div class="session-timer" aria-live="polite">
-            <div>
-              <span>Таймер тренировки</span>
-              <strong id="workoutTimerDisplay">00:00</strong>
-            </div>
-            <button id="startWorkoutButton" class="button timer-button" type="button">Начать тренировку</button>
-          </div>
-
-          <form id="workoutForm" class="form">
+          <div class="pre-workout">
             <div class="form-row">
               <label>
                 Дата
@@ -73,10 +65,29 @@
               </label>
             </div>
 
+            <div class="overview-card">
+              <span>Краткий план</span>
+              <div id="planSummary" class="plan-summary"></div>
+            </div>
+
             <label>
               Заметки
               <input id="notesInput" placeholder="Например: сон плохой, работа съела голову" />
             </label>
+
+            <button id="startWorkoutButton" class="button timer-button start-workout-button" type="button">Начать тренировку</button>
+          </div>
+
+          <div class="session-timer active-workout" aria-live="polite">
+            <div>
+              <span>Таймер тренировки</span>
+              <strong id="workoutTimerDisplay">00:00</strong>
+            </div>
+            <span class="timer-state">Тренировка идет</span>
+          </div>
+
+          <form id="workoutForm" class="form active-workout">
+            <p class="workout-helper active-helper">Идешь сверху вниз: галочка, вес/повторы, RPE. В конце нажми <strong>Завершить тренировку</strong>.</p>
 
             <div class="exercise-picker">
               <label>
@@ -247,10 +258,10 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=15"></script>
-    <script src="./training-tracker.js?v=15"></script>
+    <script src="./training-history.js?v=16"></script>
+    <script src="./training-tracker.js?v=16"></script>
     <script>
-      const APP_VERSION = "v15";
+      const APP_VERSION = "v16";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

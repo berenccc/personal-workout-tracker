@@ -69,9 +69,11 @@ const elements = {
   githubTokenInput: document.querySelector("#githubTokenInput"),
   saveGithubTokenButton: document.querySelector("#saveGithubTokenButton"),
   pullRemoteButton: document.querySelector("#pullRemoteButton"),
+  workoutPanel: document.querySelector(".workout-panel"),
   workoutForm: document.querySelector("#workoutForm"),
   startWorkoutButton: document.querySelector("#startWorkoutButton"),
   workoutTimerDisplay: document.querySelector("#workoutTimerDisplay"),
+  planSummary: document.querySelector("#planSummary"),
   dateInput: document.querySelector("#dateInput"),
   readinessInput: document.querySelector("#readinessInput"),
   notesInput: document.querySelector("#notesInput"),
@@ -200,14 +202,14 @@ function bindEvents() {
 function startWorkoutTimer() {
   if (workoutTimer.startedAt) return;
 
+  elements.workoutPanel.classList.add("is-active");
   workoutTimer = {
     startedAt: Date.now(),
     stoppedAt: null,
     intervalId: window.setInterval(renderWorkoutTimer, 1000),
   };
-  elements.startWorkoutButton.textContent = "Тренировка идет";
-  elements.startWorkoutButton.disabled = true;
   renderWorkoutTimer();
+  window.setTimeout(() => elements.selectedExercises.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
 }
 
 function stopWorkoutTimer() {
@@ -231,6 +233,7 @@ function resetWorkoutTimer() {
   elements.startWorkoutButton.textContent = "Начать тренировку";
   elements.startWorkoutButton.disabled = false;
   elements.workoutTimerDisplay.textContent = "00:00";
+  elements.workoutPanel.classList.remove("is-active");
 }
 
 function renderWorkoutTimer() {
@@ -459,6 +462,28 @@ function renderSelectedExercises() {
 
     elements.selectedExercises.appendChild(fragment);
   });
+
+  renderPlanSummary();
+}
+
+function renderPlanSummary() {
+  const totalSets = selected.reduce((sum, item) => sum + item.sets.length, 0);
+  const preview = selected.slice(0, 5).map((item) => {
+    const exercise = findExercise(item.exerciseId);
+    return `<span>${escapeHtml(exercise.name)} · ${item.sets.length} подх.</span>`;
+  });
+  const restCount = Math.max(0, selected.length - preview.length);
+
+  elements.planSummary.innerHTML = `
+    <div class="plan-summary-stats">
+      <strong>${selected.length}</strong><span>упражнений</span>
+      <strong>${totalSets}</strong><span>подходов</span>
+    </div>
+    <div class="plan-summary-list">
+      ${preview.join("")}
+      ${restCount ? `<span>+ еще ${restCount}</span>` : ""}
+    </div>
+  `;
 }
 
 function renderSetRow(uid, index, set, exercise) {

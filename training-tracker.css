@@ -391,6 +391,80 @@ h3 {
   color: #8d3333;
 }
 
+.pre-workout {
+  display: grid;
+  gap: 14px;
+}
+
+.active-workout {
+  display: none;
+}
+
+.workout-panel.is-active .pre-workout {
+  display: none;
+}
+
+.workout-panel.is-active .active-workout {
+  display: grid;
+}
+
+.overview-card {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--workout-line);
+  border-radius: 18px;
+  padding: 14px;
+  background: var(--workout-card);
+}
+
+.overview-card > span {
+  color: var(--workout-muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.plan-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-summary-stats {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.plan-summary-stats strong {
+  color: var(--workout-accent);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.plan-summary-stats span {
+  color: var(--workout-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.plan-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-summary-list span {
+  border: 1px solid var(--workout-line);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: var(--workout-card-2);
+  color: var(--workout-text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .session-timer {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -425,9 +499,26 @@ h3 {
   color: #fff;
 }
 
-.timer-button:disabled {
-  cursor: default;
-  opacity: 0.78;
+.start-workout-button {
+  width: 100%;
+  min-height: 52px;
+  font-size: 17px;
+}
+
+.timer-state {
+  border-radius: 999px;
+  padding: 8px 11px;
+  background: rgba(47, 111, 79, 0.12);
+  color: var(--workout-good);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.active-helper {
+  margin: 0;
+  border-left: 3px solid rgba(38, 58, 102, 0.35);
+  padding-left: 10px;
 }
 
 .pill {
@@ -473,6 +564,18 @@ h3 {
 .workout-panel .selected-exercises {
   counter-reset: exercise;
   gap: 16px;
+}
+
+.workout-panel:not(.is-active) .active-workout {
+  display: none;
+}
+
+.workout-panel.is-active .active-workout {
+  display: grid;
+}
+
+.workout-panel.is-active .pre-workout {
+  display: none;
 }
 
 label {
