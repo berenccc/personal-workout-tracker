@@ -377,10 +377,8 @@ function mergeWorkouts(current, incoming) {
 
 function normalizeWorkoutDates(workouts) {
   const dateFixes = {
-    "2026-06-23": "2026-06-19",
-    "2026-06-26": "2026-06-19",
-    "2026-06-30": "2026-06-19",
-    "2026-07-03": "2026-06-19",
+    "2026-06-26": "2026-06-23",
+    "2026-07-03": "2026-06-30",
   };
 
   return workouts.map((workout) => {
