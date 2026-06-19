@@ -166,7 +166,6 @@ h3 {
   text-transform: uppercase;
 }
 
-.hero-actions,
 .exercise-picker,
 .form-row,
 .panel-header,
@@ -179,11 +178,6 @@ h3 {
 .exercise-picker > *,
 .panel-header > * {
   min-width: 0;
-}
-
-.hero-actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .button,
@@ -216,6 +210,10 @@ h3 {
 .button.ghost {
   border: 1px solid var(--line);
   background: transparent;
+}
+
+.danger-action {
+  color: var(--danger);
 }
 
 .button:hover,
@@ -727,20 +725,6 @@ select {
 
   .hero .lead {
     display: none;
-  }
-
-  .hero-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .hero-actions .button {
-    padding-inline: 10px;
-  }
-
-  .hero-actions .button:last-child {
-    grid-column: 1 / -1;
   }
 
   .stats-grid {

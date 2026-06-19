@@ -59,7 +59,6 @@ const elements = {
   authPasswordInput: document.querySelector("#authPasswordInput"),
   authError: document.querySelector("#authError"),
   statsGrid: document.querySelector("#statsGrid"),
-  seedButton: document.querySelector("#seedButton"),
   resetButton: document.querySelector("#resetButton"),
   syncStatus: document.querySelector("#syncStatus"),
   githubTokenInput: document.querySelector("#githubTokenInput"),
@@ -74,7 +73,6 @@ const elements = {
   exerciseSelect: document.querySelector("#exerciseSelect"),
   addExerciseButton: document.querySelector("#addExerciseButton"),
   copyReportButton: document.querySelector("#copyReportButton"),
-  copyDataButton: document.querySelector("#copyDataButton"),
   selectedExercises: document.querySelector("#selectedExercises"),
   exerciseTemplate: document.querySelector("#exerciseTemplate"),
   coachBox: document.querySelector("#coachBox"),
@@ -145,15 +143,8 @@ function saveState() {
 }
 
 function bindEvents() {
-  elements.seedButton.addEventListener("click", () => {
-    state.workouts = window.trainingHistory || [];
-    loadMondayFunctionalPlan();
-    saveState();
-    render();
-  });
-
   elements.resetButton.addEventListener("click", () => {
-    if (!confirm("Очистить все сохраненные тренировки?")) return;
+    if (!confirm("Очистить локальные данные на этом устройстве? Git-историю это не удалит.")) return;
     state = { workouts: [] };
     saveState();
     render();
@@ -167,7 +158,6 @@ function bindEvents() {
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
-  elements.copyDataButton.addEventListener("click", copyFullHistory);
   elements.readinessInput.addEventListener("change", renderCoach);
   elements.chartExerciseSelect.addEventListener("change", renderCharts);
 
@@ -517,25 +507,6 @@ async function copyWorkoutReport() {
     }, 1800);
   } catch {
     window.prompt("Скопируй отчет для чата:", report);
-  }
-}
-
-async function copyFullHistory() {
-  const report = [
-    "Полная история из трекера:",
-    JSON.stringify(state.workouts, null, 2),
-    "",
-    "Прочитай это состояние и помоги скорректировать следующие тренировки.",
-  ].join("\n");
-
-  try {
-    await copyText(report);
-    elements.copyDataButton.textContent = "История скопирована";
-    setTimeout(() => {
-      elements.copyDataButton.textContent = "Скопировать историю";
-    }, 1800);
-  } catch {
-    window.prompt("Скопируй историю для чата:", report);
   }
 }
 

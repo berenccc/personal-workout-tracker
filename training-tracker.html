@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#111315" />
     <title>Тренировки</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=10" />
-    <link rel="stylesheet" href="./training-tracker.css?v=10" />
+    <link rel="manifest" href="./manifest.webmanifest?v=11" />
+    <link rel="stylesheet" href="./training-tracker.css?v=11" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -30,13 +30,8 @@
           <h1>Тренировки без выгорания</h1>
           <p class="lead">
             Журнал, графики прогресса, контроль RPE и подсказки по следующей тренировке.
-            История загружена в приложение, новые отметки сохраняются в браузере телефона.
+            История подтягивается из git, новые тренировки сохраняются туда после завершения.
           </p>
-        </div>
-        <div class="hero-actions">
-          <button id="seedButton" class="button secondary">Загрузить историю</button>
-          <button id="copyDataButton" class="button secondary">Скопировать историю</button>
-          <button id="resetButton" class="button ghost">Очистить</button>
         </div>
       </section>
 
@@ -52,6 +47,7 @@
           <input id="githubTokenInput" type="password" placeholder="GitHub token для записи в repo" autocomplete="off" />
           <button id="saveGithubTokenButton" class="button secondary" type="button">Сохранить token</button>
           <button id="pullRemoteButton" class="button ghost" type="button">Обновить из git</button>
+          <button id="resetButton" class="button ghost danger-action" type="button">Очистить локально</button>
         </div>
       </section>
 
@@ -234,8 +230,8 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=10"></script>
-    <script src="./training-tracker.js?v=10"></script>
+    <script src="./training-history.js?v=11"></script>
+    <script src="./training-tracker.js?v=11"></script>
     <script>
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         navigator.serviceWorker.register("./sw.js");
