@@ -1,6 +1,7 @@
 const STORAGE_KEY = "training-tracker-v3";
 const AUTH_KEY = "training-tracker-auth";
 const GITHUB_TOKEN_KEY = "training-tracker-github-token";
+const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
 const APP_PASSCODE = "train2026";
 const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
@@ -103,11 +104,23 @@ boot();
 
 function boot() {
   setupAuth();
+  requestPersistentStorage();
   fillExerciseSelects();
   loadMondayFunctionalPlan();
+  restoreWorkoutDraft();
   bindEvents();
   render();
   initializeRemoteSync();
+}
+
+async function requestPersistentStorage() {
+  if (!navigator.storage?.persist) return;
+
+  try {
+    await navigator.storage.persist();
+  } catch {
+    // Storage persistence is a best-effort browser hint.
+  }
 }
 
 function setupAuth() {
@@ -164,6 +177,7 @@ function bindEvents() {
   elements.addExerciseButton.addEventListener("click", () => {
     addExercise(elements.exerciseSelect.value);
     renderSelectedExercises();
+    saveWorkoutDraft();
   });
 
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
@@ -171,8 +185,18 @@ function bindEvents() {
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
   elements.startWorkoutButton.addEventListener("click", startWorkoutTimer);
-  elements.readinessInput.addEventListener("change", renderCoach);
+  elements.dateInput.addEventListener("change", saveWorkoutDraft);
+  elements.readinessInput.addEventListener("change", () => {
+    renderCoach();
+    saveWorkoutDraft();
+  });
+  elements.sessionEffortInput.addEventListener("change", saveWorkoutDraft);
+  elements.afterNotesInput.addEventListener("input", saveWorkoutDraft);
   elements.chartExerciseSelect.addEventListener("change", renderCharts);
+  window.addEventListener("pagehide", saveWorkoutDraft);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") saveWorkoutDraft();
+  });
 
   elements.workoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -196,6 +220,7 @@ function bindEvents() {
     } catch {
       // Saving is more important than clipboard availability.
     }
+    clearWorkoutDraft();
     loadMondayFunctionalPlan();
     resetWorkoutTimer();
     render();
@@ -214,6 +239,7 @@ function startWorkoutTimer() {
     intervalId: window.setInterval(renderWorkoutTimer, 1000),
   };
   renderWorkoutTimer();
+  saveWorkoutDraft();
   window.setTimeout(() => elements.selectedExercises.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
 }
 
@@ -226,6 +252,7 @@ function stopWorkoutTimer() {
     workoutTimer.intervalId = null;
   }
   renderWorkoutTimer();
+  saveWorkoutDraft();
 }
 
 function resetWorkoutTimer() {
@@ -239,6 +266,73 @@ function resetWorkoutTimer() {
   elements.startWorkoutButton.disabled = false;
   elements.workoutTimerDisplay.textContent = "00:00";
   elements.workoutPanel.classList.remove("is-active");
+}
+
+function saveWorkoutDraft() {
+  const hasStarted = Boolean(workoutTimer.startedAt);
+  const hasChanges = selected.some((item) =>
+    item.sets.some((set) => set.done || set.rpe || set.mark !== "normal")
+  ) || Boolean(elements.afterNotesInput.value.trim());
+
+  if (!hasStarted && !hasChanges) return;
+
+  const draft = {
+    version: 1,
+    savedAt: Date.now(),
+    isActive: elements.workoutPanel.classList.contains("is-active"),
+    timer: {
+      startedAt: workoutTimer.startedAt,
+      stoppedAt: workoutTimer.stoppedAt,
+    },
+    fields: {
+      date: elements.dateInput.value,
+      readiness: elements.readinessInput.value,
+      notes: elements.notesInput.value,
+      sessionEffort: elements.sessionEffortInput.value,
+      afterNotes: elements.afterNotesInput.value,
+    },
+    selected,
+  };
+
+  localStorage.setItem(WORKOUT_DRAFT_KEY, JSON.stringify(draft));
+}
+
+function restoreWorkoutDraft() {
+  const raw = localStorage.getItem(WORKOUT_DRAFT_KEY);
+  if (!raw) return;
+
+  try {
+    const draft = JSON.parse(raw);
+    if (!draft || draft.version !== 1 || !Array.isArray(draft.selected)) return;
+
+    const fields = draft.fields || {};
+    elements.dateInput.value = fields.date || elements.dateInput.value;
+    elements.readinessInput.value = fields.readiness || elements.readinessInput.value;
+    elements.notesInput.value = fields.notes || elements.notesInput.value;
+    elements.sessionEffortInput.value = fields.sessionEffort || elements.sessionEffortInput.value;
+    elements.afterNotesInput.value = fields.afterNotes || "";
+    selected = draft.selected;
+
+    if (draft.isActive || draft.timer?.startedAt) {
+      elements.workoutPanel.classList.add("is-active");
+      workoutTimer = {
+        startedAt: draft.timer?.startedAt || Date.now(),
+        stoppedAt: draft.timer?.stoppedAt || null,
+        intervalId: null,
+      };
+      if (!workoutTimer.stoppedAt) {
+        workoutTimer.intervalId = window.setInterval(renderWorkoutTimer, 1000);
+      }
+      renderWorkoutTimer();
+      setSyncStatus("Восстановил незавершенную тренировку с этого устройства.");
+    }
+  } catch {
+    localStorage.removeItem(WORKOUT_DRAFT_KEY);
+  }
+}
+
+function clearWorkoutDraft() {
+  localStorage.removeItem(WORKOUT_DRAFT_KEY);
 }
 
 function renderWorkoutTimer() {
@@ -546,6 +640,7 @@ function renderSelectedExercises() {
     card.querySelector(".icon-button").addEventListener("click", () => {
       selected = selected.filter((selectedItem) => selectedItem.uid !== item.uid);
       renderSelectedExercises();
+      saveWorkoutDraft();
     });
 
     const sets = card.querySelector(".sets");
@@ -554,6 +649,7 @@ function renderSelectedExercises() {
       const last = item.sets.at(-1) || { weight: 0, reps: 10, rpe: "" };
       item.sets.push({ ...last, rpe: "", done: false, mark: "normal" });
       renderSelectedExercises();
+      saveWorkoutDraft();
     });
 
     elements.selectedExercises.appendChild(fragment);
@@ -627,6 +723,7 @@ function renderSetRow(uid, index, set, exercise) {
       const item = selected.find((selectedItem) => selectedItem.uid === uid);
       item.sets[index][input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
       if (input.dataset.field === "done") renderSelectedExercises();
+      saveWorkoutDraft();
     };
     input.addEventListener("input", updateSet);
     input.addEventListener("change", updateSet);
@@ -640,6 +737,7 @@ function renderSetRow(uid, index, set, exercise) {
       const current = Number(item.sets[index][field]) || 0;
       item.sets[index][field] = Math.max(0, current + delta);
       renderSelectedExercises();
+      saveWorkoutDraft();
     });
   });
 
@@ -647,6 +745,7 @@ function renderSetRow(uid, index, set, exercise) {
     const item = selected.find((selectedItem) => selectedItem.uid === uid);
     item.sets.splice(index, 1);
     renderSelectedExercises();
+    saveWorkoutDraft();
   });
 
   return row;
