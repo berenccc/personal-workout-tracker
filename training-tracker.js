@@ -307,9 +307,9 @@ function restoreWorkoutDraft() {
     if (!draft || draft.version !== 1 || !Array.isArray(draft.selected)) return;
 
     const fields = draft.fields || {};
-    const today = formatInputDate(new Date());
     const draftDate = fields.date || "";
-    if (draftDate && draftDate < today && !draft.isActive && !draft.timer?.startedAt) {
+    const plannedDate = elements.dateInput.value;
+    if (draftDate && plannedDate && draftDate < plannedDate && !draft.isActive && !draft.timer?.startedAt) {
       localStorage.removeItem(WORKOUT_DRAFT_KEY);
       return;
     }
