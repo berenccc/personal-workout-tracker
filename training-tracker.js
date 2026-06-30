@@ -7,6 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
+const UPCOMING_WORKOUT_DATE = "2026-07-01";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -106,7 +107,7 @@ function boot() {
   setupAuth();
   requestPersistentStorage();
   fillExerciseSelects();
-  loadMondayFunctionalPlan();
+  loadPlannedWorkout();
   restoreWorkoutDraft();
   bindEvents();
   render();
@@ -221,7 +222,7 @@ function bindEvents() {
       // Saving is more important than clipboard availability.
     }
     clearWorkoutDraft();
-    loadMondayFunctionalPlan();
+    loadPlannedWorkout();
     resetWorkoutTimer();
     render();
     showFinishNotice(workout, pushedToGit);
@@ -501,21 +502,21 @@ function addExercise(exerciseId) {
   });
 }
 
-function loadMondayFunctionalPlan() {
-  elements.dateInput.value = nextMondayAfterLatestWorkout();
+function loadPlannedWorkout() {
+  elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Понедельник: функционалка без жимов/трицепса после тяжелой жимовой. Цель — вспотеть, подвигаться, не уходить в отказ.";
+  elements.notesInput.value = "Среда 01.07: грудь + плечи без отказа. Цель — хороший тонус, рабочие подходы RPE 7-8, остановиться если плечо/локоть или трицепс забиваются.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
-    planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("bird-dog", [[4, 8, 6], [4, 8, 6]]),
-    planEntry("kettlebell-swing", [[24, 12, 7], [24, 12, 7], [24, 12, 7], [24, 12, 7]]),
-    planEntry("step-lunge", [[16, 16, 8], [16, 16, 8], [16, 16, 8], [16, 16, 8]]),
-    planEntry("one-arm-row", [[24, 10, 7], [26, 10, 8], [26, 10, 8], [26, 10, 8]]),
-    planEntry("dead-bug", [[16, 20, 7], [16, 20, 7], [16, 20, 7], [16, 20, 7]]),
-    planEntry("farmer-carry", [[24, 40, 7], [24, 40, 7], [26, 40, 8]]),
-    planEntry("rowing", [[8, 1, 7]]),
+    planEntry("elliptical", [[8, 1, 5]]),
+    planEntry("bench", [[50, 8, 6], [57.5, 6, 7], [60, 6, 8], [55, 8, 7]]),
+    planEntry("incline-db-press", [[18, 10, 7], [20, 8, 8], [20, 8, 7]]),
+    planEntry("shoulder-press", [[15, 10, 7], [17.5, 8, 8], [17.5, 8, 8]]),
+    planEntry("reverse-fly", [[25, 12, 7], [30, 10, 8], [30, 10, 8]]),
+    planEntry("butterfly", [[40, 12, 7], [45, 10, 8], [45, 10, 8]]),
+    planEntry("side-plank", [[0, 20, 7], [0, 20, 7]]),
+    planEntry("rowing", [[5, 1, 6]]),
   ];
 }
 
@@ -532,6 +533,13 @@ function nextMondayAfterLatestWorkout() {
   const daysUntilMonday = (1 - next.getDay() + 7) % 7 || 7;
   next.setDate(next.getDate() + daysUntilMonday);
   return formatInputDate(next);
+}
+
+function nextPlannedWorkoutDate() {
+  const today = formatInputDate(new Date());
+  const plannedWorkoutAlreadyLogged = state.workouts.some((workout) => workout.date === UPCOMING_WORKOUT_DATE);
+  if (!plannedWorkoutAlreadyLogged && today <= UPCOMING_WORKOUT_DATE) return UPCOMING_WORKOUT_DATE;
+  return nextMondayAfterLatestWorkout();
 }
 
 function render() {
