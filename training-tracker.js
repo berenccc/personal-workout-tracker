@@ -70,6 +70,7 @@ const elements = {
   syncStatus: document.querySelector("#syncStatus"),
   githubTokenInput: document.querySelector("#githubTokenInput"),
   saveGithubTokenButton: document.querySelector("#saveGithubTokenButton"),
+  pushLatestWorkoutButton: document.querySelector("#pushLatestWorkoutButton"),
   checkGithubTokenButton: document.querySelector("#checkGithubTokenButton"),
   pullRemoteButton: document.querySelector("#pullRemoteButton"),
   workoutPanel: document.querySelector(".workout-panel"),
@@ -182,6 +183,7 @@ function bindEvents() {
   });
 
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
+  elements.pushLatestWorkoutButton.addEventListener("click", pushLatestWorkoutToGit);
   elements.checkGithubTokenButton.addEventListener("click", checkGithubTokenWrite);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
@@ -372,7 +374,7 @@ function showFinishNotice(workout, pushedToGit) {
     <p>
       ${pushedToGit
         ? "Тренировка сохранена и отправлена в git."
-        : "Тренировка сохранена на этом устройстве, но в git не ушла. Открой Синхронизацию и нажми Проверить запись."}
+        : "Тренировка сохранена на этом устройстве. Открой Синхронизацию и нажми Отправить в git."}
     </p>
     ${workout.durationMs ? `<p>Длительность: <strong>${formatDuration(workout.durationMs)}</strong></p>` : ""}
     <ol class="finish-summary-list">${rows.join("")}</ol>
@@ -387,10 +389,10 @@ function hideFinishNotice() {
 
 function initializeRemoteSync() {
   importGithubTokenFromUrl();
-  const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+  const token = getGithubToken();
   if (token) {
     elements.githubTokenInput.value = "••••••••";
-    setSyncStatus("GitHub sync включен. После завершения тренировки данные сохранятся в git.");
+    setSyncStatus("GitHub token найден. Можно завершить тренировку или нажать Отправить в git.");
   }
 
   pullRemoteWorkouts({ forceStatus: false });
@@ -401,7 +403,7 @@ function importGithubTokenFromUrl() {
   const token = hash.get("syncToken");
   if (!token) return;
 
-  localStorage.setItem(GITHUB_TOKEN_KEY, token);
+  rememberGithubToken(token);
   history.replaceState(null, document.title, window.location.pathname + window.location.search);
 }
 
@@ -412,10 +414,21 @@ async function saveGithubToken() {
     return;
   }
 
-  localStorage.setItem(GITHUB_TOKEN_KEY, token);
+  rememberGithubToken(token);
   elements.githubTokenInput.value = "••••••••";
   setSyncStatus("Token сохранен. Проверяю запись в git...");
   await checkGithubTokenWrite();
+}
+
+function getGithubToken() {
+  const token = localStorage.getItem(GITHUB_TOKEN_KEY) || sessionStorage.getItem(GITHUB_TOKEN_KEY) || "";
+  if (token) rememberGithubToken(token);
+  return token;
+}
+
+function rememberGithubToken(token) {
+  localStorage.setItem(GITHUB_TOKEN_KEY, token);
+  sessionStorage.setItem(GITHUB_TOKEN_KEY, token);
 }
 
 function setSyncStatus(message) {
@@ -423,7 +436,7 @@ function setSyncStatus(message) {
 }
 
 async function checkGithubTokenWrite() {
-  const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+  const token = getGithubToken();
   if (!token) {
     setSyncStatus("Token не найден на этом устройстве. Вставь token и нажми Сохранить.");
     return false;
@@ -449,6 +462,32 @@ async function checkGithubTokenWrite() {
     return false;
   } finally {
     elements.checkGithubTokenButton.disabled = false;
+  }
+}
+
+async function pushLatestWorkoutToGit() {
+  if (elements.workoutPanel.classList.contains("is-active")) {
+    setSyncStatus("Сначала заверши текущую тренировку, потом отправляй в git.");
+    return false;
+  }
+
+  const latestWorkout = state.workouts[state.workouts.length - 1];
+  if (!latestWorkout) {
+    setSyncStatus("Нет сохраненной локальной тренировки для отправки.");
+    return false;
+  }
+
+  elements.pushLatestWorkoutButton.disabled = true;
+  setSyncStatus(`Отправляю последнюю тренировку ${formatDate(latestWorkout.date)} в git...`);
+
+  try {
+    const pushed = await pushRemoteWorkouts(latestWorkout);
+    if (pushed) {
+      setSyncStatus(`Готово: тренировка ${formatDate(latestWorkout.date)} отправлена в git.`);
+    }
+    return pushed;
+  } finally {
+    elements.pushLatestWorkoutButton.disabled = false;
   }
 }
 
@@ -839,7 +878,7 @@ async function pullRemoteWorkouts({ forceStatus } = { forceStatus: false }) {
 }
 
 async function pushRemoteWorkouts(savedWorkout) {
-  const token = localStorage.getItem(GITHUB_TOKEN_KEY);
+  const token = getGithubToken();
   if (!token) {
     setSyncStatus("Сохранено локально. Чтобы отправлять в git, добавь GitHub token.");
     return false;
