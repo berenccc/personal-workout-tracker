@@ -187,6 +187,7 @@ function bindEvents() {
   elements.checkGithubTokenButton.addEventListener("click", checkGithubTokenWrite);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
+  elements.historyList.addEventListener("click", pushHistoryWorkoutToGit);
   elements.startWorkoutButton.addEventListener("click", startWorkoutTimer);
   elements.dateInput.addEventListener("change", saveWorkoutDraft);
   elements.readinessInput.addEventListener("change", () => {
@@ -477,17 +478,35 @@ async function pushLatestWorkoutToGit() {
     return false;
   }
 
-  elements.pushLatestWorkoutButton.disabled = true;
-  setSyncStatus(`Отправляю последнюю тренировку ${formatDate(latestWorkout.date)} в git...`);
+  return pushWorkoutToGit(latestWorkout, elements.pushLatestWorkoutButton);
+}
+
+async function pushHistoryWorkoutToGit(event) {
+  const button = event.target.closest("[data-push-workout-index]");
+  if (!button) return;
+
+  const workout = state.workouts[Number(button.dataset.pushWorkoutIndex)];
+  if (!workout) {
+    setSyncStatus("Не нашел эту тренировку локально. Обнови страницу и попробуй еще раз.");
+    return;
+  }
+
+  await pushWorkoutToGit(workout, button);
+}
+
+async function pushWorkoutToGit(workout, button) {
+  const previousText = button.textContent;
+  button.disabled = true;
+  button.textContent = "Отправляю...";
+  setSyncStatus(`Отправляю тренировку ${formatDate(workout.date)} в git...`);
 
   try {
-    const pushed = await pushRemoteWorkouts(latestWorkout);
-    if (pushed) {
-      setSyncStatus(`Готово: тренировка ${formatDate(latestWorkout.date)} отправлена в git.`);
-    }
+    const pushed = await pushRemoteWorkouts(workout);
+    if (pushed) setSyncStatus(`Готово: тренировка ${formatDate(workout.date)} отправлена в git.`);
     return pushed;
   } finally {
-    elements.pushLatestWorkoutButton.disabled = false;
+    button.disabled = false;
+    button.textContent = previousText;
   }
 }
 
@@ -1260,16 +1279,22 @@ function renderMovementBalance() {
 }
 
 function renderHistory() {
-  const workouts = state.workouts.slice().reverse().slice(0, 8);
+  const workouts = state.workouts
+    .map((workout, index) => ({ workout, index }))
+    .reverse()
+    .slice(0, 8);
   elements.historyList.innerHTML = workouts.length
-    ? workouts.map((workout) => `
+    ? workouts.map(({ workout, index }) => `
       <article class="history-item">
-        <div class="history-meta">
-          <strong>${formatDate(workout.date)}</strong>
-          <span>${readinessLabel(workout.readiness)}</span>
-          <span>${doneSetCount(workout)}/${workoutSetCount(workout)} подходов</span>
-          <span>RPE ${averageWorkoutRpe(workout) || "n/a"}</span>
-          ${workout.sessionEffort ? `<span>${sessionEffortLabel(workout.sessionEffort)}</span>` : ""}
+        <div class="history-header">
+          <div class="history-meta">
+            <strong>${formatDate(workout.date)}</strong>
+            <span>${readinessLabel(workout.readiness)}</span>
+            <span>${doneSetCount(workout)}/${workoutSetCount(workout)} подходов</span>
+            <span>RPE ${averageWorkoutRpe(workout) || "n/a"}</span>
+            ${workout.sessionEffort ? `<span>${sessionEffortLabel(workout.sessionEffort)}</span>` : ""}
+          </div>
+          <button class="button secondary history-push-button" type="button" data-push-workout-index="${index}">Отправить в git</button>
         </div>
         ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
         ${workout.afterNotes ? `<p>${escapeHtml(workout.afterNotes)}</p>` : ""}

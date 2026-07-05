@@ -1204,12 +1204,25 @@ select {
   padding: 14px;
 }
 
+.history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .history-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   color: var(--muted);
   font-size: 13px;
+}
+
+.history-push-button {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  font-size: 12px;
 }
 
 .history-exercises {
@@ -1294,8 +1307,13 @@ select {
 
   .form-row,
   .exercise-picker,
-  .panel-header {
+  .panel-header,
+  .history-header {
     display: grid;
+  }
+
+  .history-push-button {
+    width: 100%;
   }
 
   input[type="date"] {
@@ -1571,7 +1589,7 @@ select {
   .mobile-actions {
     position: fixed;
     right: 10px;
-    bottom: 10px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 66px);
     left: 10px;
     z-index: 10;
     border: 1px solid var(--line);
@@ -1597,5 +1615,177 @@ select {
 
   .mobile-actions .button.secondary {
     flex: 0.8;
+  }
+}
+
+/* ── Bottom navigation (mobile only) ─────────────────── */
+
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 15;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--line);
+    background: rgba(255, 250, 239, 0.97);
+    backdrop-filter: blur(14px);
+  }
+
+  .bottom-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    padding: 6px 4px 4px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 140ms ease;
+  }
+
+  .bottom-nav-btn.is-active {
+    color: var(--accent);
+  }
+
+  .bottom-nav-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+  }
+
+  .bottom-nav-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: transparent;
+    margin-top: 2px;
+    transition: background 140ms ease;
+  }
+
+  .bottom-nav-btn.is-active .bottom-nav-dot {
+    background: var(--accent);
+  }
+
+  body {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+}
+
+/* ── Dark mode ────────────────────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #141418;
+    --panel: #1c1c24;
+    --panel-2: #252532;
+    --text: #e2ddd4;
+    --muted: #72788a;
+    --line: #2e2e3c;
+    --accent: #7a9bd0;
+    --accent-2: #8db86c;
+    --warning: #c49a3a;
+    --danger: #c96868;
+    --workout-bg: #16161e;
+    --workout-card: #1e1e2a;
+    --workout-card-2: #252534;
+    --workout-text: #e2ddd4;
+    --workout-muted: #72788a;
+    --workout-line: #2e2e3c;
+    --workout-accent: #7a9bd0;
+    --workout-good: #427857;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(80, 120, 200, 0.07), transparent 34rem),
+      linear-gradient(180deg, #1a1a22 0%, var(--bg) 42rem),
+      var(--bg);
+  }
+
+  .hero,
+  .panel,
+  .auth-card {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  }
+
+  .workout-panel {
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .workout-panel.is-active .session-timer {
+    background: rgba(22, 22, 30, 0.97);
+  }
+
+  .button.primary {
+    background: #1e3470;
+    color: #c4d4ff;
+  }
+
+  .done-cell::before {
+    background: #1c1c2a;
+    border-color: rgba(200, 200, 220, 0.18);
+  }
+
+  .workout-panel .icon-button {
+    background: #2a2a3c;
+    color: var(--workout-muted);
+  }
+
+  .workout-panel .stepper button {
+    background: #2a2a3c;
+  }
+
+  .stepper button {
+    background: #252532;
+  }
+
+  .mobile-actions {
+    background: rgba(20, 20, 28, 0.97);
+  }
+
+  .bottom-nav {
+    background: rgba(20, 20, 28, 0.97);
+    border-top-color: var(--line);
+  }
+
+  .save-hint {
+    background: rgba(80, 120, 200, 0.09);
+    border-color: rgba(80, 120, 200, 0.2);
+  }
+
+  .workout-panel .save-hint {
+    border-color: rgba(80, 120, 200, 0.14);
+    background: rgba(80, 120, 200, 0.07);
+  }
+
+  .finish-notice {
+    border-color: rgba(60, 140, 100, 0.28);
+    background: rgba(60, 140, 100, 0.1);
+  }
+
+  .finish-notice.is-local {
+    border-color: rgba(164, 112, 39, 0.25);
+    background: rgba(164, 112, 39, 0.1);
+  }
+
+  .analytics-drawer {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
   }
 }
