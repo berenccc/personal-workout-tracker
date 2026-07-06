@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-01";
+const UPCOMING_WORKOUT_DATE = "2026-07-06";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -309,13 +309,13 @@ function restoreWorkoutDraft() {
     const draft = JSON.parse(raw);
     if (!draft || draft.version !== 1 || !Array.isArray(draft.selected)) return;
 
-    const fields = draft.fields || {};
-    const draftDate = fields.date || "";
-    const plannedDate = elements.dateInput.value;
-    if (draftDate && plannedDate && draftDate < plannedDate && !draft.isActive && !draft.timer?.startedAt) {
+    // Черновик без активной тренировки не должен затирать свежий план дня.
+    if (!draft.isActive && !draft.timer?.startedAt) {
       localStorage.removeItem(WORKOUT_DRAFT_KEY);
       return;
     }
+
+    const fields = draft.fields || {};
     elements.dateInput.value = fields.date || elements.dateInput.value;
     elements.readinessInput.value = fields.readiness || elements.readinessInput.value;
     elements.notesInput.value = fields.notes || elements.notesInput.value;
@@ -569,17 +569,17 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Среда 01.07: грудь + плечи без отказа. Цель — хороший тонус, рабочие подходы RPE 7-8, остановиться если плечо/локоть или трицепс забиваются.";
+  elements.notesInput.value = "Понедельник 06.07: спина и задняя цепь на тренажёрах. Без жима, без функциональной зоны. RPE 7-8, без отказа.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
-    planEntry("elliptical", [[8, 1, 5]]),
-    planEntry("bench", [[50, 8, 6], [57.5, 6, 7], [60, 6, 8], [55, 8, 7]]),
-    planEntry("incline-db-press", [[18, 10, 7], [20, 8, 8], [20, 8, 7]]),
-    planEntry("shoulder-press", [[15, 10, 7], [17.5, 8, 8], [17.5, 8, 8]]),
+    planEntry("elliptical", [[10, 1, 5]]),
+    planEntry("gravitron", [[40, 8, 7], [35, 8, 8], [30, 8, 8]]),
+    planEntry("lat-pulldown", [[56, 10, 7], [60, 8, 8], [60, 8, 8]]),
+    planEntry("row", [[57, 10, 7], [67, 8, 8], [67, 10, 8]]),
+    planEntry("leg-curl", [[35, 12, 7], [42.5, 10, 8], [50, 10, 8]]),
+    planEntry("back-extension", [[15, 10, 7], [15, 10, 7], [15, 10, 8]]),
     planEntry("reverse-fly", [[25, 12, 7], [30, 10, 8], [30, 10, 8]]),
-    planEntry("butterfly", [[40, 12, 7], [45, 10, 8], [45, 10, 8]]),
-    planEntry("side-plank", [[0, 20, 7], [0, 20, 7]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
 }
@@ -594,16 +594,20 @@ function planEntry(exerciseId, rows) {
 
 function nextMondayAfterLatestWorkout() {
   const next = new Date();
-  const daysUntilMonday = (1 - next.getDay() + 7) % 7 || 7;
+  const daysUntilMonday = (1 - next.getDay() + 7) % 7;
   next.setDate(next.getDate() + daysUntilMonday);
   return formatInputDate(next);
 }
 
 function nextPlannedWorkoutDate() {
   const today = formatInputDate(new Date());
+  if (!state.workouts.some((workout) => workout.date === today)) return today;
   const plannedWorkoutAlreadyLogged = state.workouts.some((workout) => workout.date === UPCOMING_WORKOUT_DATE);
   if (!plannedWorkoutAlreadyLogged && today <= UPCOMING_WORKOUT_DATE) return UPCOMING_WORKOUT_DATE;
-  return nextMondayAfterLatestWorkout();
+  const next = new Date();
+  const daysUntilMonday = ((1 - next.getDay() + 7) % 7) || 7;
+  next.setDate(next.getDate() + daysUntilMonday);
+  return formatInputDate(next);
 }
 
 function render() {
