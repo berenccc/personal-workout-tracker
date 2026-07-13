@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-06";
+const UPCOMING_WORKOUT_DATE = "2026-07-13";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -569,17 +569,17 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Понедельник 06.07: спина и задняя цепь на тренажёрах. Без жима, без функциональной зоны. RPE 7-8, без отказа.";
+  elements.notesInput.value = "Понедельник 13.07: ноги на тренажёрах + лёгкая спина. После паузы без героизма, RPE 7-8, без отказа.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("gravitron", [[40, 8, 7], [35, 8, 8], [30, 8, 8]]),
-    planEntry("lat-pulldown", [[56, 10, 7], [60, 8, 8], [60, 8, 8]]),
-    planEntry("row", [[57, 10, 7], [67, 8, 8], [67, 10, 8]]),
+    planEntry("leg-press", [[140, 10, 7], [160, 10, 7], [180, 10, 8], [200, 8, 8]]),
+    planEntry("leg-extension", [[55, 10, 7], [60, 10, 8], [60, 10, 8]]),
     planEntry("leg-curl", [[35, 12, 7], [42.5, 10, 8], [50, 10, 8]]),
-    planEntry("back-extension", [[15, 10, 7], [15, 10, 7], [15, 10, 8]]),
-    planEntry("reverse-fly", [[25, 12, 7], [30, 10, 8], [30, 10, 8]]),
+    planEntry("calf-flex", [[80, 12, 7], [90, 12, 7], [95, 12, 8]]),
+    planEntry("gravitron", [[40, 8, 7], [35, 8, 8], [30, 8, 8]]),
+    planEntry("lat-pulldown", [[56, 10, 7], [60, 8, 7], [60, 8, 8]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
 }
