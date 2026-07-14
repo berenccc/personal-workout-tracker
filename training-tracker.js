@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-13";
+const UPCOMING_WORKOUT_DATE = "2026-07-15";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -18,8 +18,8 @@ const exercises = [
   { id: "goblet-squat", name: "Присед с диском/гирей", group: "Ноги", unit: "кг", step: 2, defaultSets: [[20, 12], [20, 12], [20, 12]] },
   { id: "calf-flex", name: "Сгибание ступней / икры", group: "Икры", unit: "кг", step: 5, defaultSets: [[80, 12], [90, 12], [95, 12]] },
   { id: "gravitron", name: "Гравитрон", group: "Спина", unit: "кг противовес", step: -2.5, lowerIsBetter: true, defaultSets: [[40, 8], [35, 8], [30, 8]] },
-  { id: "lat-pulldown", name: "Тяга верхнего блока", group: "Спина", unit: "кг", step: 2.5, defaultSets: [[52, 10], [56, 10], [60, 8]] },
-  { id: "row", name: "Тяга горизонтального блока", group: "Спина", unit: "кг", step: 2.5, defaultSets: [[57, 10], [67, 8], [67, 10]] },
+  { id: "lat-pulldown", name: "Тяга верхнего блока", group: "Спина", unit: "кг", step: 0.5, defaultSets: [[52, 10], [56, 10], [60, 8]] },
+  { id: "row", name: "Тяга горизонтального блока", group: "Спина", unit: "кг", step: 0.5, defaultSets: [[57, 10], [67, 8], [67, 10]] },
   { id: "one-arm-row", name: "Тяга гантели одной рукой", group: "Спина", unit: "кг/рука", step: 2, defaultSets: [[22, 10], [26, 10], [28, 10]] },
   { id: "barbell-row", name: "Тяга штанги в наклоне", group: "Спина", unit: "кг", step: 5, defaultSets: [[40, 8], [50, 8], [50, 8]] },
   { id: "bench", name: "Жим штанги лежа", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[50, 8], [55, 8], [60, 8]] },
@@ -569,17 +569,18 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Понедельник 13.07: ноги на тренажёрах + лёгкая спина. После паузы без героизма, RPE 7-8, без отказа.";
+  elements.notesInput.value = "Среда 15.07: тяжёлый жим в тренажёре + плечи и трицепс. Штангу не трогаем, ноги после 13.07 не грузить. Главный жим RPE 7-9, остальное RPE 7-8, без отказа.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("leg-press", [[140, 10, 7], [160, 10, 7], [180, 10, 8], [200, 8, 8]]),
-    planEntry("leg-extension", [[55, 10, 7], [60, 10, 8], [60, 10, 8]]),
-    planEntry("leg-curl", [[35, 12, 7], [42.5, 10, 8], [50, 10, 8]]),
-    planEntry("calf-flex", [[80, 12, 7], [90, 12, 7], [95, 12, 8]]),
-    planEntry("gravitron", [[40, 8, 7], [35, 8, 8], [30, 8, 8]]),
-    planEntry("lat-pulldown", [[56, 10, 7], [60, 8, 7], [60, 8, 8]]),
+    planEntry("chest-machine", [[40, 10, 6], [50, 8, 7], [60, 6, 8], [65, 4, 9]]),
+    planEntry("incline-db-press", [[18, 10, 7], [20, 8, 8], [20, 8, 8]]),
+    planEntry("shoulder-press", [[15, 10, 7], [17.5, 8, 8], [17.5, 8, 8]]),
+    planEntry("reverse-fly", [[25, 12, 7], [30, 10, 8], [30, 10, 8]]),
+    planEntry("butterfly", [[40, 12, 7], [45, 10, 8]]),
+    planEntry("triceps-pushdown", [[55, 10, 7], [65, 10, 8], [70, 8, 8]]),
+    planEntry("side-plank", [[0, 20, 7], [0, 20, 7]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
 }
@@ -601,9 +602,9 @@ function nextMondayAfterLatestWorkout() {
 
 function nextPlannedWorkoutDate() {
   const today = formatInputDate(new Date());
-  if (!state.workouts.some((workout) => workout.date === today)) return today;
   const plannedWorkoutAlreadyLogged = state.workouts.some((workout) => workout.date === UPCOMING_WORKOUT_DATE);
   if (!plannedWorkoutAlreadyLogged && today <= UPCOMING_WORKOUT_DATE) return UPCOMING_WORKOUT_DATE;
+  if (!state.workouts.some((workout) => workout.date === today)) return today;
   const next = new Date();
   const daysUntilMonday = ((1 - next.getDay() + 7) % 7) || 7;
   next.setDate(next.getDate() + daysUntilMonday);
