@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-13T17:07:17.339Z",
+  "updatedAt": "2026-07-14T12:51:56.678Z",
   "lastSavedWorkoutId": "manual-2026-07-13-149f8f05-0af6-4fb7-b7a0-233091dfbc77",
   "workouts": [
     {
@@ -11609,6 +11609,5 @@
         }
       ]
     }
-  ],
-  "syncCheckAt": "2026-07-14T12:46:12.483Z"
+  ]
 }
