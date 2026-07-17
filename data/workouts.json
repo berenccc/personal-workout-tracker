@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-15T17:17:38.473Z",
-  "lastSavedWorkoutId": "manual-2026-07-15-6af6cad9-2eff-4ac7-a046-0908eae3c84e",
+  "updatedAt": "2026-07-17T17:54:23.332Z",
+  "lastSavedWorkoutId": "manual-2026-07-17-a215b08c-afad-4a40-91b7-98288fa5c531",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -11212,6 +11212,119 @@
       ]
     },
     {
+      "id": "2026-07-01--01-07-",
+      "date": "2026-07-01",
+      "readiness": "okay",
+      "notes": "Среда 01.07: грудь + плечи без отказа. Цель — хороший тонус, рабочие подходы RPE 7-8.",
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "bench",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 8,
+              "rpe": 6
+            },
+            {
+              "weight": 55,
+              "reps": 6,
+              "rpe": 7
+            },
+            {
+              "weight": 65,
+              "reps": 7,
+              "rpe": 8
+            },
+            {
+              "weight": 75,
+              "reps": 1,
+              "rpe": 7
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": null
+            }
+          ]
+        },
+        {
+          "exerciseId": "incline-db-press",
+          "sets": [
+            {
+              "weight": 18,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 20,
+              "reps": 8,
+              "rpe": 8
+            },
+            {
+              "weight": 20,
+              "reps": 8,
+              "rpe": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 17.5,
+              "reps": 8,
+              "rpe": 7
+            },
+            {
+              "weight": 17.5,
+              "reps": 8,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "reverse-fly",
+          "sets": [
+            {
+              "weight": 25,
+              "reps": 12,
+              "rpe": 7
+            },
+            {
+              "weight": 30,
+              "reps": 10,
+              "rpe": 8
+            },
+            {
+              "weight": 30,
+              "reps": 10,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "manual-2026-07-06-0fce98f4-f8e1-4087-8bc7-2eb2e62d281d",
       "date": "2026-07-06",
       "readiness": "okay",
@@ -11398,6 +11511,154 @@
               "rpe": 6,
               "done": true,
               "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2026-07-06--06-07-",
+      "date": "2026-07-06",
+      "readiness": "okay",
+      "notes": "Понедельник 06.07: спина и задняя цепь на тренажёрах. Без жима, без функциональной зоны. RPE 7-8, без отказа.",
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 8,
+              "rpe": 7
+            },
+            {
+              "weight": 35,
+              "reps": 8,
+              "rpe": 8
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "lat-pulldown",
+          "sets": [
+            {
+              "weight": 56,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 67.5,
+              "reps": 8,
+              "rpe": 8
+            },
+            {
+              "weight": 67.5,
+              "reps": 8,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 67,
+              "reps": 8,
+              "rpe": 8
+            },
+            {
+              "weight": 67,
+              "reps": 10,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 5
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "back-extension",
+          "sets": [
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "reverse-fly",
+          "sets": [
+            {
+              "weight": 25,
+              "reps": 12,
+              "rpe": 7
+            },
+            {
+              "weight": 30,
+              "reps": 10,
+              "rpe": 8
+            },
+            {
+              "weight": 30,
+              "reps": 10,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "rowing",
+          "sets": [
+            {
+              "weight": 5,
+              "reps": 1,
+              "rpe": 6
             }
           ]
         }
@@ -11604,6 +11865,164 @@
               "rpe": 6,
               "done": true,
               "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2026-07-13--13-07-",
+      "date": "2026-07-13",
+      "readiness": "okay",
+      "notes": "Понедельник 13.07: ноги на тренажёрах + лёгкая спина. После паузы без героизма, RPE 7-8, без отказа.",
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 150,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 170,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 190,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 200,
+              "reps": 8,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 55,
+              "reps": 10,
+              "rpe": 6
+            },
+            {
+              "weight": 60,
+              "reps": 10,
+              "rpe": 6
+            },
+            {
+              "weight": 65,
+              "reps": 10,
+              "rpe": 6
+            },
+            {
+              "weight": 80,
+              "reps": 10,
+              "rpe": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 7
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 8
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 9
+            }
+          ]
+        },
+        {
+          "exerciseId": "calf-flex",
+          "sets": [
+            {
+              "weight": 80,
+              "reps": 12,
+              "rpe": 7
+            },
+            {
+              "weight": 90,
+              "reps": 12,
+              "rpe": 7
+            },
+            {
+              "weight": 95,
+              "reps": 12,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 8,
+              "rpe": 7
+            },
+            {
+              "weight": 35,
+              "reps": 8,
+              "rpe": 8
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "lat-pulldown",
+          "sets": [
+            {
+              "weight": 58.5,
+              "reps": 8,
+              "rpe": 7
+            },
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": 7
+            },
+            {
+              "weight": 67.5,
+              "reps": 8,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "rowing",
+          "sets": [
+            {
+              "weight": 5,
+              "reps": 1,
+              "rpe": 6
             }
           ]
         }
@@ -11817,6 +12236,380 @@
               "rpe": 9,
               "done": true,
               "mark": "hard"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2026-07-15--15-07-",
+      "date": "2026-07-15",
+      "readiness": "okay",
+      "notes": "Среда 15.07: тяжёлый жим в тренажёре + плечи и трицепс. Главный жим RPE 7-9, остальное RPE 7-8, без отказа.",
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6
+            },
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": 7
+            },
+            {
+              "weight": 65,
+              "reps": 6,
+              "rpe": 9
+            },
+            {
+              "weight": 70,
+              "reps": 2,
+              "rpe": 10
+            }
+          ]
+        },
+        {
+          "exerciseId": "incline-db-press",
+          "sets": [
+            {
+              "weight": 18,
+              "reps": 10,
+              "rpe": 8
+            },
+            {
+              "weight": 20,
+              "reps": 8,
+              "rpe": 8
+            },
+            {
+              "weight": 22.5,
+              "reps": 8,
+              "rpe": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 22.5,
+              "reps": 8,
+              "rpe": 7
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 8
+            },
+            {
+              "weight": 35,
+              "reps": 5,
+              "rpe": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 42.5,
+              "reps": 12,
+              "rpe": 7
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 7
+            },
+            {
+              "weight": 65,
+              "reps": 5,
+              "rpe": 10
+            }
+          ]
+        },
+        {
+          "exerciseId": "triceps-pushdown",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 4
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 8
+            },
+            {
+              "weight": 42.5,
+              "reps": 6,
+              "rpe": 9
+            },
+            {
+              "weight": 42.5,
+              "reps": 6,
+              "rpe": null
+            }
+          ]
+        },
+        {
+          "exerciseId": "rowing",
+          "sets": [
+            {
+              "weight": 2,
+              "reps": 1,
+              "rpe": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 10,
+              "rpe": null
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": null
+            },
+            {
+              "weight": 55,
+              "reps": 6,
+              "rpe": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-07-17-a215b08c-afad-4a40-91b7-98288fa5c531",
+      "date": "2026-07-17",
+      "readiness": "okay",
+      "notes": "Пятница 17.07: pull-день после ног 13.07 и тяжёлого жимового верха 15.07. Спина, бицепс и кор; без тяжёлых ног, груди, жимов, обратной бабочки, фермерской и отказа. Небольшой прогресс: +1-2 повтора или +2.5 кг там, где RPE остаётся 7-8.",
+      "sessionEffort": "normal",
+      "afterNotes": "Сойдет. На бицепс был тренажер, а не свободный вес. В целом по тренировке поднимал по-ходу веса. В следующую тренировку можно веса добавлять. И в хорошей форме к гребле пришел, обычно уже сил нет, а сегодня прям норм.",
+      "durationMs": 4914937,
+      "durationMinutes": 82,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 11,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 20,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "lat-pulldown",
+          "sets": [
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 77,
+              "reps": 8,
+              "rpe": 9,
+              "done": true,
+              "mark": "hard"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 47,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 70,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "one-arm-row",
+          "sets": [
+            {
+              "weight": 24,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 28,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "biceps",
+          "sets": [
+            {
+              "weight": 25,
+              "reps": 10,
+              "rpe": 4,
+              "done": true,
+              "mark": "easy"
+            },
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "easy"
+            },
+            {
+              "weight": 45,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 40,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "ab-wheel",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 15,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 0,
+              "reps": 15,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "dead-bug",
+          "sets": [
+            {
+              "weight": 16,
+              "reps": 20,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 16,
+              "reps": 20,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "rowing",
+          "sets": [
+            {
+              "weight": 5,
+              "reps": 1,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
             }
           ]
         }
