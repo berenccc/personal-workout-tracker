@@ -13,5 +13,9 @@ When the user asks to evaluate a completed workout, treat the app's recommendati
 - Give feedback in chat on recovery, workout quality, notable issues, RPE/load management, user comments, and the next session.
 - Update `training-feedback.js` so the app shows this feedback in the `Рекомендация` block.
 - If the next workout plan should change, update `loadMondayFunctionalPlan()` or the relevant plan data in `training-tracker.js`.
+- Check that `training-history.js` contains the recent workouts used for the analysis; if it lags behind `data/workouts.json` or the remote GitHub data, update it too so history, analytics, and recommendations agree.
+- When app-visible JS/CSS/data changes should show up immediately, bump the cache query version, `APP_VERSION`, and service worker cache name across `training-tracker.html`, `sw.js`, `index.html`, `cache-reset.html`, and `manifest.webmanifest`.
+- Build plans from the user's actual exercise arsenal and recent weekly load, not just the last workout. Avoid unavailable or disliked movements when known: no `reverse-fly` if the gym lacks it, and no `farmer-carry` unless the user explicitly wants it.
+- Include small progressive overload where appropriate: add a little weight or 1-2 reps over time when RPE stays around 7-8, but do not force progress into RPE 9-10 or failure.
 - Keep the feedback concise and actionable for mobile viewing: 3-5 short cards max.
 - Preserve the user's goal: stay fit, look/feel good, avoid burnout, and avoid unnecessary failure work.

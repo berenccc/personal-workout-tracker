@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-15";
+const UPCOMING_WORKOUT_DATE = "2026-07-17";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -569,18 +569,18 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Среда 15.07: тяжёлый жим в тренажёре + плечи и трицепс. Штангу не трогаем, ноги после 13.07 не грузить. Главный жим RPE 7-9, остальное RPE 7-8, без отказа.";
+  elements.notesInput.value = "Пятница 17.07: pull-день после ног 13.07 и тяжёлого жимового верха 15.07. Спина, бицепс и кор; без тяжёлых ног, груди, жимов, обратной бабочки, фермерской и отказа. Небольшой прогресс: +1-2 повтора или +2.5 кг там, где RPE остаётся 7-8.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("chest-machine", [[40, 10, 6], [50, 8, 7], [60, 6, 8], [65, 4, 9]]),
-    planEntry("incline-db-press", [[18, 10, 7], [20, 8, 8], [20, 8, 8]]),
-    planEntry("shoulder-press", [[15, 10, 7], [17.5, 8, 8], [17.5, 8, 8]]),
-    planEntry("reverse-fly", [[25, 12, 7], [30, 10, 8], [30, 10, 8]]),
-    planEntry("butterfly", [[40, 12, 7], [45, 10, 8]]),
-    planEntry("triceps-pushdown", [[55, 10, 7], [65, 10, 8], [70, 8, 8]]),
-    planEntry("side-plank", [[0, 20, 7], [0, 20, 7]]),
+    planEntry("gravitron", [[40, 8, 7], [35, 8, 8], [30, 8, 8]]),
+    planEntry("lat-pulldown", [[58.5, 10, 7], [65, 8, 8], [67.5, 8, 8]]),
+    planEntry("row", [[57, 10, 7], [67, 10, 8], [70, 8, 8]]),
+    planEntry("one-arm-row", [[24, 10, 7], [26, 10, 8], [28, 8, 8]]),
+    planEntry("biceps", [[25, 10, 7], [30, 10, 8], [32.5, 8, 8]]),
+    planEntry("ab-wheel", [[0, 10, 7], [0, 10, 7]]),
+    planEntry("dead-bug", [[16, 20, 7], [16, 20, 7]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
 }
