@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-17";
+const UPCOMING_WORKOUT_DATE = "2026-07-20";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -531,7 +531,28 @@ function mergeWorkouts(current, incoming) {
   const keyFor = (workout) => workout.id || `${workout.date}-${workout.notes || ""}`;
   const byDate = new Map(current.map((workout) => [keyFor(workout), workout]));
   incoming.forEach((workout) => byDate.set(keyFor(workout), workout));
-  return removeFutureCompletedWorkouts([...byDate.values()]).sort((a, b) => a.date.localeCompare(b.date));
+  return removeFutureCompletedWorkouts(removePlaceholderDuplicateWorkouts([...byDate.values()]))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function removePlaceholderDuplicateWorkouts(workouts) {
+  const hasSavedWorkoutByDate = new Set(
+    workouts
+      .filter((workout) => workout.sessionEffort || workout.durationMinutes || explicitDoneSetCount(workout) > 0)
+      .map((workout) => workout.date)
+  );
+
+  return workouts.filter((workout) => {
+    if (!hasSavedWorkoutByDate.has(workout.date)) return true;
+    return workout.sessionEffort || workout.durationMinutes || explicitDoneSetCount(workout) > 0;
+  });
+}
+
+function explicitDoneSetCount(workout) {
+  return (workout.exercises || []).reduce(
+    (sum, exercise) => sum + (exercise.sets || []).filter((set) => set.done === true).length,
+    0
+  );
 }
 
 function normalizeWorkoutDates(workouts) {
@@ -569,18 +590,18 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Пятница 17.07: pull-день после ног 13.07 и тяжёлого жимового верха 15.07. Спина, бицепс и кор; без тяжёлых ног, груди, жимов, обратной бабочки, фермерской и отказа. Небольшой прогресс: +1-2 повтора или +2.5 кг там, где RPE остаётся 7-8.";
+  elements.notesInput.value = "Понедельник 20.07: ноги + умеренный жим после pull-дня 17.07. Цель — прогресс в весах без отказа: +5-10 кг на тренажёрах для ног и сплит-присед с 16 кг только если RPE остаётся 7-8. Спину и бицепс не добиваем; без обратной бабочки и фермерской.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("gravitron", [[40, 8, 7], [35, 8, 8], [30, 8, 8]]),
-    planEntry("lat-pulldown", [[58.5, 10, 7], [65, 8, 8], [67.5, 8, 8]]),
-    planEntry("row", [[57, 10, 7], [67, 10, 8], [70, 8, 8]]),
-    planEntry("one-arm-row", [[24, 10, 7], [26, 10, 8], [28, 8, 8]]),
-    planEntry("biceps", [[25, 10, 7], [30, 10, 8], [32.5, 8, 8]]),
-    planEntry("ab-wheel", [[0, 10, 7], [0, 10, 7]]),
-    planEntry("dead-bug", [[16, 20, 7], [16, 20, 7]]),
+    planEntry("leg-press", [[160, 10, 7], [185, 10, 7], [205, 8, 8], [210, 6, 8]]),
+    planEntry("leg-extension", [[65, 10, 6], [80, 10, 7], [85, 10, 8]]),
+    planEntry("leg-curl", [[35, 12, 7], [42.5, 10, 8], [50, 8, 8]]),
+    planEntry("split-squat", [[16, 10, 7], [16, 10, 8], [16, 10, 8]]),
+    planEntry("calf-flex", [[90, 12, 7], [100, 12, 8], [105, 10, 8]]),
+    planEntry("chest-machine", [[50, 10, 6], [60, 8, 7], [67.5, 5, 8]]),
+    planEntry("dead-bug", [[16, 20, 7], [18, 16, 8]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
 }
