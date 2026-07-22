@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-20";
+const UPCOMING_WORKOUT_DATE = "2026-07-22";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -590,18 +590,19 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Понедельник 20.07: ноги + умеренный жим после pull-дня 17.07. Цель — прогресс в весах без отказа: +5-10 кг на тренажёрах для ног и сплит-присед с 16 кг только если RPE остаётся 7-8. Спину и бицепс не добиваем; без обратной бабочки и фермерской.";
+  elements.notesInput.value = "Среда 22.07: pull + плечи и кор после сильных ног 20.07. Ноги, грудь и трицепс не грузим; без обратной бабочки и фермерской. Прогресс в тягах только если RPE остаётся 7-8, без отказа.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("leg-press", [[160, 10, 7], [185, 10, 7], [205, 8, 8], [210, 6, 8]]),
-    planEntry("leg-extension", [[65, 10, 6], [80, 10, 7], [85, 10, 8]]),
-    planEntry("leg-curl", [[35, 12, 7], [42.5, 10, 8], [50, 8, 8]]),
-    planEntry("split-squat", [[16, 10, 7], [16, 10, 8], [16, 10, 8]]),
-    planEntry("calf-flex", [[90, 12, 7], [100, 12, 8], [105, 10, 8]]),
-    planEntry("chest-machine", [[50, 10, 6], [60, 8, 7], [67.5, 5, 8]]),
-    planEntry("dead-bug", [[16, 20, 7], [18, 16, 8]]),
+    planEntry("gravitron", [[35, 8, 7], [25, 8, 8], [20, 9, 8]]),
+    planEntry("lat-pulldown", [[57, 10, 7], [67, 10, 8], [72, 8, 8]]),
+    planEntry("row", [[57, 10, 7], [70, 8, 8], [72, 8, 8]]),
+    planEntry("one-arm-row", [[26, 10, 7], [30, 8, 8], [30, 10, 8]]),
+    planEntry("deltoid-machine", [[25, 10, 7], [30, 10, 8], [32.5, 8, 8]]),
+    planEntry("biceps", [[35, 10, 6], [45, 8, 8], [47.5, 6, 8]]),
+    planEntry("ab-wheel", [[0, 15, 7], [0, 15, 7]]),
+    planEntry("dead-bug", [[18, 18, 7], [20, 16, 8]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
 }
