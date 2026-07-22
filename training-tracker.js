@@ -590,18 +590,17 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Среда 22.07: pull + плечи и кор после сильных ног 20.07. Ноги, грудь и трицепс не грузим; без обратной бабочки и фермерской. Прогресс в тягах только если RPE остаётся 7-8, без отказа.";
+  elements.notesInput.value = "Среда 22.07: грудь + плечи после сильных ног 20.07. Ноги не грузим; спину оставить только на другой день. Главный акцент — жим в тренажёре, один тяжёлый подход допустим осознанно, остальное RPE 7-8 без лишнего отказа.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("gravitron", [[35, 8, 7], [25, 8, 8], [20, 9, 8]]),
-    planEntry("lat-pulldown", [[57, 10, 7], [67, 10, 8], [72, 8, 8]]),
-    planEntry("row", [[57, 10, 7], [70, 8, 8], [72, 8, 8]]),
-    planEntry("one-arm-row", [[26, 10, 7], [30, 8, 8], [30, 10, 8]]),
+    planEntry("chest-machine", [[50, 10, 6], [60, 8, 7], [67.5, 5, 8], [70, 3, 9]]),
+    planEntry("incline-db-press", [[18, 10, 7], [20, 8, 8], [22.5, 8, 8]]),
+    planEntry("shoulder-press", [[20, 10, 7], [30, 8, 8], [35, 5, 8]]),
     planEntry("deltoid-machine", [[25, 10, 7], [30, 10, 8], [32.5, 8, 8]]),
-    planEntry("biceps", [[35, 10, 6], [45, 8, 8], [47.5, 6, 8]]),
-    planEntry("ab-wheel", [[0, 15, 7], [0, 15, 7]]),
+    planEntry("butterfly", [[42.5, 12, 7], [50, 10, 8], [55, 8, 8]]),
+    planEntry("triceps-pushdown", [[35, 12, 6], [45, 10, 7], [50, 8, 8]]),
     planEntry("dead-bug", [[18, 18, 7], [20, 16, 8]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
