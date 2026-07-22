@@ -601,7 +601,7 @@ function loadPlannedWorkout() {
     planEntry("deltoid-machine", [[25, 10, 7], [30, 10, 8], [32.5, 8, 8]]),
     planEntry("butterfly", [[42.5, 12, 7], [50, 10, 8], [55, 8, 8]]),
     planEntry("triceps-pushdown", [[35, 12, 6], [45, 10, 7], [50, 8, 8]]),
-    planEntry("dead-bug", [[18, 18, 7], [20, 16, 8]]),
+    planEntry("plank", [[0, 45, 7], [0, 45, 7]]),
     planEntry("rowing", [[5, 1, 6]]),
   ];
 }
