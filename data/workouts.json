@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-20T17:43:03.003Z",
-  "lastSavedWorkoutId": "manual-2026-07-20-310f7ec7-d12d-4c03-8ee7-b580185ef0ad",
+  "updatedAt": "2026-07-22T17:28:26.263Z",
+  "lastSavedWorkoutId": "manual-2026-07-22-f5f0bb11-89c9-42dd-a728-48ebec3a517c",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -12072,6 +12072,167 @@
               "reps": 1,
               "rpe": 6,
               "done": false,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-07-22-f5f0bb11-89c9-42dd-a728-48ebec3a517c",
+      "date": "2026-07-22",
+      "readiness": "okay",
+      "notes": "Среда 22.07: грудь + плечи после сильных ног 20.07. Ноги не грузим; спину оставить только на другой день. Главный акцент — жим в тренажёре, один тяжёлый подход допустим осознанно, остальное RPE 7-8 без лишнего отказа.",
+      "sessionEffort": "normal",
+      "afterNotes": "Чувствовал боль в левом плече в районе бицепса. Плюс в целом тренировка шла тяжело, будто нагрузка на ЦНС. Добил грудь на тренажере жима на наклонной скамье. Нужно добавить это упражнение в перечень упражнений и добавить тренажер жима от грузи с наклоном назад",
+      "durationMs": 3544435,
+      "durationMinutes": 59,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67.5,
+              "reps": 5,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 70,
+              "reps": 4,
+              "rpe": 9,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "incline-db-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 22,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 26,
+              "reps": 4,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 5,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "deltoid-machine",
+          "sets": [
+            {
+              "weight": 25,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 42.5,
+              "reps": 12,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 55,
+              "reps": 6,
+              "rpe": 9,
+              "done": true,
               "mark": "normal"
             }
           ]
