@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-22";
+const UPCOMING_WORKOUT_DATE = "2026-07-24";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -591,19 +591,17 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Среда 22.07: грудь + плечи после сильных ног 20.07. Ноги не грузим; спину оставить только на другой день. Главный акцент — жим в тренажёре, один тяжёлый подход допустим осознанно, остальное RPE 7-8 без лишнего отказа.";
-  elements.sessionEffortInput.value = "normal";
+  elements.notesInput.value = "Чт 24.07: лайт-восстановление. ЦНС в нагрузке, плечо не трогаем. Цель — подвигаться, пустить кровь, не уставать. Всё RPE 5-6, никакого отказа и тяжёлых жимов.";
+  elements.sessionEffortInput.value = "fresh";
   elements.afterNotesInput.value = "";
   selected = [
-    planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("chest-machine", [[50, 10, 6], [60, 8, 7], [67.5, 5, 8], [70, 3, 9]]),
-    planEntry("incline-db-press", [[18, 10, 7], [20, 8, 8], [22.5, 8, 8]]),
-    planEntry("shoulder-press", [[20, 10, 7], [30, 8, 8], [35, 5, 8]]),
-    planEntry("deltoid-machine", [[25, 10, 7], [30, 10, 8], [32.5, 8, 8]]),
-    planEntry("butterfly", [[42.5, 12, 7], [50, 10, 8], [55, 8, 8]]),
-    planEntry("triceps-pushdown", [[35, 12, 6], [45, 10, 7], [50, 8, 8]]),
-    planEntry("plank", [[0, 45, 7], [0, 45, 7]]),
-    planEntry("rowing", [[5, 1, 6]]),
+    planEntry("elliptical", [[12, 1, 5]]),
+    planEntry("bird-dog", [[4, 8, 5], [4, 8, 5], [4, 8, 5]]),
+    planEntry("one-arm-row", [[20, 12, 5], [22, 10, 6], [22, 10, 6]]),
+    planEntry("dead-bug", [[16, 16, 5], [16, 16, 5], [16, 16, 5]]),
+    planEntry("kettlebell-swing", [[20, 12, 6], [20, 12, 6], [20, 12, 6]]),
+    planEntry("ab-wheel", [[0, 8, 5], [0, 8, 5], [0, 8, 5]]),
+    planEntry("rowing", [[8, 1, 5]]),
   ];
 }
 
