@@ -24,6 +24,7 @@ const exercises = [
   { id: "barbell-row", name: "Тяга штанги в наклоне", group: "Спина", unit: "кг", step: 5, defaultSets: [[40, 8], [50, 8], [50, 8]] },
   { id: "bench", name: "Жим штанги лежа", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[50, 8], [55, 8], [60, 8]] },
   { id: "chest-machine", name: "Жим от груди / тренажер", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[40, 10], [50, 8], [55, 8]] },
+  { id: "decline-chest-machine", name: "Жим на тренажёре наклон назад", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[40, 10], [50, 8], [55, 8]] },
   { id: "incline-press", name: "Жим под углом", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[40, 10], [50, 8], [55, 8]] },
   { id: "db-press", name: "Жим гантелей", group: "Грудь", unit: "кг/рука", step: 2.5, defaultSets: [[20, 10], [20, 10], [22.5, 8]] },
   { id: "incline-db-press", name: "Жим гантелей под углом", group: "Грудь", unit: "кг/рука", step: 2.5, defaultSets: [[18, 10], [20, 8], [20, 8]] },
