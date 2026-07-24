@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-24";
+const UPCOMING_WORKOUT_DATE = "2026-07-27";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -591,17 +591,18 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Чт 24.07: лайт-восстановление. ЦНС в нагрузке, плечо не трогаем. Цель — подвигаться, пустить кровь, не уставать. Всё RPE 5-6, никакого отказа и тяжёлых жимов.";
-  elements.sessionEffortInput.value = "fresh";
+  elements.notesInput.value = "Пн 27.07: умеренная спина + кор после восстановительной тренировки. Всё RPE 6-7, без отказа и рекордов. Если левое плечо болит в тяге — упражнение пропустить.";
+  elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
-    planEntry("elliptical", [[12, 1, 5]]),
-    planEntry("bird-dog", [[4, 8, 5], [4, 8, 5], [4, 8, 5]]),
-    planEntry("one-arm-row", [[20, 12, 5], [22, 10, 6], [22, 10, 6]]),
-    planEntry("dead-bug", [[16, 16, 5], [16, 16, 5], [16, 16, 5]]),
-    planEntry("kettlebell-swing", [[20, 12, 6], [20, 12, 6], [20, 12, 6]]),
-    planEntry("ab-wheel", [[0, 8, 5], [0, 8, 5], [0, 8, 5]]),
-    planEntry("rowing", [[8, 1, 5]]),
+    planEntry("elliptical", [[10, 1, 5]]),
+    planEntry("gravitron", [[35, 8, 6], [30, 8, 7], [30, 8, 7]]),
+    planEntry("lat-pulldown", [[57, 10, 6], [62, 10, 7], [67, 8, 7]]),
+    planEntry("row", [[57, 10, 6], [62, 10, 7], [67, 8, 7]]),
+    planEntry("biceps", [[30, 10, 6], [35, 10, 7], [35, 10, 7]]),
+    planEntry("dead-bug", [[16, 20, 6], [16, 20, 6], [16, 20, 6]]),
+    planEntry("ab-wheel", [[0, 10, 6], [0, 10, 6], [0, 10, 6]]),
+    planEntry("rowing", [[5, 1, 5]]),
   ];
 }
 
