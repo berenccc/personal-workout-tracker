@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-24T17:13:08.964Z",
-  "lastSavedWorkoutId": "manual-2026-07-24-fc4a58ec-c8d6-4af5-a22b-86c9d2de4c6c",
+  "updatedAt": "2026-07-27T16:55:24.756Z",
+  "lastSavedWorkoutId": "manual-2026-07-27-c1e11d26-6bc2-4006-8037-56e3ea38c85a",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -12398,6 +12398,224 @@
               "weight": 3,
               "reps": 1,
               "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-07-27-c1e11d26-6bc2-4006-8037-56e3ea38c85a",
+      "date": "2026-07-27",
+      "readiness": "okay",
+      "notes": "Пн 27.07: умеренная спина + кор после восстановительной тренировки. Всё RPE 6-7, без отказа и рекордов. Если левое плечо болит в тяге — упражнение пропустить.",
+      "sessionEffort": "normal",
+      "afterNotes": "",
+      "durationMs": 3937862,
+      "durationMinutes": 66,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 8,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "lat-pulldown",
+          "sets": [
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "biceps",
+          "sets": [
+            {
+              "weight": 30,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "easy"
+            },
+            {
+              "weight": 40,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "ab-wheel",
+          "sets": [
+            {
+              "weight": 0,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 0,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 0,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "rowing",
+          "sets": [
+            {
+              "weight": 3,
+              "reps": 1,
+              "rpe": 8,
+              "done": true,
+              "mark": "hard"
+            }
+          ]
+        },
+        {
+          "exerciseId": "decline-chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 10,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 8,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "back-extension",
+          "sets": [
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": null,
               "done": true,
               "mark": "normal"
             }
