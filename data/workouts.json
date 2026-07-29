@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-27T16:55:24.756Z",
-  "lastSavedWorkoutId": "manual-2026-07-27-c1e11d26-6bc2-4006-8037-56e3ea38c85a",
+  "updatedAt": "2026-07-29T16:14:04.645Z",
+  "lastSavedWorkoutId": "manual-2026-07-29-a2466b85-baa7-4243-abf6-449e77c02662",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -12615,6 +12615,203 @@
             {
               "weight": 15,
               "reps": 10,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-07-29-a2466b85-baa7-4243-abf6-449e77c02662",
+      "date": "2026-07-29",
+      "readiness": "okay",
+      "notes": "Ср 29.07: ноги + немного груди. Рабочие подходы RPE 6-8, без отказа. Грудь — только один жим в тренажёре; при любом дискомфорте в левом плече сразу пропустить.",
+      "sessionEffort": "normal",
+      "afterNotes": "",
+      "durationMs": 4492609,
+      "durationMinutes": 75,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 11,
+              "reps": 15,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 190,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 210,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "easy"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "split-squat",
+          "sets": [
+            {
+              "weight": 16,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 16,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "calf-flex",
+          "sets": [
+            {
+              "weight": 95,
+              "reps": 14,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 110,
+              "reps": 14,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 117.5,
+              "reps": 12,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 80,
+              "reps": 12,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 95,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "bench",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 65,
+              "reps": 6,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
               "rpe": null,
               "done": true,
               "mark": "normal"
