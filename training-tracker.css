@@ -804,6 +804,23 @@ select {
   min-width: 0;
 }
 
+.exercise-card-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.exercise-card-actions .icon-button {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-button:disabled {
+  cursor: default;
+  opacity: 0.35;
+  filter: none;
+}
+
 .exercise-card-header p {
   margin: 4px 0 0;
   color: var(--muted);
@@ -1474,9 +1491,14 @@ select {
 
   .exercise-card-header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 32px;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
     margin-bottom: 8px;
+  }
+
+  .exercise-card-actions .icon-button {
+    width: 34px;
+    height: 34px;
   }
 
   .workout-panel .exercise-card-header {

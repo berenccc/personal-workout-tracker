@@ -9,11 +9,11 @@
     <meta name="theme-color" content="#f1eee7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141418" media="(prefers-color-scheme: dark)" />
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=54" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=54" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=54" />
-    <link rel="manifest" href="./manifest.webmanifest?v=54" />
-    <link rel="stylesheet" href="./training-tracker.css?v=54" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=55" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=55" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=55" />
+    <link rel="manifest" href="./manifest.webmanifest?v=55" />
+    <link rel="stylesheet" href="./training-tracker.css?v=55" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -40,7 +40,7 @@
             История подтягивается из git, новые тренировки сохраняются туда после завершения.
           </p>
         </div>
-        <span class="version-badge">v54</span>
+        <span class="version-badge">v55</span>
       </section>
 
       <section class="layout workout-layout">
@@ -281,16 +281,20 @@
             <h3></h3>
             <p></p>
           </div>
-          <button class="icon-button" type="button" aria-label="Удалить">×</button>
+          <div class="exercise-card-actions">
+            <button class="icon-button reorder-button move-up" type="button" aria-label="Переместить упражнение выше" title="Выше">↑</button>
+            <button class="icon-button reorder-button move-down" type="button" aria-label="Переместить упражнение ниже" title="Ниже">↓</button>
+            <button class="icon-button remove-exercise" type="button" aria-label="Удалить упражнение" title="Удалить">×</button>
+          </div>
         </div>
         <div class="sets"></div>
         <button class="button ghost add-set" type="button">+ подход</button>
       </article>
     </template>
 
-    <script src="./training-history.js?v=54"></script>
-    <script src="./training-feedback.js?v=54"></script>
-    <script src="./training-tracker.js?v=54"></script>
+    <script src="./training-history.js?v=55"></script>
+    <script src="./training-feedback.js?v=55"></script>
+    <script src="./training-tracker.js?v=55"></script>
     <script>
       // Bottom nav
       (function () {
@@ -322,7 +326,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v54";
+      const APP_VERSION = "v55";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

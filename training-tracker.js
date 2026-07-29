@@ -728,7 +728,7 @@ function renderHeatmap() {
 function renderSelectedExercises() {
   elements.selectedExercises.innerHTML = "";
 
-  selected.forEach((item) => {
+  selected.forEach((item, index) => {
     const exercise = findExercise(item.exerciseId);
     const fragment = elements.exerciseTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".exercise-card");
@@ -736,7 +736,13 @@ function renderSelectedExercises() {
     if (isExerciseComplete(item)) card.classList.add("exercise-complete");
     card.querySelector("h3").textContent = exercise.name;
     card.querySelector("p").textContent = `${exercise.group} · ${exercise.unit}`;
-    card.querySelector(".icon-button").addEventListener("click", () => {
+    const moveUpButton = card.querySelector(".move-up");
+    const moveDownButton = card.querySelector(".move-down");
+    moveUpButton.disabled = index === 0;
+    moveDownButton.disabled = index === selected.length - 1;
+    moveUpButton.addEventListener("click", () => moveSelectedExercise(item.uid, -1));
+    moveDownButton.addEventListener("click", () => moveSelectedExercise(item.uid, 1));
+    card.querySelector(".remove-exercise").addEventListener("click", () => {
       selected = selected.filter((selectedItem) => selectedItem.uid !== item.uid);
       renderSelectedExercises();
       saveWorkoutDraft();
@@ -755,6 +761,20 @@ function renderSelectedExercises() {
   });
 
   renderPlanSummary();
+}
+
+function moveSelectedExercise(uid, direction) {
+  const currentIndex = selected.findIndex((item) => item.uid === uid);
+  const targetIndex = currentIndex + direction;
+  if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selected.length) return;
+
+  [selected[currentIndex], selected[targetIndex]] = [selected[targetIndex], selected[currentIndex]];
+  renderSelectedExercises();
+  saveWorkoutDraft();
+
+  const movedCard = [...elements.selectedExercises.querySelectorAll(".exercise-card")]
+    .find((card) => card.dataset.uid === uid);
+  movedCard?.querySelector(direction < 0 ? ".move-up" : ".move-down")?.focus();
 }
 
 function renderPlanSummary() {
