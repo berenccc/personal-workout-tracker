@@ -591,16 +591,17 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Ср 29.07: ноги с плавным движением по весам. Рабочие подходы RPE 6-8, без отказа. Верх не грузим; если 205 кг в жиме ногами выше RPE 8, подход 215 кг пропустить.";
+  elements.notesInput.value = "Ср 29.07: ноги + немного груди. Рабочие подходы RPE 6-8, без отказа. Грудь — только один жим в тренажёре; при любом дискомфорте в левом плече сразу пропустить.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("leg-press", [[160, 10, 6], [190, 10, 7], [205, 10, 8], [215, 6, 8]]),
+    planEntry("leg-press", [[160, 10, 6], [190, 10, 7], [205, 10, 8]]),
     planEntry("leg-extension", [[65, 12, 6], [80, 10, 7], [90, 8, 8]]),
     planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [50, 10, 8]]),
-    planEntry("split-squat", [[16, 10, 7], [16, 10, 7], [16, 10, 8]]),
+    planEntry("split-squat", [[16, 10, 7], [16, 10, 7]]),
     planEntry("calf-flex", [[90, 14, 6], [100, 14, 7], [110, 12, 8]]),
+    planEntry("chest-machine", [[50, 10, 6], [60, 8, 7], [62.5, 8, 7]]),
     planEntry("dead-bug", [[16, 20, 6], [16, 20, 6]]),
     planEntry("treadmill", [[5, 1, 5]]),
   ];
