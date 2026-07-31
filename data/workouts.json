@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-29T16:14:04.645Z",
-  "lastSavedWorkoutId": "manual-2026-07-29-a2466b85-baa7-4243-abf6-449e77c02662",
+  "updatedAt": "2026-07-31T16:48:35.907Z",
+  "lastSavedWorkoutId": "manual-2026-07-31-e8fde919-d6bc-4450-95a0-3bda68253cfe",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -12813,6 +12813,224 @@
               "weight": 10,
               "reps": 1,
               "rpe": null,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-07-31-e8fde919-d6bc-4450-95a0-3bda68253cfe",
+      "date": "2026-07-31",
+      "readiness": "okay",
+      "notes": "Пт 31.07: функционал + кор после pull и ног/груди. Цель — много спокойного движения без тяжёлого дня. Всё RPE 5-7; без жимов, тяжёлых ног и отказа.",
+      "sessionEffort": "normal",
+      "afterNotes": "",
+      "durationMs": 4986835,
+      "durationMinutes": 83,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 14,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "dead-bug",
+          "sets": [
+            {
+              "weight": 16,
+              "reps": 20,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 18,
+              "reps": 20,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 18,
+              "reps": 20,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "one-arm-row",
+          "sets": [
+            {
+              "weight": 22,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 26,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 28,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 6,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 20,
+              "reps": 6,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "back-extension",
+          "sets": [
+            {
+              "weight": 15,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 15,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "triceps",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 10,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 12,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 5,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 27.5,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 6,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 5,
+              "reps": 12,
+              "rpe": 5,
               "done": true,
               "mark": "normal"
             }
