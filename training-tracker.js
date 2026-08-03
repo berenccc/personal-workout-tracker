@@ -591,16 +591,16 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Пн 03.08: умеренный фулбади. Главный акцент — ноги, по одному движению на спину и грудь, затем кор. Всё RPE 5-8, без отказа и отдельных добивок плеч/рук.";
+  elements.notesInput.value = "Пн 03.08: сбалансированный фулбади. Низ — жим ногами и лёгкая румынская; верх — гравитрон, жим лёжа и два подхода плеч; затем кор. Всё RPE 5-8, без отказа.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
     planEntry("leg-press", [[160, 10, 6], [190, 10, 7], [210, 8, 8]]),
-    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [50, 10, 8]]),
-    planEntry("split-squat", [[16, 10, 7], [16, 10, 7]]),
+    planEntry("rdl", [[18, 10, 6], [20, 10, 7], [22, 10, 7]]),
     planEntry("gravitron", [[35, 8, 6], [30, 8, 7], [25, 6, 8]]),
     planEntry("bench", [[50, 10, 6], [60, 8, 7], [62.5, 6, 8]]),
+    planEntry("shoulder-press", [[20, 10, 6], [27.5, 8, 7]]),
     planEntry("dead-bug", [[18, 20, 6], [18, 20, 6], [20, 16, 7]]),
     planEntry("treadmill", [[6, 1, 5]]),
   ];
