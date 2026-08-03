@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-07-31";
+const UPCOMING_WORKOUT_DATE = "2026-08-03";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -591,19 +591,18 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Пт 31.07: функционал + кор после pull и ног/груди. Цель — много спокойного движения без тяжёлого дня. Всё RPE 5-7; без жимов, тяжёлых ног и отказа.";
+  elements.notesInput.value = "Пн 03.08: умеренный фулбади. Главный акцент — ноги, по одному движению на спину и грудь, затем кор. Всё RPE 5-8, без отказа и отдельных добивок плеч/рук.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
-    planEntry("elliptical", [[12, 1, 5]]),
-    planEntry("bird-dog", [[4, 20, 5], [4, 20, 5], [5, 20, 5]]),
-    planEntry("one-arm-row", [[22, 12, 6], [26, 10, 6], [28, 10, 7]]),
-    planEntry("kettlebell-swing", [[20, 12, 6], [24, 12, 6], [24, 12, 7]]),
-    planEntry("back-extension", [[15, 12, 6], [15, 12, 6], [15, 12, 6]]),
-    planEntry("dead-bug", [[16, 20, 5], [16, 20, 6], [16, 20, 6]]),
-    planEntry("ab-wheel", [[0, 10, 6], [0, 10, 6]]),
-    planEntry("side-plank", [[0, 20, 6], [0, 20, 6]]),
-    planEntry("treadmill", [[8, 1, 5]]),
+    planEntry("elliptical", [[10, 1, 5]]),
+    planEntry("leg-press", [[160, 10, 6], [190, 10, 7], [210, 8, 8]]),
+    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [50, 10, 8]]),
+    planEntry("split-squat", [[16, 10, 7], [16, 10, 7]]),
+    planEntry("gravitron", [[35, 8, 6], [30, 8, 7], [25, 6, 8]]),
+    planEntry("bench", [[50, 10, 6], [60, 8, 7], [62.5, 6, 8]]),
+    planEntry("dead-bug", [[18, 20, 6], [18, 20, 6], [20, 16, 7]]),
+    planEntry("treadmill", [[6, 1, 5]]),
   ];
 }
 
