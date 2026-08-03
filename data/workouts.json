@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-31T16:48:35.907Z",
-  "lastSavedWorkoutId": "manual-2026-07-31-e8fde919-d6bc-4450-95a0-3bda68253cfe",
+  "updatedAt": "2026-08-03T18:44:12.322Z",
+  "lastSavedWorkoutId": "manual-2026-08-03-4c468c29-66fa-4223-8070-57ca14ffdc91",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -13031,6 +13031,189 @@
               "weight": 5,
               "reps": 12,
               "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-03-4c468c29-66fa-4223-8070-57ca14ffdc91",
+      "date": "2026-08-03",
+      "readiness": "okay",
+      "notes": "Пн 03.08: сбалансированный фулбади. Низ — жим ногами и лёгкая румынская; верх — гравитрон, жим лёжа и два подхода плеч; затем кор. Всё RPE 5-8, без отказа.",
+      "sessionEffort": "normal",
+      "afterNotes": "",
+      "durationMs": 9441896,
+      "durationMinutes": 157,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 5,
+              "reps": 14,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "rowing",
+          "sets": [
+            {
+              "weight": 5,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "rdl",
+          "sets": [
+            {
+              "weight": 18,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 20,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 22,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 190,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 210,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "bench",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 62.5,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 70,
+              "reps": 4,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 6,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 5,
+              "reps": 12,
+              "rpe": null,
               "done": true,
               "mark": "normal"
             }
