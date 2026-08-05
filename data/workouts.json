@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-08-03T18:44:12.322Z",
-  "lastSavedWorkoutId": "manual-2026-08-03-4c468c29-66fa-4223-8070-57ca14ffdc91",
+  "updatedAt": "2026-08-05T17:24:34.601Z",
+  "lastSavedWorkoutId": "manual-2026-08-05-905679e3-4ef5-4e37-8504-4da891930396",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -13214,6 +13214,184 @@
               "weight": 5,
               "reps": 12,
               "rpe": null,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-05-905679e3-4ef5-4e37-8504-4da891930396",
+      "date": "2026-08-05",
+      "readiness": "okay",
+      "notes": "Ср 05.08: лёгкий фулбади после 90-минутной тренировки 03.08. Движение, а не проверка силы: всё RPE 5-7, без отказа, тяжёлого жима ногами, плеч и добивок рук.",
+      "sessionEffort": "normal",
+      "afterNotes": "",
+      "durationMs": 4534104,
+      "durationMinutes": 76,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 14,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 70,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 85,
+              "reps": 12,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 87.5,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 57,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 45,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 55,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 70,
+              "reps": 4,
+              "rpe": 10,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "dead-bug",
+          "sets": [
+            {
+              "weight": 18,
+              "reps": 20,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 20,
+              "reps": 20,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 20,
+              "reps": 20,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "treadmill",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5,
               "done": true,
               "mark": "normal"
             }
