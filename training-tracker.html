@@ -9,11 +9,11 @@
     <meta name="theme-color" content="#f1eee7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141418" media="(prefers-color-scheme: dark)" />
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=59" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=59" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=59" />
-    <link rel="manifest" href="./manifest.webmanifest?v=59" />
-    <link rel="stylesheet" href="./training-tracker.css?v=59" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=60" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=60" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=60" />
+    <link rel="manifest" href="./manifest.webmanifest?v=60" />
+    <link rel="stylesheet" href="./training-tracker.css?v=60" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -40,7 +40,7 @@
             История подтягивается из git, новые тренировки сохраняются туда после завершения.
           </p>
         </div>
-        <span class="version-badge">v59</span>
+        <span class="version-badge">v60</span>
       </section>
 
       <section class="layout workout-layout">
@@ -48,7 +48,7 @@
           <div class="panel-header">
             <div>
               <p class="eyebrow">Ближайшая тренировка</p>
-              <h2>Сбалансированный фулбади</h2>
+              <h2>Лёгкий фулбади сегодня</h2>
             </div>
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
@@ -292,9 +292,9 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=59"></script>
-    <script src="./training-feedback.js?v=59"></script>
-    <script src="./training-tracker.js?v=59"></script>
+    <script src="./training-history.js?v=60"></script>
+    <script src="./training-feedback.js?v=60"></script>
+    <script src="./training-tracker.js?v=60"></script>
     <script>
       // Bottom nav
       (function () {
@@ -326,7 +326,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v59";
+      const APP_VERSION = "v60";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {
