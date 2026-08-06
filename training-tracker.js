@@ -5,6 +5,7 @@ const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
 const AI_KEY_STORAGE = "training-tracker-ai-key";
 const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
+const CUSTOM_EXERCISES_KEY = "training-tracker-custom-exercises-v1";
 const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const AI_MODEL = "gpt-5.6-terra";
 const AI_MAX_TOOL_ROUNDS = 6;
@@ -60,6 +61,57 @@ const exercises = [
   { id: "elliptical", name: "Эллипсоид / вело", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[12, 1]] },
   { id: "treadmill", name: "Дорожка", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[10, 1]] },
 ];
+
+const EXERCISE_GROUPS = ["Ноги", "Икры", "Спина", "Грудь", "Плечи", "Задняя цепь", "Функционал", "Руки", "Кор", "Плиометрика", "Кардио", "Другое"];
+
+exercises.push(...loadCustomExercises());
+
+function loadCustomExercises() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_EXERCISES_KEY));
+    return Array.isArray(saved) ? saved.filter((exercise) => exercise?.id && exercise?.name) : [];
+  } catch {
+    return [];
+  }
+}
+
+function slugifyExerciseName(name) {
+  const translit = {
+    а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z", и: "i", й: "y",
+    к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f",
+    х: "h", ц: "ts", ч: "ch", ш: "sh", щ: "sch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
+  };
+  const slug = name
+    .toLowerCase()
+    .split("")
+    .map((char) => translit[char] ?? char)
+    .join("")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+  return slug || `exercise-${Date.now()}`;
+}
+
+function addCustomExercise({ name, group, unit, step }) {
+  let id = `custom-${slugifyExerciseName(name)}`;
+  while (exercises.some((exercise) => exercise.id === id)) id = `${id}-2`;
+
+  const numericStep = Number(step);
+  const exercise = {
+    id,
+    name: name.trim(),
+    group: group && EXERCISE_GROUPS.includes(group) ? group : "Другое",
+    unit: (unit || "кг").trim(),
+    step: Number.isFinite(numericStep) && numericStep !== 0 ? numericStep : 2.5,
+    defaultSets: [[20, 10], [20, 10], [20, 10]],
+    custom: true,
+  };
+
+  exercises.push(exercise);
+  localStorage.setItem(CUSTOM_EXERCISES_KEY, JSON.stringify(loadCustomExercises().concat(exercise)));
+  fillExerciseSelects();
+  return exercise;
+}
 
 let state = loadState();
 let selected = [];
@@ -553,9 +605,12 @@ function fillExerciseSelects() {
   const options = exercises
     .map((exercise) => `<option value="${exercise.id}">${exercise.name}</option>`)
     .join("");
+  const previousChartChoice = elements.chartExerciseSelect.value;
   elements.exerciseSelect.innerHTML = options;
   elements.chartExerciseSelect.innerHTML = options;
-  elements.chartExerciseSelect.value = "bench";
+  elements.chartExerciseSelect.value = exercises.some((exercise) => exercise.id === previousChartChoice)
+    ? previousChartChoice
+    : "bench";
 }
 
 function mergeWorkouts(current, incoming) {
@@ -1247,7 +1302,11 @@ const AI_SYSTEM_PROMPT = `Ты — персональный AI-тренер вн
 
 ПРОФИЛЬ АТЛЕТА: мужчина, тренируется в зале 2-3 раза в неделю на тренажёрах, гантелях и штанге. Цель — форма, самочувствие и сила без выгорания и без работы в отказ. Не любит и не может делать: reverse-fly (нет тренажёра), farmer-carry. История знает случаи перегруза ЦНС и боли в левом плече — следи за этими сигналами.
 
-ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план в приложении), get_exercise_catalog (доступные упражнения и их id). Изменение плана делай через set_planned_workout — это реально обновит план в приложении; после вызова коротко подтверди, что именно поменял. Используй только exerciseId из каталога.
+ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план и статус тренировки), get_exercise_catalog (доступные упражнения и их id). Полную замену плана делай через set_planned_workout, точечное добавление одного упражнения — через add_exercise_to_plan. Всё это реально обновляет план в приложении; после вызова коротко подтверди, что именно поменял. Используй только exerciseId из каталога.
+
+НОВЫЕ УПРАЖНЕНИЯ: если пользователь встретил в зале тренажёр или упражнение, которого нет в каталоге («тут стоит хаммер», «добавь тягу Т-грифа», «есть новый тренажёр на икры»), — добавь его через add_new_exercise (подбери группу, единицу и шаг веса), а затем, если уместно, сразу поставь в текущую тренировку через add_exercise_to_plan с консервативными весами для первого знакомства (RPE 6-7, «прощупать» вес).
+
+ВО ВРЕМЯ АКТИВНОЙ ТРЕНИРОВКИ (статус «тренировка идёт»): не вызывай set_planned_workout — он перезапишет отметки уже сделанных подходов. Добавляй через add_exercise_to_plan, а изменения существующих упражнений проговаривай словами.
 
 МЕТОДИКА (научная база: позиция ACSM и мета-анализы по гипертрофии/силе):
 - Объём: 10-20 рабочих подходов на мышечную группу в неделю, 2-3 подхода на упражнение, 8-20 повторов (в основном 6-12). Больше 20 подходов в неделю на группу — убывающая отдача.
@@ -1287,6 +1346,49 @@ const AI_TOOL_DEFS = [
       name: "get_exercise_catalog",
       description: "Каталог доступных упражнений: exerciseId, название, группа мышц, единица веса. Только эти exerciseId можно использовать в set_planned_workout.",
       parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_new_exercise",
+      description: "Добавляет новое упражнение в каталог приложения (например незнакомый тренажёр, которого нет в get_exercise_catalog). Возвращает exerciseId нового упражнения — после этого его можно ставить в план.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Название по-русски, как его увидит пользователь. Например: «Хаммер жим сидя»." },
+          group: { type: "string", enum: ["Ноги", "Икры", "Спина", "Грудь", "Плечи", "Задняя цепь", "Функционал", "Руки", "Кор", "Плиометрика", "Кардио", "Другое"], description: "Группа мышц/тип." },
+          unit: { type: "string", description: "Единица нагрузки: «кг», «кг/рука», «кг противовес», «мин», «повторы». По умолчанию «кг»." },
+          step: { type: "number", description: "Шаг изменения веса в кг (обычно 2.5; для тренажёров с большими плитками 5)." },
+        },
+        required: ["name", "group"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_exercise_to_plan",
+      description: "Добавляет ОДНО упражнение с подходами в конец текущего плана/тренировки, не трогая остальные упражнения и отметки выполнения. Используй для точечных добавлений, особенно когда тренировка уже идёт.",
+      parameters: {
+        type: "object",
+        properties: {
+          exerciseId: { type: "string", description: "id из get_exercise_catalog или из ответа add_new_exercise" },
+          sets: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                weight: { type: "number", description: "Вес в кг (для кардио — минуты)" },
+                reps: { type: "integer", description: "Повторы (для кардио — 1)" },
+                rpe: { type: "number", description: "Целевой RPE 5-8" },
+              },
+              required: ["weight", "reps"],
+            },
+          },
+        },
+        required: ["exerciseId", "sets"],
+      },
     },
   },
   {
@@ -1399,16 +1501,49 @@ function executeAiTool(name, args) {
     const plan = selected.map((item) => {
       const exercise = findExercise(item.exerciseId);
       const sets = item.sets
-        .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}`)
+        .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}${set.done ? " ✓" : ""}`)
         .join(", ");
       return `- ${exercise ? exercise.name : item.exerciseId} (${item.exerciseId}): ${sets}`;
     });
+    const isActive = elements.workoutPanel.classList.contains("is-active");
     return [
+      `Статус: ${isActive ? "тренировка идёт прямо сейчас (✓ = подход уже сделан)" : "тренировка ещё не начата"}`,
       `Дата: ${elements.dateInput.value || "не выбрана"}`,
       `Заметка: ${elements.notesInput.value || "нет"}`,
       "Упражнения:",
       plan.join("\n") || "план пуст",
     ].join("\n");
+  }
+
+  if (name === "add_new_exercise") {
+    const title = (args.name || "").trim();
+    if (!title) return "Ошибка: не указано название упражнения.";
+
+    const existing = exercises.find((exercise) => exercise.name.toLowerCase() === title.toLowerCase());
+    if (existing) {
+      return `Такое упражнение уже есть в каталоге: ${existing.id} — ${existing.name} (${existing.group}). Используй его.`;
+    }
+
+    const exercise = addCustomExercise({ name: title, group: args.group, unit: args.unit, step: args.step });
+    return `Добавил в каталог: ${exercise.id} — ${exercise.name} (${exercise.group}, ${exercise.unit}). Теперь можно ставить его в план.`;
+  }
+
+  if (name === "add_exercise_to_plan") {
+    const exercise = exercises.find((item) => item.id === args.exerciseId);
+    if (!exercise) {
+      return `Ошибка: неизвестный exerciseId «${args.exerciseId}». Возьми id из get_exercise_catalog или сначала добавь упражнение через add_new_exercise.`;
+    }
+
+    const rows = (Array.isArray(args.sets) ? args.sets : [])
+      .map((set) => [Number(set.weight) || 0, Number(set.reps) || 0, set.rpe ? Number(set.rpe) : ""])
+      .filter((row) => row[1] > 0);
+    if (!rows.length) return "Ошибка: не переданы подходы (weight, reps).";
+
+    selected.push(planEntry(exercise.id, rows));
+    renderSelectedExercises();
+    persistAiPlan();
+    saveWorkoutDraft();
+    return `Добавил в текущий план: ${exercise.name}, ${rows.length} подх. Остальные упражнения не тронуты.`;
   }
 
   if (name === "get_exercise_catalog") {
