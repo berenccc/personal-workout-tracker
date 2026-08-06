@@ -149,6 +149,11 @@ label,
   min-width: 0;
 }
 
+.ai-key-controls {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 10px;
+}
+
 .drawer {
   margin-bottom: 18px;
 }
@@ -1213,6 +1218,42 @@ select {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
+}
+
+.ai-coach {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ai-coach textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+.ai-coach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-coach-actions small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.ai-card {
+  border-color: rgba(154, 193, 120, 0.4);
+  background: rgba(154, 193, 120, 0.09);
 }
 
 .history-item {

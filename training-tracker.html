@@ -9,11 +9,11 @@
     <meta name="theme-color" content="#f1eee7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141418" media="(prefers-color-scheme: dark)" />
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=61" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=61" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=61" />
-    <link rel="manifest" href="./manifest.webmanifest?v=61" />
-    <link rel="stylesheet" href="./training-tracker.css?v=61" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=62" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=62" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=62" />
+    <link rel="manifest" href="./manifest.webmanifest?v=62" />
+    <link rel="stylesheet" href="./training-tracker.css?v=62" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -40,7 +40,7 @@
             История подтягивается из git, новые тренировки сохраняются туда после завершения.
           </p>
         </div>
-        <span class="version-badge">v61</span>
+        <span class="version-badge">v62</span>
       </section>
 
       <section class="layout workout-layout">
@@ -135,6 +135,13 @@
               <h2>Что делать дальше</h2>
             </div>
           </div>
+          <div class="ai-coach">
+            <textarea id="aiQuestionInput" rows="2" placeholder="Вопрос AI-тренеру (необязательно): самочувствие, боль, чем заменить упражнение…"></textarea>
+            <div class="ai-coach-actions">
+              <button id="askAiButton" class="button secondary" type="button">Спросить AI-тренера</button>
+              <small id="aiStatus"></small>
+            </div>
+          </div>
           <div id="coachBox" class="coach-box"></div>
         </div>
       </section>
@@ -146,6 +153,10 @@
           <span>Синхронизация</span>
           <small id="syncStatus">Пока локально. После настройки телефон сам пишет в git.</small>
         </summary>
+        <div class="sync-controls ai-key-controls">
+          <input id="aiApiKeyInput" type="password" placeholder="OpenAI API key для AI-тренера" autocomplete="off" />
+          <button id="saveAiApiKeyButton" class="button secondary" type="button">Сохранить AI key</button>
+        </div>
         <div class="sync-controls">
           <input id="githubTokenInput" type="password" placeholder="GitHub token для записи в repo" autocomplete="off" />
           <button id="saveGithubTokenButton" class="button secondary" type="button">Сохранить token</button>
@@ -292,9 +303,9 @@
       </article>
     </template>
 
-    <script src="./training-history.js?v=61"></script>
-    <script src="./training-feedback.js?v=61"></script>
-    <script src="./training-tracker.js?v=61"></script>
+    <script src="./training-history.js?v=62"></script>
+    <script src="./training-feedback.js?v=62"></script>
+    <script src="./training-tracker.js?v=62"></script>
     <script>
       // Bottom nav
       (function () {
@@ -326,7 +337,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v61";
+      const APP_VERSION = "v62";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

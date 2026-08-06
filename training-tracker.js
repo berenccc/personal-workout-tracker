@@ -2,6 +2,10 @@ const STORAGE_KEY = "training-tracker-v3";
 const AUTH_KEY = "training-tracker-auth";
 const GITHUB_TOKEN_KEY = "training-tracker-github-token";
 const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
+const AI_KEY_STORAGE = "training-tracker-ai-key";
+const AI_RESPONSE_STORAGE = "training-tracker-ai-response-v1";
+const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+const AI_MODEL = "gpt-4o-mini";
 const APP_PASSCODE = "train2026";
 const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
@@ -91,6 +95,11 @@ const elements = {
   selectedExercises: document.querySelector("#selectedExercises"),
   exerciseTemplate: document.querySelector("#exerciseTemplate"),
   coachBox: document.querySelector("#coachBox"),
+  aiQuestionInput: document.querySelector("#aiQuestionInput"),
+  askAiButton: document.querySelector("#askAiButton"),
+  aiStatus: document.querySelector("#aiStatus"),
+  aiApiKeyInput: document.querySelector("#aiApiKeyInput"),
+  saveAiApiKeyButton: document.querySelector("#saveAiApiKeyButton"),
   readinessPill: document.querySelector("#readinessPill"),
   monthlyChart: document.querySelector("#monthlyChart"),
   prBoard: document.querySelector("#prBoard"),
@@ -114,6 +123,7 @@ function boot() {
   bindEvents();
   render();
   initializeRemoteSync();
+  initAiCoach();
 }
 
 async function requestPersistentStorage() {
@@ -184,6 +194,8 @@ function bindEvents() {
   });
 
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
+  elements.saveAiApiKeyButton.addEventListener("click", saveAiApiKey);
+  elements.askAiButton.addEventListener("click", askAiCoach);
   elements.pushLatestWorkoutButton.addEventListener("click", pushLatestWorkoutToGit);
   elements.checkGithubTokenButton.addEventListener("click", checkGithubTokenWrite);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
@@ -1106,14 +1118,16 @@ function renderCoach() {
   elements.readinessPill.textContent = readinessLabel(readiness);
   elements.readinessPill.className = `pill ${readiness === "good" ? "good" : readiness === "bad" ? "bad" : "warn"}`;
 
+  const aiCard = aiCoachCardHtml();
+
   if (window.trainingFeedback?.cards?.length) {
-    renderTrainingFeedback(window.trainingFeedback);
+    elements.coachBox.innerHTML = aiCard + trainingFeedbackHtml(window.trainingFeedback);
     return;
   }
 
   const fatigue = fatigueScore(state.workouts);
   const next = nextSessionSuggestion(state.workouts, readiness, fatigue);
-  elements.coachBox.innerHTML = next.map((item) => `
+  elements.coachBox.innerHTML = aiCard + next.map((item) => `
     <article class="coach-card">
       <strong>${item.title}</strong>
       <p>${item.text}</p>
@@ -1121,9 +1135,9 @@ function renderCoach() {
   `).join("");
 }
 
-function renderTrainingFeedback(feedback) {
+function trainingFeedbackHtml(feedback) {
   const updated = feedback.updatedAt ? `<p class="feedback-meta">Обновлено: ${formatDate(feedback.updatedAt)}</p>` : "";
-  elements.coachBox.innerHTML = `
+  return `
     <article class="coach-card feedback-card">
       <strong>${escapeHtml(feedback.title || "Фидбек после тренировки")}</strong>
       ${updated}
@@ -1135,6 +1149,153 @@ function renderTrainingFeedback(feedback) {
       </article>
     `).join("")}
   `;
+}
+
+function initAiCoach() {
+  setAiStatus(
+    localStorage.getItem(AI_KEY_STORAGE)
+      ? "AI-тренер готов. Ответ появится карточкой ниже."
+      : "Нужен OpenAI API key: вкладка Синхронизация → Сохранить AI key."
+  );
+}
+
+function setAiStatus(text) {
+  elements.aiStatus.textContent = text;
+}
+
+function saveAiApiKey() {
+  const key = elements.aiApiKeyInput.value.trim();
+  if (!key) {
+    localStorage.removeItem(AI_KEY_STORAGE);
+    setAiStatus("AI key удалён с этого устройства.");
+    return;
+  }
+
+  localStorage.setItem(AI_KEY_STORAGE, key);
+  elements.aiApiKeyInput.value = "";
+  setAiStatus("AI key сохранён. Он хранится только в этом браузере.");
+}
+
+function loadAiResponse() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AI_RESPONSE_STORAGE));
+    return saved?.text ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function aiCoachCardHtml() {
+  const saved = loadAiResponse();
+  if (!saved) return "";
+
+  const meta = saved.createdAt ? `<p class="feedback-meta">Ответ AI от ${formatDate(saved.createdAt.slice(0, 10))}</p>` : "";
+  const question = saved.question ? `<p class="feedback-meta">Вопрос: ${escapeHtml(saved.question)}</p>` : "";
+  const body = escapeHtml(saved.text)
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/\n/g, "<br>");
+
+  return `
+    <article class="coach-card ai-card">
+      <strong>AI-тренер</strong>
+      ${meta}
+      ${question}
+      <p>${body}</p>
+    </article>
+  `;
+}
+
+function buildAiCoachPrompt(question) {
+  const recent = state.workouts.slice(-8).map((workout) => {
+    const header = `${workout.date} · готовность: ${workout.readiness || "?"} · итог: ${workout.sessionEffort || "?"}${workout.durationMinutes ? ` · ${workout.durationMinutes} мин` : ""}`;
+    const notes = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ");
+    const lines = (workout.exercises || []).map((item) => {
+      const exercise = findExercise(item.exerciseId);
+      const sets = (item.sets || [])
+        .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}${set.done === false ? " (скип)" : ""}`)
+        .join(", ");
+      return `  - ${exercise ? exercise.name : item.exerciseId}: ${sets}`;
+    });
+    return [header, notes ? `  заметки: ${notes}` : null, ...lines].filter(Boolean).join("\n");
+  });
+
+  const plan = selected.map((item) => {
+    const exercise = findExercise(item.exerciseId);
+    const sets = item.sets.map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}`).join(", ");
+    return `- ${exercise ? exercise.name : item.exerciseId}: ${sets}`;
+  });
+
+  const arsenal = exercises.map((exercise) => exercise.name).join(", ");
+
+  return [
+    "Последние тренировки (вес x повторы @ целевой/фактический RPE):",
+    recent.join("\n\n") || "истории нет",
+    "",
+    `План ближайшей тренировки (${elements.dateInput.value || "дата не выбрана"}): ${elements.notesInput.value || ""}`,
+    plan.join("\n") || "план пуст",
+    "",
+    `Доступные упражнения: ${arsenal}.`,
+    question ? `Вопрос спортсмена: ${question}` : "Вопроса нет — дай разбор последней тренировки и скорректируй план следующей.",
+  ].join("\n");
+}
+
+const AI_SYSTEM_PROMPT = [
+  "Ты персональный тренер. Атлет тренируется в зале 2-3 раза в неделю, цель: форма и самочувствие без выгорания.",
+  "Правила: рабочие подходы держать на RPE 6-8, без отказа; прогресс маленькими шагами (+1-2 повтора или +2.5 кг) только при стабильной технике и RPE ≤ 8.",
+  "Используй только упражнения из списка доступных. Не предлагай reverse-fly и farmer-carry.",
+  "Отвечай по-русски, кратко и структурно: 3-5 коротких блоков, каждый с заголовка строкой вида 'Заголовок:'. Без markdown-разметки (#, *, -).",
+  "Если в данных есть тревожные сигналы (RPE 9-10, боль, too-hard), обязательно отметь их и предложи корректировку.",
+].join(" ");
+
+async function askAiCoach() {
+  const key = localStorage.getItem(AI_KEY_STORAGE);
+  if (!key) {
+    setAiStatus("Сначала сохрани OpenAI API key во вкладке Синхронизация.");
+    return;
+  }
+
+  const question = elements.aiQuestionInput.value.trim();
+  elements.askAiButton.disabled = true;
+  setAiStatus("AI-тренер думает…");
+
+  try {
+    const response = await fetch(AI_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        temperature: 0.4,
+        max_tokens: 700,
+        messages: [
+          { role: "system", content: AI_SYSTEM_PROMPT },
+          { role: "user", content: buildAiCoachPrompt(question) },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(response.status === 401 ? "неверный API key" : `API вернул ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content?.trim();
+    if (!text) throw new Error("пустой ответ модели");
+
+    localStorage.setItem(
+      AI_RESPONSE_STORAGE,
+      JSON.stringify({ text, question: question || null, createdAt: new Date().toISOString() })
+    );
+    elements.aiQuestionInput.value = "";
+    renderCoach();
+    setAiStatus("Готово: ответ в карточке ниже.");
+  } catch (error) {
+    setAiStatus(`Не получилось: ${error.message}.`);
+  } finally {
+    elements.askAiButton.disabled = false;
+  }
 }
 
 function nextSessionSuggestion(workouts, readiness, fatigue) {
