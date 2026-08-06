@@ -3,9 +3,11 @@ const AUTH_KEY = "training-tracker-auth";
 const GITHUB_TOKEN_KEY = "training-tracker-github-token";
 const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
 const AI_KEY_STORAGE = "training-tracker-ai-key";
-const AI_RESPONSE_STORAGE = "training-tracker-ai-response-v1";
+const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const AI_MODEL = "gpt-4o-mini";
+const AI_MAX_TOOL_ROUNDS = 6;
+const AI_CHAT_HISTORY_LIMIT = 30;
 const APP_PASSCODE = "train2026";
 const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
@@ -95,8 +97,10 @@ const elements = {
   selectedExercises: document.querySelector("#selectedExercises"),
   exerciseTemplate: document.querySelector("#exerciseTemplate"),
   coachBox: document.querySelector("#coachBox"),
-  aiQuestionInput: document.querySelector("#aiQuestionInput"),
-  askAiButton: document.querySelector("#askAiButton"),
+  aiChatLog: document.querySelector("#aiChatLog"),
+  aiChatInput: document.querySelector("#aiChatInput"),
+  aiChatSendButton: document.querySelector("#aiChatSendButton"),
+  aiChatClearButton: document.querySelector("#aiChatClearButton"),
   aiStatus: document.querySelector("#aiStatus"),
   aiApiKeyInput: document.querySelector("#aiApiKeyInput"),
   saveAiApiKeyButton: document.querySelector("#saveAiApiKeyButton"),
@@ -195,7 +199,14 @@ function bindEvents() {
 
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
   elements.saveAiApiKeyButton.addEventListener("click", saveAiApiKey);
-  elements.askAiButton.addEventListener("click", askAiCoach);
+  elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
+  elements.aiChatClearButton.addEventListener("click", clearAiChat);
+  elements.aiChatInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey && !isTouchDevice()) {
+      event.preventDefault();
+      sendAiChatMessage();
+    }
+  });
   elements.pushLatestWorkoutButton.addEventListener("click", pushLatestWorkoutToGit);
   elements.checkGithubTokenButton.addEventListener("click", checkGithubTokenWrite);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
@@ -1118,16 +1129,14 @@ function renderCoach() {
   elements.readinessPill.textContent = readinessLabel(readiness);
   elements.readinessPill.className = `pill ${readiness === "good" ? "good" : readiness === "bad" ? "bad" : "warn"}`;
 
-  const aiCard = aiCoachCardHtml();
-
   if (window.trainingFeedback?.cards?.length) {
-    elements.coachBox.innerHTML = aiCard + trainingFeedbackHtml(window.trainingFeedback);
+    elements.coachBox.innerHTML = trainingFeedbackHtml(window.trainingFeedback);
     return;
   }
 
   const fatigue = fatigueScore(state.workouts);
   const next = nextSessionSuggestion(state.workouts, readiness, fatigue);
-  elements.coachBox.innerHTML = aiCard + next.map((item) => `
+  elements.coachBox.innerHTML = next.map((item) => `
     <article class="coach-card">
       <strong>${item.title}</strong>
       <p>${item.text}</p>
@@ -1151,10 +1160,19 @@ function trainingFeedbackHtml(feedback) {
   `;
 }
 
+// ── AI-тренер: чат-агент с инструментами ────────────────────────────
+
+let aiChat = loadAiChat();
+
+function isTouchDevice() {
+  return window.matchMedia?.("(pointer: coarse)").matches;
+}
+
 function initAiCoach() {
+  renderAiChat();
   setAiStatus(
     localStorage.getItem(AI_KEY_STORAGE)
-      ? "AI-тренер готов. Ответ появится карточкой ниже."
+      ? ""
       : "Нужен OpenAI API key: вкладка Синхронизация → Сохранить AI key."
   );
 }
@@ -1176,125 +1194,288 @@ function saveAiApiKey() {
   setAiStatus("AI key сохранён. Он хранится только в этом браузере.");
 }
 
-function loadAiResponse() {
+function loadAiChat() {
   try {
-    const saved = JSON.parse(localStorage.getItem(AI_RESPONSE_STORAGE));
-    return saved?.text ? saved : null;
+    const saved = JSON.parse(localStorage.getItem(AI_CHAT_STORAGE));
+    return Array.isArray(saved) ? saved.filter((m) => m?.role && m?.content) : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-function aiCoachCardHtml() {
-  const saved = loadAiResponse();
-  if (!saved) return "";
-
-  const meta = saved.createdAt ? `<p class="feedback-meta">Ответ AI от ${formatDate(saved.createdAt.slice(0, 10))}</p>` : "";
-  const question = saved.question ? `<p class="feedback-meta">Вопрос: ${escapeHtml(saved.question)}</p>` : "";
-  const body = escapeHtml(saved.text)
-    .replace(/\n{2,}/g, "</p><p>")
-    .replace(/\n/g, "<br>");
-
-  return `
-    <article class="coach-card ai-card">
-      <strong>AI-тренер</strong>
-      ${meta}
-      ${question}
-      <p>${body}</p>
-    </article>
-  `;
+function persistAiChat() {
+  aiChat = aiChat.slice(-AI_CHAT_HISTORY_LIMIT);
+  localStorage.setItem(AI_CHAT_STORAGE, JSON.stringify(aiChat));
 }
 
-function buildAiCoachPrompt(question) {
-  const recent = state.workouts.slice(-8).map((workout) => {
-    const header = `${workout.date} · готовность: ${workout.readiness || "?"} · итог: ${workout.sessionEffort || "?"}${workout.durationMinutes ? ` · ${workout.durationMinutes} мин` : ""}`;
-    const notes = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ");
-    const lines = (workout.exercises || []).map((item) => {
-      const exercise = findExercise(item.exerciseId);
-      const sets = (item.sets || [])
-        .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}${set.done === false ? " (скип)" : ""}`)
-        .join(", ");
-      return `  - ${exercise ? exercise.name : item.exerciseId}: ${sets}`;
-    });
-    return [header, notes ? `  заметки: ${notes}` : null, ...lines].filter(Boolean).join("\n");
-  });
+function clearAiChat() {
+  aiChat = [];
+  localStorage.removeItem(AI_CHAT_STORAGE);
+  renderAiChat();
+  setAiStatus("");
+}
 
-  const plan = selected.map((item) => {
+function renderAiChat() {
+  if (!aiChat.length) {
+    elements.aiChatLog.innerHTML = `
+      <div class="ai-chat-empty">
+        Это твой AI-тренер: он сам смотрит историю тренировок и план в приложении.
+        Примеры: «оцени последнюю тренировку», «дай фидбэк по неделе», «запланируй следующую»,
+        «замени жим ногами», «добавь упражнение на спину», «сделай план полегче».
+      </div>
+    `;
+    return;
+  }
+
+  elements.aiChatLog.innerHTML = aiChat
+    .map((message) => {
+      const body = escapeHtml(message.content).replace(/\n/g, "<br>");
+      return `<div class="ai-msg ${message.role === "user" ? "ai-msg-user" : "ai-msg-bot"}">${body}</div>`;
+    })
+    .join("");
+  elements.aiChatLog.scrollTop = elements.aiChatLog.scrollHeight;
+}
+
+const AI_SYSTEM_PROMPT = `Ты — персональный AI-тренер внутри приложения-трекера тренировок. Ты общаешься на русском, понимаешь разговорные и синонимичные формулировки: «оцени тренировку» = «дай фидбэк» = «разбери сессию» = «как я отработал»; «запланируй» = «составь план» = «накидай тренировку» = «что делать в следующий раз»; «замени/поменяй/убери/добавь упражнение», «сделай легче/тяжелее/короче». Если просьба неоднозначна, задай один короткий уточняющий вопрос, иначе действуй сразу.
+
+ПРОФИЛЬ АТЛЕТА: мужчина, тренируется в зале 2-3 раза в неделю на тренажёрах, гантелях и штанге. Цель — форма, самочувствие и сила без выгорания и без работы в отказ. Не любит и не может делать: reverse-fly (нет тренажёра), farmer-carry. История знает случаи перегруза ЦНС и боли в левом плече — следи за этими сигналами.
+
+ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план в приложении), get_exercise_catalog (доступные упражнения и их id). Изменение плана делай через set_planned_workout — это реально обновит план в приложении; после вызова коротко подтверди, что именно поменял. Используй только exerciseId из каталога.
+
+МЕТОДИКА (научная база: позиция ACSM и мета-анализы по гипертрофии/силе):
+- Объём: 10-20 рабочих подходов на мышечную группу в неделю, 2-3 подхода на упражнение, 8-20 повторов (в основном 6-12). Больше 20 подходов в неделю на группу — убывающая отдача.
+- Интенсивность: рабочие подходы RPE 6-8 (2-4 повтора в запасе). RPE 9-10 и отказ — только как редкое исключение, не планируй их.
+- Прогрессия: дабл-прогрессия — сначала +1-2 повтора в диапазоне, затем +2.5 кг (ноги +5-10 кг) и назад к нижней границе повторов. Прогресс только если RPE ≤ 8 и техника чистая.
+- Восстановление: мышечной группе 48+ часов между тяжёлыми сессиями; отдых между подходами 2-3 мин на базовых.
+- Разгрузка: каждые 4-6 недель или при сигналах усталости (растущий RPE при тех же весах, плохой сон, нет желания идти в зал, itог too-hard) — неделя с −30-50% объёма.
+- Боль: при острой боли убрать провоцирующее движение, подобрать безболевую замену; при повторяющейся боли посоветовать врача. Дискомфорт в левом плече → осторожнее с жимами над головой и глубоким жимом.
+
+СТИЛЬ ОТВЕТА: кратко, для чтения с телефона. 2-6 коротких абзацев или строк, без markdown-разметки (#, *, -, **). Конкретные цифры: веса, повторы, целевой RPE. Хвали за реальный прогресс, честно указывай на риски (пики RPE 9-10, лишний объём, слишком частые тренировки одной группы).`;
+
+const AI_TOOL_DEFS = [
+  {
+    type: "function",
+    function: {
+      name: "get_recent_workouts",
+      description: "Последние сохранённые тренировки атлета: дата, готовность до, итог после, длительность, заметки и все подходы (вес x повторы @ RPE).",
+      parameters: {
+        type: "object",
+        properties: {
+          count: { type: "integer", description: "Сколько последних тренировок вернуть, 1-12. По умолчанию 3." },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_planned_workout",
+      description: "Текущий план следующей тренировки в приложении: дата, заметка-фокус, упражнения и целевые подходы.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_exercise_catalog",
+      description: "Каталог доступных упражнений: exerciseId, название, группа мышц, единица веса. Только эти exerciseId можно использовать в set_planned_workout.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "set_planned_workout",
+      description: "Полностью заменяет план следующей тренировки в приложении (упражнения, подходы, целевые RPE, заметку). Вызывай, когда пользователь попросил запланировать или изменить тренировку.",
+      parameters: {
+        type: "object",
+        properties: {
+          notes: { type: "string", description: "Короткая заметка-фокус тренировки (1-2 предложения, по-русски)." },
+          exercises: {
+            type: "array",
+            description: "Упражнения по порядку выполнения.",
+            items: {
+              type: "object",
+              properties: {
+                exerciseId: { type: "string", description: "id из get_exercise_catalog" },
+                sets: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      weight: { type: "number", description: "Вес в кг (для кардио — минуты)" },
+                      reps: { type: "integer", description: "Повторы (для кардио — 1)" },
+                      rpe: { type: "number", description: "Целевой RPE 5-8" },
+                    },
+                    required: ["weight", "reps"],
+                  },
+                },
+              },
+              required: ["exerciseId", "sets"],
+            },
+          },
+        },
+        required: ["exercises"],
+      },
+    },
+  },
+];
+
+function describeWorkoutForAi(workout) {
+  const header = `${workout.date} · готовность: ${workout.readiness || "?"} · итог: ${workout.sessionEffort || "?"}${workout.durationMinutes ? ` · ${workout.durationMinutes} мин` : ""}`;
+  const notes = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ");
+  const lines = (workout.exercises || []).map((item) => {
     const exercise = findExercise(item.exerciseId);
-    const sets = item.sets.map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}`).join(", ");
-    return `- ${exercise ? exercise.name : item.exerciseId}: ${sets}`;
+    const sets = (item.sets || [])
+      .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}${set.done === false ? " (не сделан)" : ""}`)
+      .join(", ");
+    return `  - ${exercise ? exercise.name : item.exerciseId}: ${sets}`;
   });
-
-  const arsenal = exercises.map((exercise) => exercise.name).join(", ");
-
-  return [
-    "Последние тренировки (вес x повторы @ целевой/фактический RPE):",
-    recent.join("\n\n") || "истории нет",
-    "",
-    `План ближайшей тренировки (${elements.dateInput.value || "дата не выбрана"}): ${elements.notesInput.value || ""}`,
-    plan.join("\n") || "план пуст",
-    "",
-    `Доступные упражнения: ${arsenal}.`,
-    question ? `Вопрос спортсмена: ${question}` : "Вопроса нет — дай разбор последней тренировки и скорректируй план следующей.",
-  ].join("\n");
+  return [header, notes ? `  заметки: ${notes}` : null, ...lines].filter(Boolean).join("\n");
 }
 
-const AI_SYSTEM_PROMPT = [
-  "Ты персональный тренер. Атлет тренируется в зале 2-3 раза в неделю, цель: форма и самочувствие без выгорания.",
-  "Правила: рабочие подходы держать на RPE 6-8, без отказа; прогресс маленькими шагами (+1-2 повтора или +2.5 кг) только при стабильной технике и RPE ≤ 8.",
-  "Используй только упражнения из списка доступных. Не предлагай reverse-fly и farmer-carry.",
-  "Отвечай по-русски, кратко и структурно: 3-5 коротких блоков, каждый с заголовка строкой вида 'Заголовок:'. Без markdown-разметки (#, *, -).",
-  "Если в данных есть тревожные сигналы (RPE 9-10, боль, too-hard), обязательно отметь их и предложи корректировку.",
-].join(" ");
+function executeAiTool(name, args) {
+  if (name === "get_recent_workouts") {
+    const count = Math.min(Math.max(Number(args.count) || 3, 1), 12);
+    const recent = state.workouts.slice(-count).map(describeWorkoutForAi);
+    return recent.length ? recent.join("\n\n") : "Сохранённых тренировок нет.";
+  }
 
-async function askAiCoach() {
+  if (name === "get_planned_workout") {
+    const plan = selected.map((item) => {
+      const exercise = findExercise(item.exerciseId);
+      const sets = item.sets
+        .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}`)
+        .join(", ");
+      return `- ${exercise ? exercise.name : item.exerciseId} (${item.exerciseId}): ${sets}`;
+    });
+    return [
+      `Дата: ${elements.dateInput.value || "не выбрана"}`,
+      `Заметка: ${elements.notesInput.value || "нет"}`,
+      "Упражнения:",
+      plan.join("\n") || "план пуст",
+    ].join("\n");
+  }
+
+  if (name === "get_exercise_catalog") {
+    return exercises
+      .map((exercise) => `${exercise.id} — ${exercise.name} (${exercise.group}, ${exercise.unit})`)
+      .join("\n");
+  }
+
+  if (name === "set_planned_workout") {
+    const items = Array.isArray(args.exercises) ? args.exercises : [];
+    if (!items.length) return "Ошибка: список упражнений пуст, план не изменён.";
+
+    const unknown = items.filter((item) => !findExercise(item.exerciseId)).map((item) => item.exerciseId);
+    if (unknown.length) {
+      return `Ошибка: неизвестные exerciseId: ${unknown.join(", ")}. Возьми точные id из get_exercise_catalog и повтори вызов.`;
+    }
+
+    selected = items.map((item) =>
+      planEntry(
+        item.exerciseId,
+        (item.sets || []).map((set) => [Number(set.weight) || 0, Number(set.reps) || 0, set.rpe ? Number(set.rpe) : ""])
+      )
+    );
+    if (typeof args.notes === "string" && args.notes.trim()) {
+      elements.notesInput.value = args.notes.trim();
+    }
+    renderSelectedExercises();
+    saveWorkoutDraft();
+
+    const summary = selected
+      .map((item) => `${findExercise(item.exerciseId).name}: ${item.sets.length} подх.`)
+      .join("; ");
+    return `План в приложении обновлён (${selected.length} упражнений): ${summary}`;
+  }
+
+  return `Ошибка: неизвестный инструмент ${name}.`;
+}
+
+async function callOpenAi(key, messages) {
+  const response = await fetch(AI_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      temperature: 0.4,
+      max_tokens: 900,
+      messages,
+      tools: AI_TOOL_DEFS,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(response.status === 401 ? "неверный API key" : `API вернул ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function runAiConversation(key) {
+  const messages = [
+    { role: "system", content: `${AI_SYSTEM_PROMPT}\n\nСегодня ${formatInputDate(new Date())}.` },
+    ...aiChat.slice(-16).map((message) => ({ role: message.role, content: message.content })),
+  ];
+
+  for (let round = 0; round < AI_MAX_TOOL_ROUNDS; round++) {
+    const data = await callOpenAi(key, messages);
+    const message = data.choices?.[0]?.message;
+    if (!message) throw new Error("пустой ответ модели");
+
+    if (message.tool_calls?.length) {
+      messages.push(message);
+      for (const call of message.tool_calls) {
+        let result;
+        try {
+          result = executeAiTool(call.function.name, JSON.parse(call.function.arguments || "{}"));
+        } catch (error) {
+          result = `Ошибка инструмента: ${error.message}`;
+        }
+        messages.push({ role: "tool", tool_call_id: call.id, content: result });
+      }
+      continue;
+    }
+
+    const text = (message.content || "").trim();
+    if (text) return text;
+    throw new Error("пустой ответ модели");
+  }
+
+  throw new Error("слишком много шагов, сформулируй запрос проще");
+}
+
+async function sendAiChatMessage() {
   const key = localStorage.getItem(AI_KEY_STORAGE);
   if (!key) {
     setAiStatus("Сначала сохрани OpenAI API key во вкладке Синхронизация.");
     return;
   }
 
-  const question = elements.aiQuestionInput.value.trim();
-  elements.askAiButton.disabled = true;
-  setAiStatus("AI-тренер думает…");
+  const text = elements.aiChatInput.value.trim();
+  if (!text) return;
+
+  aiChat.push({ role: "user", content: text });
+  persistAiChat();
+  renderAiChat();
+  elements.aiChatInput.value = "";
+  elements.aiChatSendButton.disabled = true;
+  setAiStatus("Тренер смотрит твои данные…");
 
   try {
-    const response = await fetch(AI_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        temperature: 0.4,
-        max_tokens: 700,
-        messages: [
-          { role: "system", content: AI_SYSTEM_PROMPT },
-          { role: "user", content: buildAiCoachPrompt(question) },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(response.status === 401 ? "неверный API key" : `API вернул ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content?.trim();
-    if (!text) throw new Error("пустой ответ модели");
-
-    localStorage.setItem(
-      AI_RESPONSE_STORAGE,
-      JSON.stringify({ text, question: question || null, createdAt: new Date().toISOString() })
-    );
-    elements.aiQuestionInput.value = "";
-    renderCoach();
-    setAiStatus("Готово: ответ в карточке ниже.");
+    const reply = await runAiConversation(key);
+    aiChat.push({ role: "assistant", content: reply });
+    persistAiChat();
+    renderAiChat();
+    setAiStatus("");
   } catch (error) {
     setAiStatus(`Не получилось: ${error.message}.`);
   } finally {
-    elements.askAiButton.disabled = false;
+    elements.aiChatSendButton.disabled = false;
   }
 }
 
