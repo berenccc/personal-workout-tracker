@@ -1,5 +1,6 @@
 *
 !.gitignore
+!.nojekyll
 !index.html
 !cache-reset.html
 !training-tracker.html
