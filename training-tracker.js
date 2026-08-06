@@ -62,6 +62,7 @@ const exercises = [
 
 let state = loadState();
 let selected = [];
+let aiChat = loadAiChat();
 let workoutTimer = {
   startedAt: null,
   stoppedAt: null,
@@ -1161,8 +1162,6 @@ function trainingFeedbackHtml(feedback) {
 }
 
 // ── AI-тренер: чат-агент с инструментами ────────────────────────────
-
-let aiChat = loadAiChat();
 
 function isTouchDevice() {
   return window.matchMedia?.("(pointer: coarse)").matches;
