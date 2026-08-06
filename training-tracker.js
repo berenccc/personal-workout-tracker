@@ -4,6 +4,7 @@ const GITHUB_TOKEN_KEY = "training-tracker-github-token";
 const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
 const AI_KEY_STORAGE = "training-tracker-ai-key";
 const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
+const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
 const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const AI_MODEL = "gpt-4o-mini";
 const AI_MAX_TOOL_ROUNDS = 6;
@@ -124,6 +125,7 @@ function boot() {
   requestPersistentStorage();
   fillExerciseSelects();
   loadPlannedWorkout();
+  applyStoredAiPlan();
   restoreWorkoutDraft();
   bindEvents();
   render();
@@ -250,6 +252,7 @@ function bindEvents() {
       // Saving is more important than clipboard availability.
     }
     clearWorkoutDraft();
+    localStorage.removeItem(AI_PLAN_STORAGE);
     loadPlannedWorkout();
     resetWorkoutTimer();
     render();
@@ -1320,6 +1323,53 @@ const AI_TOOL_DEFS = [
   },
 ];
 
+function persistAiPlan() {
+  localStorage.setItem(
+    AI_PLAN_STORAGE,
+    JSON.stringify({
+      version: 1,
+      savedAt: Date.now(),
+      planDate: elements.dateInput.value || formatInputDate(new Date()),
+      notes: elements.notesInput.value,
+      exercises: selected.map((item) => ({
+        exerciseId: item.exerciseId,
+        sets: item.sets.map((set) => ({ weight: set.weight, reps: set.reps, rpe: set.rpe })),
+      })),
+    })
+  );
+}
+
+function applyStoredAiPlan() {
+  let plan;
+  try {
+    plan = JSON.parse(localStorage.getItem(AI_PLAN_STORAGE));
+  } catch {
+    localStorage.removeItem(AI_PLAN_STORAGE);
+    return;
+  }
+  if (!plan || plan.version !== 1 || !Array.isArray(plan.exercises) || !plan.exercises.length) return;
+
+  // План выполнен: после его сохранения появилась тренировка на эту дату или позже.
+  const planDate = plan.planDate || formatInputDate(new Date(plan.savedAt || Date.now()));
+  if (state.workouts.some((workout) => workout.date >= planDate)) {
+    localStorage.removeItem(AI_PLAN_STORAGE);
+    return;
+  }
+
+  const valid = plan.exercises.filter((item) => findExercise(item.exerciseId));
+  if (!valid.length) return;
+
+  selected = valid.map((item) =>
+    planEntry(item.exerciseId, (item.sets || []).map((set) => [set.weight, set.reps, set.rpe ?? ""]))
+  );
+  if (typeof plan.notes === "string" && plan.notes.trim()) {
+    elements.notesInput.value = plan.notes;
+  }
+  if (planDate >= formatInputDate(new Date())) {
+    elements.dateInput.value = planDate;
+  }
+}
+
 function describeWorkoutForAi(workout) {
   const header = `${workout.date} · готовность: ${workout.readiness || "?"} · итог: ${workout.sessionEffort || "?"}${workout.durationMinutes ? ` · ${workout.durationMinutes} мин` : ""}`;
   const notes = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ");
@@ -1381,6 +1431,7 @@ function executeAiTool(name, args) {
       elements.notesInput.value = args.notes.trim();
     }
     renderSelectedExercises();
+    persistAiPlan();
     saveWorkoutDraft();
 
     const summary = selected
