@@ -6,7 +6,7 @@ const AI_KEY_STORAGE = "training-tracker-ai-key";
 const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
 const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
-const AI_MODEL = "gpt-4o-mini";
+const AI_MODEL = "gpt-5.6-terra";
 const AI_MAX_TOOL_ROUNDS = 6;
 const AI_CHAT_HISTORY_LIMIT = 30;
 const APP_PASSCODE = "train2026";
@@ -430,9 +430,14 @@ function initializeRemoteSync() {
 function importGithubTokenFromUrl() {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const token = hash.get("syncToken");
-  if (!token) return;
+  const aiKey = hash.get("aiKey");
+  if (!token && !aiKey) return;
 
-  rememberGithubToken(token);
+  if (token) rememberGithubToken(token);
+  if (aiKey) {
+    localStorage.setItem(AI_KEY_STORAGE, aiKey);
+    setAiStatus("AI key импортирован из ссылки и сохранён в браузере.");
+  }
   history.replaceState(null, document.title, window.location.pathname + window.location.search);
 }
 
@@ -1453,7 +1458,9 @@ async function callOpenAi(key, messages) {
     body: JSON.stringify({
       model: AI_MODEL,
       temperature: 0.4,
-      max_tokens: 900,
+      max_completion_tokens: 900,
+      // Требование API: function tools у reasoning-моделей 5.x в chat/completions работают только с reasoning_effort "none".
+      reasoning_effort: "none",
       messages,
       tools: AI_TOOL_DEFS,
     }),
