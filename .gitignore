@@ -1,6 +1,9 @@
 *
 !.gitignore
 !.nojekyll
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
 !index.html
 !cache-reset.html
 !training-tracker.html
