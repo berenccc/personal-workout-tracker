@@ -7,7 +7,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-08-05";
+const UPCOMING_WORKOUT_DATE = "2026-08-07";
 
 const exercises = [
   { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
@@ -591,17 +591,18 @@ function addExercise(exerciseId) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Ср 05.08: лёгкий фулбади после 90-минутной тренировки 03.08. Движение, а не проверка силы: всё RPE 5-7, без отказа, тяжёлого жима ногами, плеч и добивок рук.";
+  elements.notesInput.value = "Пт 07.08: умеренный pull + ноги + кор после лёгкого фулбади. Держим почти всё в RPE 6-8, без отказа и без тяжёлого финишного жима на грудь.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("leg-extension", [[65, 12, 6], [75, 12, 7], [80, 10, 7]]),
-    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [45, 10, 7]]),
-    planEntry("row", [[52, 12, 6], [57, 10, 7], [62, 10, 7]]),
-    planEntry("chest-machine", [[45, 12, 6], [50, 10, 7], [55, 8, 7]]),
-    planEntry("dead-bug", [[18, 20, 6], [18, 20, 6], [18, 20, 6]]),
-    planEntry("treadmill", [[10, 1, 5]]),
+    planEntry("gravitron", [[35, 10, 6], [30, 8, 7], [25, 6, 8]]),
+    planEntry("lat-pulldown", [[57, 10, 6], [67, 8, 7], [67, 8, 7]]),
+    planEntry("row", [[57, 12, 6], [67, 10, 7], [67, 10, 7]]),
+    planEntry("leg-press", [[160, 10, 6], [180, 10, 7], [190, 8, 8]]),
+    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [50, 10, 7]]),
+    planEntry("dead-bug", [[18, 20, 6], [20, 20, 6], [20, 20, 6]]),
+    planEntry("treadmill", [[8, 1, 5]]),
   ];
 }
 
