@@ -256,6 +256,12 @@ function bindEvents() {
   elements.saveAiApiKeyButton.addEventListener("click", saveAiApiKey);
   elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
   elements.aiChatClearButton.addEventListener("click", clearAiChat);
+  document.querySelectorAll(".ai-quick-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      elements.aiChatInput.value = chip.dataset.question;
+      sendAiChatMessage();
+    });
+  });
   elements.aiChatInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey && !isTouchDevice()) {
       event.preventDefault();
