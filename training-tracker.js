@@ -155,6 +155,7 @@ const elements = {
   aiChatInput: document.querySelector("#aiChatInput"),
   aiChatSendButton: document.querySelector("#aiChatSendButton"),
   aiChatClearButton: document.querySelector("#aiChatClearButton"),
+  aiRetryButton: document.querySelector("#aiRetryButton"),
   aiStatus: document.querySelector("#aiStatus"),
   aiApiKeyInput: document.querySelector("#aiApiKeyInput"),
   saveAiApiKeyButton: document.querySelector("#saveAiApiKeyButton"),
@@ -256,6 +257,7 @@ function bindEvents() {
   elements.saveAiApiKeyButton.addEventListener("click", saveAiApiKey);
   elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
   elements.aiChatClearButton.addEventListener("click", clearAiChat);
+  elements.aiRetryButton.addEventListener("click", retryAiChat);
   document.querySelectorAll(".ai-quick-chip").forEach((chip) => {
     chip.addEventListener("click", () => {
       elements.aiChatInput.value = chip.dataset.question;
@@ -1281,6 +1283,7 @@ function clearAiChat() {
   localStorage.removeItem(AI_CHAT_STORAGE);
   renderAiChat();
   setAiStatus("");
+  elements.aiRetryButton.hidden = true;
 }
 
 function renderAiChat() {
@@ -1589,29 +1592,54 @@ function executeAiTool(name, args) {
   return `Ошибка: неизвестный инструмент ${name}.`;
 }
 
-async function callOpenAi(key, messages) {
-  const response = await fetch(AI_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      temperature: 0.4,
-      max_completion_tokens: 900,
-      // Требование API: function tools у reasoning-моделей 5.x в chat/completions работают только с reasoning_effort "none".
-      reasoning_effort: "none",
-      messages,
-      tools: AI_TOOL_DEFS,
-    }),
-  });
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-  if (!response.ok) {
-    throw new Error(response.status === 401 ? "неверный API key" : `API вернул ${response.status}`);
+async function callOpenAi(key, messages) {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let response;
+    try {
+      response = await fetch(AI_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify({
+          model: AI_MODEL,
+          temperature: 0.4,
+          max_completion_tokens: 900,
+          // Требование API: function tools у reasoning-моделей 5.x в chat/completions работают только с reasoning_effort "none".
+          reasoning_effort: "none",
+          messages,
+          tools: AI_TOOL_DEFS,
+        }),
+      });
+    } catch {
+      // Обрыв сети (в Safari — «Load failed»): пробуем ещё раз с паузой.
+      if (attempt < maxAttempts) {
+        setAiStatus(`Связь прервалась, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
+        await sleep(1200 * attempt);
+        continue;
+      }
+      throw new Error("нет связи с OpenAI. Проверь интернет и не сворачивай приложение, пока тренер отвечает");
+    }
+
+    if (response.status === 401) throw new Error("неверный API key");
+    if ((response.status === 429 || response.status >= 500) && attempt < maxAttempts) {
+      setAiStatus(`OpenAI занят, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
+      await sleep(1500 * attempt);
+      continue;
+    }
+    if (!response.ok) throw new Error(`API вернул ${response.status}`);
+
+    return response.json();
   }
 
-  return response.json();
+  throw new Error("OpenAI не отвечает, попробуй чуть позже");
 }
 
 async function runAiConversation(key) {
@@ -1661,7 +1689,18 @@ async function sendAiChatMessage() {
   persistAiChat();
   renderAiChat();
   elements.aiChatInput.value = "";
+  await runAiChatCycle(key);
+}
+
+async function retryAiChat() {
+  const key = localStorage.getItem(AI_KEY_STORAGE);
+  if (!key || !aiChat.length || aiChat.at(-1).role !== "user") return;
+  await runAiChatCycle(key);
+}
+
+async function runAiChatCycle(key) {
   elements.aiChatSendButton.disabled = true;
+  elements.aiRetryButton.hidden = true;
   setAiStatus("Тренер смотрит твои данные…");
 
   try {
@@ -1672,6 +1711,7 @@ async function sendAiChatMessage() {
     setAiStatus("");
   } catch (error) {
     setAiStatus(`Не получилось: ${error.message}.`);
+    elements.aiRetryButton.hidden = false;
   } finally {
     elements.aiChatSendButton.disabled = false;
   }

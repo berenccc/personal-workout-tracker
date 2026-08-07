@@ -1304,13 +1304,35 @@ select {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: 76px;
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 11px 12px;
   background: var(--panel-2);
   color: var(--text);
   font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
   resize: vertical;
+}
+
+@media (max-width: 620px) {
+  .ai-chat-composer {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-chat-composer textarea {
+    min-height: 92px;
+  }
+
+  .ai-chat-composer .button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .ai-chat-log {
+    max-height: 46vh;
+  }
 }
 
 .ai-chat-meta {
