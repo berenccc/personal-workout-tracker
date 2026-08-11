@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-08-07T16:57:20.890Z",
-  "lastSavedWorkoutId": "manual-2026-08-07-eafbd40c-9bf9-42a6-aba3-a0fd28137f7f",
+  "updatedAt": "2026-08-11T07:32:21.760Z",
+  "lastSavedWorkoutId": "manual-2026-08-11-e74ec628-624c-4679-a742-7a4e0f7efbd3",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -13571,6 +13571,118 @@
               "reps": 12,
               "rpe": 7,
               "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-11-e74ec628-624c-4679-a742-7a4e0f7efbd3",
+      "date": "2026-08-11",
+      "readiness": "okay",
+      "notes": "Командировка и смена часового пояса: восстановительная сессия на 35–45 минут. Всё RPE 5–6, без попыток догонять веса; если сон плохой — сделай только кардио и кор.",
+      "sessionEffort": "normal",
+      "afterNotes": "",
+      "durationMs": 9003,
+      "durationMinutes": 0,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 10,
+              "reps": 1,
+              "rpe": 5,
+              "done": false,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 5,
+              "done": false,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 6,
+              "done": false,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 5,
+              "done": false,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": false,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 12,
+              "rpe": 5,
+              "done": false,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": false,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "dead-bug",
+          "sets": [
+            {
+              "weight": 16,
+              "reps": 16,
+              "rpe": 5,
+              "done": false,
+              "mark": "normal"
+            },
+            {
+              "weight": 16,
+              "reps": 16,
+              "rpe": 5,
+              "done": false,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "treadmill",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 1,
+              "rpe": 5,
+              "done": false,
               "mark": "normal"
             }
           ]
