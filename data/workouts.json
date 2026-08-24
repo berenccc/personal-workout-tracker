@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-08-11T07:32:21.760Z",
-  "lastSavedWorkoutId": "manual-2026-08-11-e74ec628-624c-4679-a742-7a4e0f7efbd3",
+  "updatedAt": "2026-08-24T17:14:07.170Z",
+  "lastSavedWorkoutId": "manual-2026-08-24-97798cfd-9723-458f-baf7-40400078cca8",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -13683,6 +13683,1006 @@
               "reps": 1,
               "rpe": 5,
               "done": false,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-24-7ab03409-207f-4bcc-8b79-116decaa4a5c",
+      "date": "2026-08-24",
+      "readiness": "okay",
+      "notes": "Возвращение после 2 недель болезни: лёгкий фулбади 40–50 минут. Всё RPE 5–6, без отказа и без попыток вернуть прежние веса; при одышке, слабости или боли в левом плече остановись.",
+      "sessionEffort": "normal",
+      "afterNotes": "Почувствовал боль в правом колене на жиме ногами и остановился.",
+      "durationMs": 3863244,
+      "durationMinutes": 64,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 47,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 120,
+              "reps": 7,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 55,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "custom-tritseps-trenazher",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 75,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-24-97798cfd-9723-458f-baf7-40400078cca8",
+      "date": "2026-08-24",
+      "readiness": "okay",
+      "notes": "Возвращение после 2 недель болезни: лёгкий фулбади 40–50 минут. Всё RPE 5–6, без отказа и без попыток вернуть прежние веса; при одышке, слабости или боли в левом плече остановись.",
+      "sessionEffort": "normal",
+      "afterNotes": "Почувствовал боль в правом колене на жиме ногами и остановился.",
+      "durationMs": 3863244,
+      "durationMinutes": 64,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 47,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 120,
+              "reps": 7,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 55,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "custom-tritseps-trenazher",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 75,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-24-5844aad2-a0ee-4281-8c81-5d40250ceb2c",
+      "date": "2026-08-24",
+      "readiness": "okay",
+      "notes": "Возвращение после 2 недель болезни: лёгкий фулбади 40–50 минут. Всё RPE 5–6, без отказа и без попыток вернуть прежние веса; при одышке, слабости или боли в левом плече остановись.",
+      "sessionEffort": "normal",
+      "afterNotes": "Почувствовал боль в правом колене на жиме ногами и остановился.",
+      "durationMs": 3863244,
+      "durationMinutes": 64,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 47,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 120,
+              "reps": 7,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 55,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "custom-tritseps-trenazher",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 75,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-24-4e626a05-42c6-49ce-91e0-b73410132a64",
+      "date": "2026-08-24",
+      "readiness": "okay",
+      "notes": "Возвращение после 2 недель болезни: лёгкий фулбади 40–50 минут. Всё RPE 5–6, без отказа и без попыток вернуть прежние веса; при одышке, слабости или боли в левом плече остановись.",
+      "sessionEffort": "normal",
+      "afterNotes": "Почувствовал боль в правом колене на жиме ногами и остановился.",
+      "durationMs": 3863244,
+      "durationMinutes": 64,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 47,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 120,
+              "reps": 7,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 55,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "custom-tritseps-trenazher",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 75,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-24-3316b179-318b-4da8-a398-151b59604150",
+      "date": "2026-08-24",
+      "readiness": "okay",
+      "notes": "Возвращение после 2 недель болезни: лёгкий фулбади 40–50 минут. Всё RPE 5–6, без отказа и без попыток вернуть прежние веса; при одышке, слабости или боли в левом плече остановись.",
+      "sessionEffort": "normal",
+      "afterNotes": "Почувствовал боль в правом колене на жиме ногами и остановился.",
+      "durationMs": 3863244,
+      "durationMinutes": 64,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 8,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "chest-machine",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 40,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 35,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "row",
+          "sets": [
+            {
+              "weight": 47,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 57,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 120,
+              "reps": 7,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-extension",
+          "sets": [
+            {
+              "weight": 55,
+              "reps": 12,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 60,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "shoulder-press",
+          "sets": [
+            {
+              "weight": 20,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "butterfly",
+          "sets": [
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 50,
+              "reps": 10,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "custom-tritseps-trenazher",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 75,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 1,
+              "rpe": 5,
+              "done": true,
               "mark": "normal"
             }
           ]
