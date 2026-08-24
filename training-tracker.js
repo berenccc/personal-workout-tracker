@@ -3,10 +3,11 @@ const AUTH_KEY = "training-tracker-auth";
 const GITHUB_TOKEN_KEY = "training-tracker-github-token";
 const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
 const AI_KEY_STORAGE = "training-tracker-ai-key";
+const AI_BASE_STORAGE = "training-tracker-ai-base-url";
 const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
 const CUSTOM_EXERCISES_KEY = "training-tracker-custom-exercises-v1";
-const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+const AI_DEFAULT_BASE_URL = "https://api.openai.com/v1";
 const AI_MODEL = "gpt-5.6-terra";
 const AI_MAX_TOOL_ROUNDS = 6;
 const AI_CHAT_HISTORY_LIMIT = 30;
@@ -159,6 +160,8 @@ const elements = {
   aiStatus: document.querySelector("#aiStatus"),
   aiApiKeyInput: document.querySelector("#aiApiKeyInput"),
   saveAiApiKeyButton: document.querySelector("#saveAiApiKeyButton"),
+  aiBaseUrlInput: document.querySelector("#aiBaseUrlInput"),
+  saveAiBaseUrlButton: document.querySelector("#saveAiBaseUrlButton"),
   readinessPill: document.querySelector("#readinessPill"),
   monthlyChart: document.querySelector("#monthlyChart"),
   prBoard: document.querySelector("#prBoard"),
@@ -255,6 +258,7 @@ function bindEvents() {
 
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
   elements.saveAiApiKeyButton.addEventListener("click", saveAiApiKey);
+  elements.saveAiBaseUrlButton.addEventListener("click", saveAiBaseUrl);
   elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
   elements.aiChatClearButton.addEventListener("click", clearAiChat);
   elements.aiRetryButton.addEventListener("click", retryAiChat);
@@ -491,12 +495,16 @@ function importGithubTokenFromUrl() {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const token = hash.get("syncToken");
   const aiKey = hash.get("aiKey");
-  if (!token && !aiKey) return;
+  const aiBase = hash.get("aiBase");
+  if (!token && !aiKey && !aiBase) return;
 
   if (token) rememberGithubToken(token);
   if (aiKey) {
     localStorage.setItem(AI_KEY_STORAGE, aiKey);
     setAiStatus("AI key импортирован из ссылки и сохранён в браузере.");
+  }
+  if (aiBase && /^https:\/\/.+/i.test(aiBase)) {
+    localStorage.setItem(AI_BASE_STORAGE, aiBase.replace(/\/+$/, ""));
   }
   history.replaceState(null, document.title, window.location.pathname + window.location.search);
 }
@@ -1240,6 +1248,8 @@ function isTouchDevice() {
 
 function initAiCoach() {
   renderAiChat();
+  const savedBase = localStorage.getItem(AI_BASE_STORAGE);
+  if (savedBase) elements.aiBaseUrlInput.value = savedBase;
   setAiStatus(
     localStorage.getItem(AI_KEY_STORAGE)
       ? ""
@@ -1262,6 +1272,28 @@ function saveAiApiKey() {
   localStorage.setItem(AI_KEY_STORAGE, key);
   elements.aiApiKeyInput.value = "";
   setAiStatus("AI key сохранён. Он хранится только в этом браузере.");
+}
+
+function getAiBaseUrl() {
+  return (localStorage.getItem(AI_BASE_STORAGE) || AI_DEFAULT_BASE_URL).replace(/\/+$/, "");
+}
+
+function saveAiBaseUrl() {
+  const value = elements.aiBaseUrlInput.value.trim().replace(/\/+$/, "");
+  if (!value) {
+    localStorage.removeItem(AI_BASE_STORAGE);
+    elements.aiBaseUrlInput.value = "";
+    setAiStatus("AI URL сброшен: снова использую api.openai.com (нужен VPN в РФ).");
+    return;
+  }
+
+  if (!/^https:\/\/.+/i.test(value)) {
+    setAiStatus("AI URL должен начинаться с https://");
+    return;
+  }
+
+  localStorage.setItem(AI_BASE_STORAGE, value);
+  setAiStatus(`AI URL сохранён: ${value}`);
 }
 
 function loadAiChat() {
@@ -1602,7 +1634,7 @@ async function callOpenAi(key, messages) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let response;
     try {
-      response = await fetch(AI_ENDPOINT, {
+      response = await fetch(`${getAiBaseUrl()}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1625,10 +1657,18 @@ async function callOpenAi(key, messages) {
         await sleep(1200 * attempt);
         continue;
       }
-      throw new Error("нет связи с OpenAI. Проверь интернет и не сворачивай приложение, пока тренер отвечает");
+      const usingDefault = getAiBaseUrl() === AI_DEFAULT_BASE_URL;
+      throw new Error(
+        usingDefault
+          ? "нет доступа к OpenAI. Из России api.openai.com заблокирован: включи VPN или укажи прокси-URL в Синхронизации"
+          : "нет связи с AI-сервером. Проверь интернет и адрес прокси в Синхронизации"
+      );
     }
 
     if (response.status === 401) throw new Error("неверный API key");
+    if (response.status === 403) {
+      throw new Error("доступ запрещён (403): регион заблокирован. Включи VPN или укажи прокси-URL в Синхронизации");
+    }
     if ((response.status === 429 || response.status >= 500) && attempt < maxAttempts) {
       setAiStatus(`OpenAI занят, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
       await sleep(1500 * attempt);
