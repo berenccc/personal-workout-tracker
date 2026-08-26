@@ -17,54 +17,18 @@ const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
 const UPCOMING_WORKOUT_DATE = "2026-08-07";
 
-const exercises = [
-  { id: "leg-press", name: "Жим ногами", group: "Ноги", unit: "кг", step: 10, defaultSets: [[140, 10], [160, 10], [180, 10]] },
-  { id: "leg-curl", name: "Сгибание ног", group: "Ноги", unit: "кг", step: 2.5, defaultSets: [[35, 12], [42.5, 10], [50, 10]] },
-  { id: "leg-extension", name: "Разгибание ног", group: "Ноги", unit: "кг", step: 2.5, defaultSets: [[55, 10], [60, 10], [60, 10]] },
-  { id: "split-squat", name: "Сплит-присед / выпад", group: "Ноги", unit: "кг", step: 2, defaultSets: [[16, 10], [16, 10], [16, 10]] },
-  { id: "step-lunge", name: "Step-up + reverse lunge", group: "Ноги", unit: "кг", step: 2, defaultSets: [[16, 20], [16, 20], [16, 20]] },
-  { id: "goblet-squat", name: "Присед с диском/гирей", group: "Ноги", unit: "кг", step: 2, defaultSets: [[20, 12], [20, 12], [20, 12]] },
-  { id: "calf-flex", name: "Сгибание ступней / икры", group: "Икры", unit: "кг", step: 5, defaultSets: [[80, 12], [90, 12], [95, 12]] },
-  { id: "gravitron", name: "Гравитрон", group: "Спина", unit: "кг противовес", step: -2.5, lowerIsBetter: true, defaultSets: [[40, 8], [35, 8], [30, 8]] },
-  { id: "lat-pulldown", name: "Тяга верхнего блока", group: "Спина", unit: "кг", step: 0.5, defaultSets: [[52, 10], [56, 10], [60, 8]] },
-  { id: "row", name: "Тяга горизонтального блока", group: "Спина", unit: "кг", step: 0.5, defaultSets: [[57, 10], [67, 8], [67, 10]] },
-  { id: "one-arm-row", name: "Тяга гантели одной рукой", group: "Спина", unit: "кг/рука", step: 2, defaultSets: [[22, 10], [26, 10], [28, 10]] },
-  { id: "barbell-row", name: "Тяга штанги в наклоне", group: "Спина", unit: "кг", step: 5, defaultSets: [[40, 8], [50, 8], [50, 8]] },
-  { id: "bench", name: "Жим штанги лежа", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[50, 8], [55, 8], [60, 8]] },
-  { id: "chest-machine", name: "Жим от груди / тренажер", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[40, 10], [50, 8], [55, 8]] },
-  { id: "decline-chest-machine", name: "Жим на тренажёре наклон назад", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[40, 10], [50, 8], [55, 8]] },
-  { id: "incline-press", name: "Жим под углом", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[40, 10], [50, 8], [55, 8]] },
-  { id: "db-press", name: "Жим гантелей", group: "Грудь", unit: "кг/рука", step: 2.5, defaultSets: [[20, 10], [20, 10], [22.5, 8]] },
-  { id: "incline-db-press", name: "Жим гантелей под углом", group: "Грудь", unit: "кг/рука", step: 2.5, defaultSets: [[18, 10], [20, 8], [20, 8]] },
-  { id: "butterfly", name: "Баттерфляй / сведение", group: "Грудь", unit: "кг", step: 2.5, defaultSets: [[40, 10], [45, 10], [50, 8]] },
-  { id: "dips", name: "Брусья в гравитроне", group: "Грудь", unit: "кг противовес", step: -2.5, lowerIsBetter: true, defaultSets: [[35, 8], [35, 8], [35, 8]] },
-  { id: "shoulder-press", name: "Жим вверх", group: "Плечи", unit: "кг", step: 2.5, defaultSets: [[15, 10], [17.5, 10], [20, 10]] },
-  { id: "deltoid-machine", name: "Дельта-машина", group: "Плечи", unit: "кг", step: 2.5, defaultSets: [[25, 10], [30, 8], [30, 8]] },
-  { id: "reverse-fly", name: "Обратная бабочка", group: "Плечи", unit: "кг", step: 2.5, defaultSets: [[20, 10], [30, 10], [30, 10]] },
-  { id: "deadlift", name: "Становая тяга", group: "Задняя цепь", unit: "кг", step: 5, defaultSets: [[60, 8], [70, 8], [80, 6]] },
-  { id: "rdl", name: "Румынская тяга с гантелями", group: "Задняя цепь", unit: "кг/рука", step: 2.5, defaultSets: [[20, 10], [22.5, 10], [22.5, 10]] },
-  { id: "single-leg-rdl", name: "Румынская тяга на одной ноге", group: "Задняя цепь", unit: "кг", step: 2, defaultSets: [[16, 10], [16, 10], [16, 10]] },
-  { id: "back-extension", name: "Гиперэкстензия / разгибание спины", group: "Задняя цепь", unit: "кг", step: 5, defaultSets: [[15, 10], [15, 10], [15, 10]] },
-  { id: "kettlebell-swing", name: "Махи гирей", group: "Задняя цепь", unit: "кг", step: 2, defaultSets: [[24, 10], [24, 10], [24, 10]] },
-  { id: "farmer-carry", name: "Фермерская прогулка", group: "Функционал", unit: "кг/рука", step: 2, defaultSets: [[24, 40], [24, 40], [24, 40]] },
-  { id: "biceps", name: "Бицепс", group: "Руки", unit: "кг", step: 2.5, defaultSets: [[25, 10], [30, 8], [30, 8]] },
-  { id: "triceps", name: "Трицепс гантель/лежа", group: "Руки", unit: "кг", step: 1, defaultSets: [[10, 10], [10, 10], [12, 8]] },
-  { id: "triceps-pushdown", name: "Трицепс верхний блок", group: "Руки", unit: "кг", step: 2.5, defaultSets: [[55, 10], [65, 10], [75, 8]] },
-  { id: "dead-bug", name: "Dead Bug", group: "Кор", unit: "кг в руках", step: 1, defaultSets: [[16, 20], [16, 20], [16, 20]] },
-  { id: "ab-wheel", name: "Ролик", group: "Кор", unit: "повторы", step: 1, bodyweight: true, defaultSets: [[0, 12], [0, 12], [0, 12]] },
-  { id: "plank", name: "Планка / вариации", group: "Кор", unit: "сек/повт", step: 5, bodyweight: true, defaultSets: [[0, 40], [0, 40], [0, 40]] },
-  { id: "side-plank", name: "Боковая планка", group: "Кор", unit: "сек/повт", step: 5, bodyweight: true, defaultSets: [[0, 15], [0, 15], [0, 15]] },
-  { id: "bird-dog", name: "Bird-dog", group: "Кор", unit: "кг", step: 1, defaultSets: [[4, 10], [4, 10], [4, 10]] },
-  { id: "overhead-plate", name: "Диск вокруг головы", group: "Кор", unit: "кг", step: 2.5, defaultSets: [[15, 12], [20, 10], [20, 10]] },
-  { id: "box-jump", name: "Прыжки на блок", group: "Плиометрика", unit: "см/кг", step: 5, bodyweight: true, defaultSets: [[75, 10], [75, 10], [75, 10]] },
-  { id: "rowing", name: "Гребля", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[5, 1]] },
-  { id: "elliptical", name: "Эллипсоид / вело", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[12, 1]] },
-  { id: "treadmill", name: "Дорожка", group: "Кардио", unit: "мин", step: 1, cardio: true, defaultSets: [[10, 1]] },
-];
+// Каталог упражнений загружается из exercise-catalog.js (генерируется скриптом tools/build-exercise-catalog.py из data/exercise-catalog.json).
+const exercises = (window.exerciseCatalog?.exercises || []).map((exercise) => ({ ...exercise }));
+const EXERCISE_ALIASES = window.exerciseCatalog?.aliases || {};
+const MY_GYM_KEY = "training-tracker-my-gym-v1";
 
 const EXERCISE_GROUPS = ["Ноги", "Икры", "Спина", "Грудь", "Плечи", "Задняя цепь", "Функционал", "Руки", "Кор", "Плиометрика", "Кардио", "Другое"];
 
-exercises.push(...loadCustomExercises());
+exercises.push(
+  ...loadCustomExercises().filter(
+    (custom) => !EXERCISE_ALIASES[custom.id] && !exercises.some((exercise) => exercise.id === custom.id)
+  )
+);
 
 function loadCustomExercises() {
   try {
@@ -109,12 +73,98 @@ function addCustomExercise({ name, group, unit, step }) {
 
   exercises.push(exercise);
   localStorage.setItem(CUSTOM_EXERCISES_KEY, JSON.stringify(loadCustomExercises().concat(exercise)));
+  gymSet().add(exercise.id);
+  saveMyGym();
   fillExerciseSelects();
+  renderMyGym();
   return exercise;
+}
+
+// «Мой зал»: набор id упражнений, доступных в зале пользователя. Всё вне набора
+// скрыто из выбора и из каталога AI-тренера. По умолчанию — то, что уже встречалось в истории.
+let myGymSet = null;
+
+function gymSet() {
+  if (myGymSet) return myGymSet;
+  try {
+    const saved = JSON.parse(localStorage.getItem(MY_GYM_KEY));
+    if (Array.isArray(saved)) {
+      myGymSet = new Set(saved.map((id) => EXERCISE_ALIASES[id] || id));
+      return myGymSet;
+    }
+  } catch {
+    // fallthrough to default
+  }
+  myGymSet = defaultMyGymIds();
+  return myGymSet;
+}
+
+function defaultMyGymIds() {
+  const used = new Set();
+  const source = [...(state?.workouts || []), ...(window.trainingHistory || [])];
+  source.forEach((workout) =>
+    (workout.exercises || []).forEach((item) => {
+      const resolved = EXERCISE_ALIASES[item.exerciseId] || item.exerciseId;
+      if (exercises.some((exercise) => exercise.id === resolved)) used.add(resolved);
+    })
+  );
+  exercises.forEach((exercise) => {
+    if (exercise.custom) used.add(exercise.id);
+  });
+  return used;
+}
+
+function saveMyGym() {
+  localStorage.setItem(MY_GYM_KEY, JSON.stringify([...gymSet()]));
+}
+
+function isExerciseAvailable(exercise) {
+  return exercise.custom || gymSet().has(exercise.id);
+}
+
+function renderMyGym() {
+  if (!elements.gymList) return;
+  const set = gymSet();
+  const groups = EXERCISE_GROUPS.filter((group) => exercises.some((exercise) => exercise.group === group));
+  elements.gymList.innerHTML = groups
+    .map((group) => {
+      const items = exercises.filter((exercise) => exercise.group === group);
+      const rows = items
+        .map(
+          (exercise) => `
+        <label class="gym-item">
+          <input type="checkbox" data-gym-id="${exercise.id}" ${isExerciseAvailable(exercise) ? "checked" : ""} ${exercise.custom ? "disabled" : ""} />
+          <span>${escapeHtml(exercise.name)}</span>
+        </label>`
+        )
+        .join("");
+      return `<div class="gym-group"><h4>${group}</h4>${rows}</div>`;
+    })
+    .join("");
+
+  elements.gymList.querySelectorAll("input[data-gym-id]").forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.checked) set.add(input.dataset.gymId);
+      else set.delete(input.dataset.gymId);
+      saveMyGym();
+      fillExerciseSelects();
+      updateGymStatus();
+    });
+  });
+  updateGymStatus();
+}
+
+function updateGymStatus() {
+  if (!elements.gymStatus) return;
+  const count = exercises.filter((exercise) => isExerciseAvailable(exercise)).length;
+  elements.gymStatus.textContent = `${count} из ${exercises.length} отмечено — выбор и AI работают только с этим набором.`;
 }
 
 let state = loadState();
 let selected = [];
+let isFinishingWorkout = false;
+// Стабильный id на сессию: повторное "Завершить" перезапишет запись, а не создаст дубль.
+let workoutSessionUid = makeUid();
 let aiChat = loadAiChat();
 let workoutTimer = {
   startedAt: null,
@@ -139,6 +189,7 @@ const elements = {
   startWorkoutButton: document.querySelector("#startWorkoutButton"),
   workoutTimerDisplay: document.querySelector("#workoutTimerDisplay"),
   finishNotice: document.querySelector("#finishNotice"),
+  finishWorkoutButton: document.querySelector("#finishWorkoutButton"),
   planSummary: document.querySelector("#planSummary"),
   dateInput: document.querySelector("#dateInput"),
   readinessInput: document.querySelector("#readinessInput"),
@@ -169,6 +220,14 @@ const elements = {
   volumeChart: document.querySelector("#volumeChart"),
   movementBalance: document.querySelector("#movementBalance"),
   historyList: document.querySelector("#historyList"),
+  gymList: document.querySelector("#gymList"),
+  gymStatus: document.querySelector("#gymStatus"),
+  gymSelectAllButton: document.querySelector("#gymSelectAllButton"),
+  gymFromHistoryButton: document.querySelector("#gymFromHistoryButton"),
+  builderGoalSelect: document.querySelector("#builderGoalSelect"),
+  builderDurationSelect: document.querySelector("#builderDurationSelect"),
+  buildWorkoutButton: document.querySelector("#buildWorkoutButton"),
+  accentPicker: document.querySelector("#accentPicker"),
 };
 
 boot();
@@ -176,7 +235,10 @@ boot();
 function boot() {
   setupAuth();
   requestPersistentStorage();
+  renderAccentPicker();
   fillExerciseSelects();
+  fillBuilderGoals();
+  renderMyGym();
   loadPlannedWorkout();
   applyStoredAiPlan();
   restoreWorkoutDraft();
@@ -184,6 +246,48 @@ function boot() {
   render();
   initializeRemoteSync();
   initAiCoach();
+}
+
+const ACCENT_KEY = "training-tracker-accent";
+const ACCENT_COLORS = [
+  { id: "lime", color: "#c8f135", label: "Лайм" },
+  { id: "cyan", color: "#2fd3f0", label: "Циан" },
+  { id: "coral", color: "#ff5a5f", label: "Коралл" },
+  { id: "violet", color: "#a78bfa", label: "Фиолет" },
+  { id: "amber", color: "#ffb454", label: "Янтарь" },
+];
+
+function currentAccent() {
+  const saved = localStorage.getItem(ACCENT_KEY);
+  return ACCENT_COLORS.some((accent) => accent.id === saved) ? saved : "lime";
+}
+
+function applyAccent(accentId) {
+  if (accentId === "lime") {
+    delete document.documentElement.dataset.accent;
+  } else {
+    document.documentElement.dataset.accent = accentId;
+  }
+  localStorage.setItem(ACCENT_KEY, accentId);
+  renderAccentPicker();
+}
+
+function renderAccentPicker() {
+  if (!elements.accentPicker) return;
+  const active = currentAccent();
+  elements.accentPicker.innerHTML = "";
+  ACCENT_COLORS.forEach((accent) => {
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = `accent-dot${accent.id === active ? " is-active" : ""}`;
+    dot.style.background = accent.color;
+    dot.title = accent.label;
+    dot.setAttribute("role", "radio");
+    dot.setAttribute("aria-checked", String(accent.id === active));
+    dot.setAttribute("aria-label", `Акцент: ${accent.label}`);
+    dot.addEventListener("click", () => applyAccent(accent.id));
+    elements.accentPicker.append(dot);
+  });
 }
 
 async function requestPersistentStorage() {
@@ -248,10 +352,12 @@ function bindEvents() {
   });
 
   elements.addExerciseButton.addEventListener("click", () => {
-    addExercise(elements.exerciseSelect.value);
+    const uid = addExercise(elements.exerciseSelect.value);
     renderSelectedExercises();
     saveWorkoutDraft();
+    keepExerciseInView(uid);
   });
+  elements.buildWorkoutButton?.addEventListener("click", runWorkoutBuilder);
 
   elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
   elements.saveAiApiKeyButton.addEventListener("click", saveAiApiKey);
@@ -273,6 +379,18 @@ function bindEvents() {
   elements.pushLatestWorkoutButton.addEventListener("click", pushLatestWorkoutToGit);
   elements.checkGithubTokenButton.addEventListener("click", checkGithubTokenWrite);
   elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
+  elements.gymSelectAllButton?.addEventListener("click", () => {
+    exercises.forEach((exercise) => gymSet().add(exercise.id));
+    saveMyGym();
+    fillExerciseSelects();
+    renderMyGym();
+  });
+  elements.gymFromHistoryButton?.addEventListener("click", () => {
+    myGymSet = defaultMyGymIds();
+    saveMyGym();
+    fillExerciseSelects();
+    renderMyGym();
+  });
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
   elements.historyList.addEventListener("click", pushHistoryWorkoutToGit);
   elements.startWorkoutButton.addEventListener("click", startWorkoutTimer);
@@ -291,6 +409,8 @@ function bindEvents() {
 
   elements.workoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (isFinishingWorkout) return;
+
     stopWorkoutTimer();
     const workout = collectWorkout();
     if (!workout.exercises.length) {
@@ -298,25 +418,37 @@ function bindEvents() {
       return;
     }
 
-    upsertWorkout(workout);
-    state.workouts.sort((a, b) => a.date.localeCompare(b.date));
-    saveState();
-    const pushedToGit = await pushRemoteWorkouts(workout);
+    isFinishingWorkout = true;
+    setFinishButtonState("saving");
     try {
-      await copyText(buildWorkoutReport(workout));
-      elements.copyReportButton.textContent = "Отчет скопирован";
-      setTimeout(() => {
-        elements.copyReportButton.textContent = "Отчет";
-      }, 1800);
-    } catch {
-      // Saving is more important than clipboard availability.
+      upsertWorkout(workout);
+      state.workouts.sort((a, b) => a.date.localeCompare(b.date));
+      saveState();
+      if (navigator.vibrate) navigator.vibrate(80);
+      showToast("Тренировка сохранена ✓");
+
+      const pushedToGit = await pushRemoteWorkouts(workout);
+      showToast(pushedToGit ? "Отправлено в git ✓" : "В git не отправлено — сохранено локально", pushedToGit ? "success" : "warn");
+      try {
+        await copyText(buildWorkoutReport(workout));
+        elements.copyReportButton.textContent = "Отчет скопирован";
+        setTimeout(() => {
+          elements.copyReportButton.textContent = "Отчет";
+        }, 1800);
+      } catch {
+        // Saving is more important than clipboard availability.
+      }
+      clearWorkoutDraft();
+      localStorage.removeItem(AI_PLAN_STORAGE);
+      workoutSessionUid = makeUid();
+      loadPlannedWorkout();
+      resetWorkoutTimer();
+      render();
+      showFinishNotice(workout, pushedToGit);
+    } finally {
+      isFinishingWorkout = false;
+      setFinishButtonState("idle");
     }
-    clearWorkoutDraft();
-    localStorage.removeItem(AI_PLAN_STORAGE);
-    loadPlannedWorkout();
-    resetWorkoutTimer();
-    render();
-    showFinishNotice(workout, pushedToGit);
   });
 }
 
@@ -371,6 +503,7 @@ function saveWorkoutDraft() {
   const draft = {
     version: 1,
     savedAt: Date.now(),
+    sessionUid: workoutSessionUid,
     isActive: elements.workoutPanel.classList.contains("is-active"),
     timer: {
       startedAt: workoutTimer.startedAt,
@@ -403,6 +536,7 @@ function restoreWorkoutDraft() {
       return;
     }
 
+    if (draft.sessionUid) workoutSessionUid = draft.sessionUid;
     const fields = draft.fields || {};
     elements.dateInput.value = fields.date || elements.dateInput.value;
     elements.readinessInput.value = fields.readiness || elements.readinessInput.value;
@@ -440,6 +574,33 @@ function renderWorkoutTimer() {
 function getWorkoutDurationMs() {
   if (!workoutTimer.startedAt) return 0;
   return (workoutTimer.stoppedAt || Date.now()) - workoutTimer.startedAt;
+}
+
+function setFinishButtonState(mode) {
+  const button = elements.finishWorkoutButton;
+  if (!button) return;
+  button.disabled = mode === "saving";
+  button.textContent = mode === "saving" ? "Сохраняю..." : "Завершить тренировку";
+}
+
+function showToast(message, tone = "success") {
+  let container = document.querySelector("#toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${tone}`;
+  toast.setAttribute("role", "status");
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("is-visible"));
+  setTimeout(() => {
+    toast.classList.remove("is-visible");
+    setTimeout(() => toast.remove(), 350);
+  }, 2800);
 }
 
 function showFinishNotice(workout, pushedToGit) {
@@ -610,12 +771,12 @@ function upsertWorkout(workout) {
 }
 
 function fillExerciseSelects() {
-  const options = exercises
-    .map((exercise) => `<option value="${exercise.id}">${exercise.name}</option>`)
-    .join("");
+  const optionFor = (exercise) => `<option value="${exercise.id}">${exercise.name}</option>`;
+  const available = exercises.filter((exercise) => isExerciseAvailable(exercise));
+  const pickList = available.length ? available : exercises;
   const previousChartChoice = elements.chartExerciseSelect.value;
-  elements.exerciseSelect.innerHTML = options;
-  elements.chartExerciseSelect.innerHTML = options;
+  elements.exerciseSelect.innerHTML = pickList.map(optionFor).join("");
+  elements.chartExerciseSelect.innerHTML = exercises.map(optionFor).join("");
   elements.chartExerciseSelect.value = exercises.some((exercise) => exercise.id === previousChartChoice)
     ? previousChartChoice
     : "bench";
@@ -627,8 +788,31 @@ function mergeWorkouts(current, incoming) {
   const keyFor = (workout) => workout.id || `${workout.date}-${workout.notes || ""}`;
   const byDate = new Map(current.map((workout) => [keyFor(workout), workout]));
   incoming.forEach((workout) => byDate.set(keyFor(workout), workout));
-  return removeFutureCompletedWorkouts(removePlaceholderDuplicateWorkouts([...byDate.values()]))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  return removeFutureCompletedWorkouts(
+    removeRepeatedSaveDuplicates(removePlaceholderDuplicateWorkouts([...byDate.values()]))
+  ).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// Многократное нажатие "Завершить" раньше плодило одинаковые записи с разными id — схлопываем их.
+function removeRepeatedSaveDuplicates(workouts) {
+  const byPayload = new Map();
+  workouts.forEach((workout) => {
+    const key = JSON.stringify({
+      date: workout.date,
+      notes: workout.notes || "",
+      afterNotes: workout.afterNotes || "",
+      sessionEffort: workout.sessionEffort || null,
+      exercises: (workout.exercises || []).map((item) => ({
+        exerciseId: item.exerciseId,
+        sets: (item.sets || []).map((set) => [set.weight, set.reps, set.rpe ?? null, set.done === true]),
+      })),
+    });
+    const existing = byPayload.get(key);
+    if (!existing || (workout.durationMinutes || 0) >= (existing.durationMinutes || 0)) {
+      byPayload.set(key, workout);
+    }
+  });
+  return [...byPayload.values()];
 }
 
 function removePlaceholderDuplicateWorkouts(workouts) {
@@ -659,11 +843,20 @@ function normalizeWorkoutDates(workouts) {
 
   return workouts.map((workout) => {
     const fixedDate = dateFixes[workout.date];
-    if (!fixedDate) return workout;
+    const hasAliasedIds = (workout.exercises || []).some((item) => EXERCISE_ALIASES[item.exerciseId]);
+    if (!fixedDate && !hasAliasedIds) return workout;
 
-    const fixed = { ...workout, date: fixedDate };
-    if (typeof fixed.id === "string") {
-      fixed.id = fixed.id.replace(/^manual-\d{4}-\d{2}-\d{2}-/, `manual-${fixedDate}-`);
+    const fixed = { ...workout };
+    if (hasAliasedIds) {
+      fixed.exercises = workout.exercises.map((item) =>
+        EXERCISE_ALIASES[item.exerciseId] ? { ...item, exerciseId: EXERCISE_ALIASES[item.exerciseId] } : item
+      );
+    }
+    if (fixedDate) {
+      fixed.date = fixedDate;
+      if (typeof fixed.id === "string") {
+        fixed.id = fixed.id.replace(/^manual-\d{4}-\d{2}-\d{2}-/, `manual-${fixedDate}-`);
+      }
     }
     return fixed;
   });
@@ -676,11 +869,142 @@ function removeFutureCompletedWorkouts(workouts) {
 
 function addExercise(exerciseId) {
   const exercise = findExercise(exerciseId);
+  const working = pickWorkingLoad(exercise);
+  const intensity = currentWorkoutIntensity();
+  const uid = makeUid();
+  const intensityLabel = { light: "лайт", normal: "рабочий", heavy: "чуть выше" }[intensity];
   selected.push({
-    uid: makeUid(),
+    uid,
     exerciseId,
-    sets: exercise.defaultSets.map(([weight, reps]) => ({ weight, reps, rpe: "", done: false, mark: "normal" })),
+    sourceNote: working
+      ? `база ${formatNumber(scaleWorkingWeight(working.weight, exercise, intensity))} · ${intensityLabel}`
+      : "нет истории, шаблон",
+    sets: suggestedSetsForExercise(exercise).map(([weight, reps]) => ({
+      weight,
+      reps,
+      rpe: "",
+      done: false,
+      mark: "normal",
+    })),
   });
+  return uid;
+}
+
+function currentWorkoutIntensity() {
+  const readiness = elements.readinessInput?.value || "okay";
+  const notes = `${elements.notesInput?.value || ""}`.toLowerCase();
+  if (readiness === "bad") return "light";
+  if (readiness === "good") return "heavy";
+  if (/лайт|восстанов|recovery|легк/.test(notes)) return "light";
+  return "normal";
+}
+
+function roundToStep(value, step) {
+  const abs = Math.abs(Number(step) || 0.5);
+  const rounded = Math.round(Number(value) / abs) * abs;
+  return Number(rounded.toFixed(3));
+}
+
+function median(values) {
+  const sorted = values.map(Number).filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  if (!sorted.length) return null;
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2) return sorted[middle];
+  return (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function recentExerciseSessions(exerciseId, limit = 3) {
+  const sessions = [];
+  for (let index = state.workouts.length - 1; index >= 0; index -= 1) {
+    const workout = state.workouts[index];
+    const entry = (workout.exercises || []).find((item) => item.exerciseId === exerciseId);
+    if (!entry) continue;
+    const sets = (entry.sets || []).filter((set) => set.mark !== "skip" && Number(set.reps) > 0);
+    if (!sets.length) continue;
+    sessions.push(sets);
+    if (sessions.length >= limit) break;
+  }
+  return sessions;
+}
+
+function workingSetsFromSession(sets, exercise) {
+  const usable = sets.filter((set) => {
+    if (exercise.cardio) return Number(set.weight) > 0 || Number(set.reps) > 0;
+    if (exercise.bodyweight) return Number(set.reps) > 0;
+    return Number(set.weight) > 0;
+  });
+  if (!usable.length) return [];
+
+  let quality = usable.filter((set) => {
+    const rpe = Number(set.rpe);
+    const reps = Number(set.reps);
+    const hasRpe = Number.isFinite(rpe) && rpe > 0;
+    if (hasRpe && (rpe < 6.5 || rpe > 8.5)) return false;
+    if (!exercise.cardio && !exercise.bodyweight && reps < 6) return false;
+    return true;
+  });
+  if (!quality.length) quality = usable;
+
+  if (quality.length >= 2 && !exercise.lowerIsBetter && !exercise.cardio) {
+    const maxWeight = Math.max(...quality.map((set) => Number(set.weight)));
+    const clustered = quality.filter((set) => Number(set.weight) >= maxWeight * 0.85);
+    if (clustered.length) quality = clustered;
+  }
+
+  return quality;
+}
+
+function pickWorkingLoad(exercise) {
+  const sessions = recentExerciseSessions(exercise.id);
+  if (!sessions.length) return null;
+
+  const lastWork = workingSetsFromSession(sessions[0], exercise);
+  const chosen = lastWork.length
+    ? lastWork
+    : sessions.slice(1).flatMap((sets) => workingSetsFromSession(sets, exercise));
+  if (!chosen.length) return null;
+
+  const weight = median(chosen.map((set) => Number(set.weight)));
+  const reps = median(chosen.map((set) => Number(set.reps)));
+  return {
+    weight,
+    reps: Math.max(1, Math.round(reps || 8)),
+    setCount: Math.min(4, Math.max(2, sessions[0].length || 3)),
+  };
+}
+
+function scaleWorkingWeight(weight, exercise, intensity) {
+  const step = Math.abs(exercise.step || 2.5);
+  const harder = exercise.lowerIsBetter ? -1 : 1;
+  if (intensity === "light") return roundToStep(weight - harder * step, step);
+  if (intensity === "heavy") return roundToStep(weight + harder * step, step);
+  return roundToStep(weight, step);
+}
+
+function suggestedSetsForExercise(exercise) {
+  const working = pickWorkingLoad(exercise);
+  if (!working) return exercise.defaultSets.slice();
+
+  const intensity = currentWorkoutIntensity();
+  const workWeight = scaleWorkingWeight(working.weight, exercise, intensity);
+  const warmupWeight = scaleWorkingWeight(workWeight, exercise, "light");
+  const workReps = working.reps;
+  const setCount = working.setCount;
+
+  if (exercise.cardio) {
+    return [[Math.max(1, workWeight), 1]];
+  }
+
+  if (exercise.bodyweight && Number(exercise.defaultSets?.[0]?.[0]) === 0) {
+    const reps = intensity === "light" ? Math.max(1, workReps - 2) : intensity === "heavy" ? workReps + 2 : workReps;
+    return Array.from({ length: setCount }, () => [0, reps]);
+  }
+
+  if (setCount >= 3) {
+    return [[warmupWeight, Math.max(workReps, 8)], ...Array.from({ length: setCount - 1 }, () => [workWeight, workReps])];
+  }
+
+  return Array.from({ length: setCount }, () => [workWeight, workReps]);
 }
 
 function loadPlannedWorkout() {
@@ -707,6 +1031,130 @@ function planEntry(exerciseId, rows) {
     exerciseId,
     sets: rows.map(([weight, reps, rpe]) => ({ weight, reps, rpe, done: false, mark: "normal" })),
   };
+}
+
+// Конструктор тренировки по цели: собирает план из упражнений «Моего зала»
+// с весами из истории (suggestedSetsForExercise) и ротацией против прошлых сессий.
+const WORKOUT_GOALS = [
+  { id: "legs-glutes", label: "Ноги и ягодицы", muscles: ["glutes", "quads", "hamstrings", "calves"] },
+  { id: "back-biceps", label: "Спина и бицепс", muscles: ["lats", "upper_back", "biceps", "rear_delts"] },
+  { id: "chest-triceps", label: "Грудь и трицепс", muscles: ["chest", "triceps", "shoulders"] },
+  { id: "shoulders-arms", label: "Плечи и руки", muscles: ["shoulders", "rear_delts", "biceps", "triceps"] },
+  { id: "fullbody", label: "Фулбади", muscles: ["quads", "glutes", "chest", "lats", "upper_back", "shoulders", "core"] },
+  { id: "core-functional", label: "Функционал и кор", muscles: ["core", "obliques", "lower_back", "full_body"], functional: true },
+];
+
+const BUILDER_EXERCISE_COUNT = { 30: 3, 45: 5, 60: 6, 75: 7 };
+const CARDIO_PREFERENCE = ["elliptical", "bike", "treadmill", "rowing", "assault-bike", "ski-erg", "stairmaster", "jump-rope"];
+
+function buildWorkoutFromGoal(goalId, minutes) {
+  const goal = WORKOUT_GOALS.find((item) => item.id === goalId);
+  if (!goal) return null;
+
+  const available = exercises.filter((exercise) => isExerciseAvailable(exercise));
+  const lastWorkout = state.workouts[state.workouts.length - 1];
+  const lastIds = new Set((lastWorkout?.exercises || []).map((item) => item.exerciseId));
+  const recentIds = new Set(
+    state.workouts.slice(-3).flatMap((workout) => (workout.exercises || []).map((item) => item.exerciseId))
+  );
+
+  const pool = available.filter((exercise) => {
+    if (exercise.cardio || exercise.type === "cardio") return false;
+    const matchesMuscles = (exercise.primary || []).some((muscle) => goal.muscles.includes(muscle));
+    if (goal.functional) return matchesMuscles || exercise.type === "functional";
+    return matchesMuscles;
+  });
+  if (!pool.length) return null;
+
+  const score = (exercise, muscle) => {
+    let value = 0;
+    if ((exercise.primary || [])[0] === muscle) value += 2;
+    if ((exercise.primary || []).length >= 2) value += 1.5;
+    if (exercise.equipment === "machine" || exercise.equipment === "barbell") value += 0.5;
+    if (lastIds.has(exercise.id)) value -= 2.5;
+    else if (recentIds.has(exercise.id)) value -= 1;
+    value += Math.random() * 0.4;
+    return value;
+  };
+
+  const targetCount = BUILDER_EXERCISE_COUNT[minutes] || 5;
+  const picked = [];
+  const pickedIds = new Set();
+  const perMuscleCount = {};
+  let cursor = 0;
+  let guard = 0;
+  while (picked.length < targetCount && guard < goal.muscles.length * 4) {
+    guard += 1;
+    const muscle = goal.muscles[cursor % goal.muscles.length];
+    cursor += 1;
+    if ((perMuscleCount[muscle] || 0) >= 2) continue;
+
+    const candidates = pool
+      .filter((exercise) => !pickedIds.has(exercise.id) && (exercise.primary || []).includes(muscle))
+      .map((exercise) => ({ exercise, value: score(exercise, muscle) }));
+    if (!candidates.length) continue;
+
+    const best = candidates.sort((a, b) => b.value - a.value)[0].exercise;
+    picked.push(best);
+    pickedIds.add(best.id);
+    perMuscleCount[muscle] = (perMuscleCount[muscle] || 0) + 1;
+  }
+  if (!picked.length) return null;
+
+  // Сначала базовые многосуставные, изоляция и кор в конец.
+  picked.sort((a, b) => (b.primary || []).length - (a.primary || []).length);
+
+  const cardio = CARDIO_PREFERENCE.map((id) => available.find((exercise) => exercise.id === id)).filter(Boolean);
+  const warmupMinutes = minutes >= 75 ? 12 : minutes >= 45 ? 10 : 8;
+  const plan = [];
+  if (cardio[0]) plan.push(planEntry(cardio[0].id, [[warmupMinutes, 1, ""]]));
+  picked.forEach((exercise) => addExerciseToPlan(plan, exercise));
+  if (minutes >= 60 && cardio.length) {
+    const cooldown = cardio[1] || cardio[0];
+    plan.push(planEntry(cooldown.id, [[5, 1, ""]]));
+  }
+  return { goal, plan };
+}
+
+function addExerciseToPlan(plan, exercise) {
+  plan.push({
+    uid: makeUid(),
+    exerciseId: exercise.id,
+    sourceNote: pickWorkingLoad(exercise) ? "вес из истории" : "нет истории, шаблон",
+    sets: suggestedSetsForExercise(exercise).map(([weight, reps]) => ({
+      weight,
+      reps,
+      rpe: "",
+      done: false,
+      mark: "normal",
+    })),
+  });
+}
+
+function fillBuilderGoals() {
+  if (!elements.builderGoalSelect) return;
+  elements.builderGoalSelect.innerHTML = WORKOUT_GOALS.map(
+    (goal) => `<option value="${goal.id}">${goal.label}</option>`
+  ).join("");
+}
+
+function runWorkoutBuilder() {
+  const goalId = elements.builderGoalSelect?.value;
+  const minutes = Number(elements.builderDurationSelect?.value) || 45;
+  if (selected.length && !confirm("Заменить текущий план собранной тренировкой?")) return;
+
+  const result = buildWorkoutFromGoal(goalId, minutes);
+  if (!result) {
+    showToast("Не хватает упражнений в «Моём зале» под эту цель", "warn");
+    return;
+  }
+
+  selected = result.plan;
+  elements.notesInput.value = `Конструктор: ${result.goal.label}, ~${minutes} мин. Держим RPE 6-8, без отказа.`;
+  renderSelectedExercises();
+  saveWorkoutDraft();
+  const strengthCount = result.plan.filter((item) => !findExercise(item.exerciseId).cardio).length;
+  showToast(`Собрал: ${result.goal.label} — ${strengthCount} упражнений + кардио`);
 }
 
 function nextMondayAfterLatestWorkout() {
@@ -776,11 +1224,10 @@ function renderPrBoard() {
     .map((exerciseId) => bestExercisePerformance(state.workouts, exerciseId))
     .filter(Boolean)
     .map(({ exercise, set, workout }) => {
-      const value = exercise.lowerIsBetter
-        ? `${formatNumber(set.weight)} ${exercise.unit}`
-        : `${formatNumber(set.weight)} ${exercise.unit}`;
+      const unit = shortUnit(exercise);
+      const value = `${formatNumber(set.weight)} ${unit}`;
       const subtitle = exercise.lowerIsBetter
-        ? "меньше противовес = сильнее"
+        ? `${formatDate(workout.date)} · меньше противовес = сильнее`
         : `${set.reps} повт · ${formatDate(workout.date)}`;
       return `
         <article class="pr-item">
@@ -828,8 +1275,10 @@ function renderSelectedExercises() {
     const card = fragment.querySelector(".exercise-card");
     card.dataset.uid = item.uid;
     if (isExerciseComplete(item)) card.classList.add("exercise-complete");
+    const indexBadge = card.querySelector(".exercise-index");
+    if (indexBadge) indexBadge.textContent = String(index + 1);
     card.querySelector("h3").textContent = exercise.name;
-    card.querySelector("p").textContent = `${exercise.group} · ${exercise.unit}`;
+    card.querySelector("p").textContent = exerciseSubtitle(exercise, item);
     const moveUpButton = card.querySelector(".move-up");
     const moveDownButton = card.querySelector(".move-down");
     moveUpButton.disabled = index === 0;
@@ -862,22 +1311,54 @@ function moveSelectedExercise(uid, direction) {
   const targetIndex = currentIndex + direction;
   if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selected.length) return;
 
+  const card = findExerciseCard(uid);
+  const previousTop = card ? card.getBoundingClientRect().top : null;
   [selected[currentIndex], selected[targetIndex]] = [selected[targetIndex], selected[currentIndex]];
   renderSelectedExercises();
   saveWorkoutDraft();
+  keepExerciseInView(uid, previousTop);
+}
 
-  const movedCard = [...elements.selectedExercises.querySelectorAll(".exercise-card")]
-    .find((card) => card.dataset.uid === uid);
-  movedCard?.querySelector(direction < 0 ? ".move-up" : ".move-down")?.focus();
+function exerciseSubtitle(exercise, item) {
+  const parts = [`${exercise.group} · ${exercise.unit}`];
+  if (item.sourceNote) parts.push(item.sourceNote);
+  return parts.join(" · ");
+}
+
+function findExerciseCard(uid) {
+  return elements.selectedExercises.querySelector(`[data-uid="${uid}"]`);
+}
+
+function keepExerciseInView(uid, previousTop) {
+  const card = findExerciseCard(uid);
+  if (!card) return;
+
+  if (previousTop != null) {
+    const delta = card.getBoundingClientRect().top - previousTop;
+    if (delta) window.scrollBy(0, delta);
+  }
+
+  const rect = card.getBoundingClientRect();
+  const timer = elements.workoutPanel?.querySelector(".session-timer");
+  const topSafe = ((timer && timer.getBoundingClientRect().bottom) || 8) + 8;
+  const bottomSafe = window.innerHeight - 110;
+  if (rect.top < topSafe) {
+    window.scrollBy(0, rect.top - topSafe);
+  } else if (rect.bottom > bottomSafe) {
+    window.scrollBy(0, rect.bottom - bottomSafe);
+  }
+
+  card.classList.add("exercise-moved");
+  window.setTimeout(() => card.classList.remove("exercise-moved"), 500);
 }
 
 function renderPlanSummary() {
   const totalSets = selected.reduce((sum, item) => sum + item.sets.length, 0);
-  const rows = selected.map((item) => {
+  const rows = selected.map((item, order) => {
     const exercise = findExercise(item.exerciseId);
     return `
       <li>
-        <span>${escapeHtml(exercise.name)}</span>
+        <span><b>${order + 1}.</b> ${escapeHtml(exercise.name)}</span>
         <strong>${item.sets.length} подх.</strong>
       </li>
     `;
@@ -968,7 +1449,7 @@ function collectWorkout() {
   const durationMs = getWorkoutDurationMs();
   const completedDate = completedWorkoutDate(elements.dateInput.value);
   return {
-    id: `manual-${completedDate}-${makeUid()}`,
+    id: `manual-${completedDate}-${workoutSessionUid}`,
     date: completedDate,
     readiness: elements.readinessInput.value,
     notes: elements.notesInput.value.trim(),
@@ -1556,9 +2037,15 @@ function executeAiTool(name, args) {
   }
 
   if (name === "get_exercise_catalog") {
-    return exercises
-      .map((exercise) => `${exercise.id} — ${exercise.name} (${exercise.group}, ${exercise.unit})`)
-      .join("\n");
+    const available = exercises.filter((exercise) => isExerciseAvailable(exercise));
+    const hiddenCount = exercises.length - available.length;
+    const lines = available.map((exercise) => `${exercise.id} — ${exercise.name} (${exercise.group}, ${exercise.unit})`);
+    if (hiddenCount > 0) {
+      lines.push(
+        `\nЕщё ${hiddenCount} упражнений скрыто настройкой «Мой зал» — этого оборудования в зале пользователя нет, НЕ предлагай их. Если нужно что-то новое, добавь через add_new_exercise.`
+      );
+    }
+    return lines.join("\n");
   }
 
   if (name === "set_planned_workout") {
@@ -1871,7 +2358,7 @@ function comboSvg(points, chartHeight = 300) {
         const barHeight = (point.load / maxLoad) * (height - padding * 2);
         const x = padding + index * (barWidth + 6);
         const y = height - padding - barHeight;
-        return `<rect x="${x}" y="${y}" width="${Math.max(barWidth, 4)}" height="${barHeight}" rx="5" fill="rgba(122, 162, 255, 0.45)"><title>${point.label}: ${formatNumber(point.load)} подходов</title></rect>`;
+        return `<rect x="${x}" y="${y}" width="${Math.max(barWidth, 4)}" height="${barHeight}" rx="5" fill="var(--accent-line)"><title>${point.label}: ${formatNumber(point.load)} подходов</title></rect>`;
       }).join("")}
       <path d="${rpePoints.map(([x, y], index) => `${index ? "L" : "M"} ${x} ${y}`).join(" ")}" stroke="var(--accent-2)" stroke-width="3" fill="none" />
       ${rpePoints.map(([x, y], index) => `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--accent-2)"><title>${points[index].label}: RPE ${points[index].rpe || "n/a"}</title></circle>`).join("")}
@@ -1996,7 +2483,15 @@ function bestExercisePerformance(workouts, exerciseId) {
 }
 
 function findExercise(id) {
-  return exercises.find((exercise) => exercise.id === id) || exercises[0];
+  const resolved = EXERCISE_ALIASES[id] || id;
+  return exercises.find((exercise) => exercise.id === resolved) || exercises[0];
+}
+
+function shortUnit(exercise) {
+  const unit = exercise?.unit || "кг";
+  if (unit === "кг противовес" || unit === "кг/рука" || unit === "кг в руках") return "кг";
+  if (unit === "сек/повт") return "сек";
+  return unit;
 }
 
 function allSets(workouts) {
