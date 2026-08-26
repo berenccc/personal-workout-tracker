@@ -15,7 +15,7 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-08-07";
+const UPCOMING_WORKOUT_DATE = "2026-08-26";
 
 // Каталог упражнений загружается из exercise-catalog.js (генерируется скриптом tools/build-exercise-catalog.py из data/exercise-catalog.json).
 const exercises = (window.exerciseCatalog?.exercises || []).map((exercise) => ({ ...exercise }));
@@ -1010,18 +1010,18 @@ function suggestedSetsForExercise(exercise) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Пт 07.08: умеренный pull + ноги + кор после лёгкого фулбади. Держим почти всё в RPE 6-8, без отказа и без тяжёлого финишного жима на грудь.";
+  elements.notesInput.value = "Ср 26.08: pull + задняя цепь после возвращения 24.08. RPE 6–7, ~45 мин. Без жима ногами и разгибаний — правое колено. Если колено или левое плечо ноет — пропускай подход, не добивай.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("gravitron", [[35, 10, 6], [30, 8, 7], [25, 6, 8]]),
-    planEntry("lat-pulldown", [[57, 10, 6], [67, 8, 7], [67, 8, 7]]),
-    planEntry("row", [[57, 12, 6], [67, 10, 7], [67, 10, 7]]),
-    planEntry("leg-press", [[160, 10, 6], [180, 10, 7], [190, 8, 8]]),
-    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [50, 10, 7]]),
-    planEntry("dead-bug", [[18, 20, 6], [20, 20, 6], [20, 20, 6]]),
-    planEntry("treadmill", [[8, 1, 5]]),
+    planEntry("gravitron", [[35, 12, 6], [30, 10, 7], [25, 8, 7]]),
+    planEntry("lat-pulldown", [[50, 12, 6], [55, 10, 7], [55, 10, 7]]),
+    planEntry("row", [[50, 12, 6], [57, 10, 7]]),
+    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [45, 10, 7]]),
+    planEntry("chest-machine", [[40, 12, 6], [45, 10, 6]]),
+    planEntry("dead-bug", [[16, 16, 6], [16, 16, 6]]),
+    planEntry("treadmill", [[5, 1, 5]]),
   ];
 }
 
