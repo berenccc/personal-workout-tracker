@@ -239,8 +239,6 @@ const ACCENT_COLORS = [
   { id: "amber", color: "#ffb454", label: "Янтарь" },
 ];
 
-boot();
-
 function boot() {
   setupAuth();
   requestPersistentStorage();
@@ -2614,3 +2612,7 @@ function escapeHtml(value) {
     "'": "&#039;",
   }[char]));
 }
+
+// Запускаем приложение только после инициализации всех const/let ниже по файлу.
+// Иначе ранний boot может попасть в temporal dead zone новых модулей.
+boot();
