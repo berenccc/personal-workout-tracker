@@ -230,6 +230,15 @@ const elements = {
   accentPicker: document.querySelector("#accentPicker"),
 };
 
+const ACCENT_KEY = "training-tracker-accent";
+const ACCENT_COLORS = [
+  { id: "lime", color: "#c8f135", label: "Лайм" },
+  { id: "cyan", color: "#2fd3f0", label: "Циан" },
+  { id: "coral", color: "#ff5a5f", label: "Коралл" },
+  { id: "violet", color: "#a78bfa", label: "Фиолет" },
+  { id: "amber", color: "#ffb454", label: "Янтарь" },
+];
+
 boot();
 
 function boot() {
@@ -247,15 +256,6 @@ function boot() {
   initializeRemoteSync();
   initAiCoach();
 }
-
-const ACCENT_KEY = "training-tracker-accent";
-const ACCENT_COLORS = [
-  { id: "lime", color: "#c8f135", label: "Лайм" },
-  { id: "cyan", color: "#2fd3f0", label: "Циан" },
-  { id: "coral", color: "#ff5a5f", label: "Коралл" },
-  { id: "violet", color: "#a78bfa", label: "Фиолет" },
-  { id: "amber", color: "#ffb454", label: "Янтарь" },
-];
 
 function currentAccent() {
   const saved = localStorage.getItem(ACCENT_KEY);
