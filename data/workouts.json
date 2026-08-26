@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-08-24T17:14:07.170Z",
-  "lastSavedWorkoutId": "manual-2026-08-24-97798cfd-9723-458f-baf7-40400078cca8",
+  "updatedAt": "2026-08-26T17:53:02.424Z",
+  "lastSavedWorkoutId": "manual-2026-08-26-021801bc-2511-45a5-94e6-41d5c3a03606",
   "workouts": [
     {
       "id": "2025-06-16--",
@@ -263,7 +263,7 @@
           ]
         },
         {
-          "exerciseId": "step-lunge",
+          "exerciseId": "step-up",
           "sets": [
             {
               "weight": 15,
@@ -1586,7 +1586,7 @@
           ]
         },
         {
-          "exerciseId": "step-lunge",
+          "exerciseId": "step-up",
           "sets": [
             {
               "weight": 16,
@@ -2093,7 +2093,7 @@
           ]
         },
         {
-          "exerciseId": "step-lunge",
+          "exerciseId": "step-up",
           "sets": [
             {
               "weight": 16,
@@ -2863,7 +2863,7 @@
           ]
         },
         {
-          "exerciseId": "step-lunge",
+          "exerciseId": "step-up",
           "sets": [
             {
               "weight": 16,
@@ -4499,7 +4499,7 @@
           ]
         },
         {
-          "exerciseId": "step-lunge",
+          "exerciseId": "step-up",
           "sets": [
             {
               "weight": 16,
@@ -7720,7 +7720,7 @@
           ]
         },
         {
-          "exerciseId": "step-lunge",
+          "exerciseId": "step-up",
           "sets": [
             {
               "weight": 16,
@@ -13460,7 +13460,7 @@
           ]
         },
         {
-          "exerciseId": "custom-tritseps-trenazher",
+          "exerciseId": "triceps-machine",
           "sets": [
             {
               "weight": 72.5,
@@ -13857,7 +13857,7 @@
           ]
         },
         {
-          "exerciseId": "custom-tritseps-trenazher",
+          "exerciseId": "triceps-machine",
           "sets": [
             {
               "weight": 65,
@@ -13881,6 +13881,198 @@
             {
               "weight": 4,
               "reps": 1,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manual-2026-08-26-021801bc-2511-45a5-94e6-41d5c3a03606",
+      "date": "2026-08-26",
+      "readiness": "okay",
+      "notes": "Ср 26.08: pull + задняя цепь после возвращения 24.08. RPE 6–7, ~45 мин. Без жима ногами и разгибаний — правое колено. Если колено или левое плечо ноет — пропускай подход, не добивай.",
+      "sessionEffort": "normal",
+      "afterNotes": "Все по кайфу, чувствую желание еще делать, но понимаю, что не нужно",
+      "durationMs": 3945075,
+      "durationMinutes": 66,
+      "exercises": [
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 12,
+              "reps": 14,
+              "rpe": 5,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-press",
+          "sets": [
+            {
+              "weight": 130,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 180,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 210,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "gravitron",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 30,
+              "reps": 10,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 25,
+              "reps": 5,
+              "rpe": 9,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "leg-curl",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 42.5,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 45,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "decline-chest-machine",
+          "sets": [
+            {
+              "weight": 60,
+              "reps": 8,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 65,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 70,
+              "reps": 8,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "lat-pulldown",
+          "sets": [
+            {
+              "weight": 57,
+              "reps": 12,
+              "rpe": 6,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 67,
+              "reps": 10,
+              "rpe": 7,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 77,
+              "reps": 8,
+              "rpe": 8,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "back-extension",
+          "sets": [
+            {
+              "weight": 15,
+              "reps": 12,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 20,
+              "reps": 10,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            },
+            {
+              "weight": 20,
+              "reps": 10,
+              "rpe": null,
+              "done": true,
+              "mark": "normal"
+            }
+          ]
+        },
+        {
+          "exerciseId": "elliptical",
+          "sets": [
+            {
+              "weight": 4,
+              "reps": 10,
               "rpe": 5,
               "done": true,
               "mark": "normal"
