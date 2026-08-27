@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=79" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=79" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=79" />
-    <link rel="manifest" href="./manifest.webmanifest?v=79" />
-    <link rel="stylesheet" href="./training-tracker.css?v=79" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=81" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=81" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=81" />
+    <link rel="manifest" href="./manifest.webmanifest?v=81" />
+    <link rel="stylesheet" href="./training-tracker.css?v=81" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -46,8 +46,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v79</span>
-          <div class="accent-picker" id="accentPicker" role="radiogroup" aria-label="Акцентный цвет"></div>
+          <span class="version-badge">v81</span>
         </div>
       </section>
 
@@ -193,35 +192,66 @@
 
       <section class="stats-grid compact-stats" id="statsGrid"></section>
 
-      <details class="panel drawer sync-drawer">
+      <details class="panel drawer cabinet-drawer">
         <summary>
-          <span>Синхронизация</span>
-          <small id="syncStatus">Пока локально. После настройки телефон сам пишет в git.</small>
+          <span>Кабинет</span>
+          <small id="cabinetStatus">Внешний вид, зал, AI и синхронизация</small>
         </summary>
-        <div class="sync-controls ai-key-controls">
-          <input id="aiApiKeyInput" type="password" placeholder="OpenAI API key для AI-тренера" autocomplete="off" />
-          <button id="saveAiApiKeyButton" class="button secondary" type="button">Сохранить AI key</button>
-        </div>
-        <div class="sync-controls">
-          <input id="githubTokenInput" type="password" placeholder="GitHub token для записи в repo" autocomplete="off" />
-          <button id="saveGithubTokenButton" class="button secondary" type="button">Сохранить token</button>
-          <button id="pushLatestWorkoutButton" class="button secondary" type="button">Отправить в git</button>
-          <button id="checkGithubTokenButton" class="button ghost" type="button">Проверить запись</button>
-          <button id="pullRemoteButton" class="button ghost" type="button">Обновить из git</button>
-          <button id="resetButton" class="button ghost danger-action" type="button">Очистить локально</button>
-        </div>
-      </details>
 
-      <details class="panel drawer gym-drawer">
-        <summary>
-          <span>Мой зал</span>
-          <small id="gymStatus"></small>
-        </summary>
-        <div class="gym-actions">
-          <button id="gymFromHistoryButton" class="button ghost" type="button">Только из истории</button>
-          <button id="gymSelectAllButton" class="button ghost" type="button">Отметить всё</button>
-        </div>
-        <div id="gymList" class="gym-list"></div>
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
+            <h3>Внешний вид</h3>
+            <p>Акцентный цвет интерфейса</p>
+          </div>
+          <div class="accent-picker cabinet-accent" id="accentPicker" role="radiogroup" aria-label="Акцентный цвет"></div>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
+            <h3>Мой зал</h3>
+            <p id="gymStatus"></p>
+          </div>
+          <div class="gym-actions">
+            <button id="gymFromHistoryButton" class="button ghost" type="button">Пресет зала</button>
+            <button id="gymSelectAllButton" class="button ghost" type="button">Отметить всё</button>
+          </div>
+          <div id="gymList" class="gym-list"></div>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
+            <h3>AI-тренер</h3>
+            <p>Ключ хранится только в этом браузере</p>
+          </div>
+          <div class="sync-controls ai-key-controls">
+            <input id="aiApiKeyInput" type="password" placeholder="OpenAI API key" autocomplete="off" />
+            <button id="saveAiApiKeyButton" class="button secondary" type="button">Сохранить</button>
+          </div>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
+            <h3>Синхронизация</h3>
+            <p id="syncStatus">Пока локально. После настройки телефон сам пишет в git.</p>
+          </div>
+          <div class="sync-controls">
+            <input id="githubTokenInput" type="password" placeholder="GitHub token для записи в repo" autocomplete="off" />
+            <button id="saveGithubTokenButton" class="button secondary" type="button">Сохранить token</button>
+            <button id="pushLatestWorkoutButton" class="button secondary" type="button">Отправить в git</button>
+            <button id="checkGithubTokenButton" class="button ghost" type="button">Проверить запись</button>
+            <button id="pullRemoteButton" class="button ghost" type="button">Обновить из git</button>
+          </div>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
+            <h3>Данные</h3>
+            <p>Локальный черновик и кэш на этом устройстве</p>
+          </div>
+          <div class="cabinet-actions">
+            <button id="resetButton" class="button ghost danger-action" type="button">Очистить локально</button>
+          </div>
+        </section>
       </details>
 
       <details class="drawer analytics-drawer">
@@ -339,11 +369,11 @@
           <span>Аналитика</span>
           <span class="bottom-nav-dot"></span>
         </button>
-        <button class="bottom-nav-btn" data-target="sync" type="button">
+        <button class="bottom-nav-btn" data-target="cabinet" type="button">
           <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>
-          <span>Синхронизация</span>
+          <span>Кабинет</span>
           <span class="bottom-nav-dot"></span>
         </button>
       </nav>
@@ -368,10 +398,10 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=79"></script>
-    <script src="./training-history.js?v=79"></script>
-    <script src="./training-feedback.js?v=79"></script>
-    <script src="./training-tracker.js?v=79"></script>
+    <script src="./exercise-catalog.js?v=81"></script>
+    <script src="./training-history.js?v=81"></script>
+    <script src="./training-feedback.js?v=81"></script>
+    <script src="./training-tracker.js?v=81"></script>
     <script>
       // Bottom nav
       (function () {
@@ -379,7 +409,7 @@
         const workoutSection = document.querySelector(".workout-layout");
         const aiPanel = document.querySelector(".ai-panel");
         const analyticsDrawer = document.querySelector(".analytics-drawer");
-        const syncDrawer = document.querySelector(".sync-drawer");
+        const cabinetDrawer = document.querySelector(".cabinet-drawer");
 
         function setActive(btn) {
           btns.forEach((b) => b.classList.remove("is-active"));
@@ -397,16 +427,16 @@
             } else if (target === "analytics") {
               analyticsDrawer.open = true;
               setTimeout(() => analyticsDrawer.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
-            } else if (target === "sync") {
-              syncDrawer.open = true;
-              setTimeout(() => syncDrawer.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+            } else if (target === "cabinet") {
+              cabinetDrawer.open = true;
+              setTimeout(() => cabinetDrawer.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
             }
           });
         });
       })();
     </script>
     <script>
-      const APP_VERSION = "v79";
+      const APP_VERSION = "v81";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

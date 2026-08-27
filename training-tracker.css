@@ -181,7 +181,52 @@ label,
 
 .ai-key-controls {
   grid-template-columns: minmax(0, 1fr) auto;
-  margin-bottom: 10px;
+}
+
+.cabinet-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.cabinet-section:first-of-type {
+  padding-top: 12px;
+  border-top: 0;
+}
+
+.cabinet-section-head {
+  display: grid;
+  gap: 2px;
+}
+
+.cabinet-section-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.cabinet-section-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.cabinet-accent {
+  justify-content: flex-start;
+}
+
+.cabinet-accent .accent-dot {
+  width: 22px;
+  height: 22px;
+}
+
+.cabinet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .drawer {
@@ -1642,6 +1687,10 @@ select {
 
   .sync-controls .button {
     width: 100%;
+  }
+
+  .cabinet-section {
+    padding: 12px 0;
   }
 
   .layout {

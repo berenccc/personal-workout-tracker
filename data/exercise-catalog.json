@@ -1,145 +1,3397 @@
 {
-  "version": 1,
-  "updated": "2026-08-26",
+  "version": 2,
+  "updated": "2026-08-27",
   "muscles": {
-    "quads": { "ru": "Квадрицепсы", "en": "Quads" },
-    "hamstrings": { "ru": "Бицепс бедра", "en": "Hamstrings" },
-    "glutes": { "ru": "Ягодицы", "en": "Glutes" },
-    "calves": { "ru": "Икры", "en": "Calves" },
-    "adductors": { "ru": "Приводящие", "en": "Adductors" },
-    "abductors": { "ru": "Отводящие", "en": "Abductors" },
-    "chest": { "ru": "Грудь", "en": "Chest" },
-    "lats": { "ru": "Широчайшие", "en": "Lats" },
-    "upper_back": { "ru": "Верх спины", "en": "Upper back" },
-    "lower_back": { "ru": "Поясница", "en": "Lower back" },
-    "traps": { "ru": "Трапеции", "en": "Traps" },
-    "shoulders": { "ru": "Плечи", "en": "Shoulders" },
-    "rear_delts": { "ru": "Задние дельты", "en": "Rear delts" },
-    "biceps": { "ru": "Бицепс", "en": "Biceps" },
-    "triceps": { "ru": "Трицепс", "en": "Triceps" },
-    "forearms": { "ru": "Предплечья", "en": "Forearms" },
-    "core": { "ru": "Кор / пресс", "en": "Core / abs" },
-    "obliques": { "ru": "Косые", "en": "Obliques" },
-    "hip_flexors": { "ru": "Сгибатели бедра", "en": "Hip flexors" },
-    "full_body": { "ru": "Всё тело", "en": "Full body" }
+    "quads": {
+      "ru": "Квадрицепсы",
+      "en": "Quads"
+    },
+    "hamstrings": {
+      "ru": "Бицепс бедра",
+      "en": "Hamstrings"
+    },
+    "glutes": {
+      "ru": "Ягодицы",
+      "en": "Glutes"
+    },
+    "calves": {
+      "ru": "Икры",
+      "en": "Calves"
+    },
+    "adductors": {
+      "ru": "Приводящие",
+      "en": "Adductors"
+    },
+    "abductors": {
+      "ru": "Отводящие",
+      "en": "Abductors"
+    },
+    "chest": {
+      "ru": "Грудь",
+      "en": "Chest"
+    },
+    "lats": {
+      "ru": "Широчайшие",
+      "en": "Lats"
+    },
+    "upper_back": {
+      "ru": "Верх спины",
+      "en": "Upper back"
+    },
+    "lower_back": {
+      "ru": "Поясница",
+      "en": "Lower back"
+    },
+    "traps": {
+      "ru": "Трапеции",
+      "en": "Traps"
+    },
+    "shoulders": {
+      "ru": "Плечи",
+      "en": "Shoulders"
+    },
+    "rear_delts": {
+      "ru": "Задние дельты",
+      "en": "Rear delts"
+    },
+    "biceps": {
+      "ru": "Бицепс",
+      "en": "Biceps"
+    },
+    "triceps": {
+      "ru": "Трицепс",
+      "en": "Triceps"
+    },
+    "forearms": {
+      "ru": "Предплечья",
+      "en": "Forearms"
+    },
+    "core": {
+      "ru": "Кор / пресс",
+      "en": "Core / abs"
+    },
+    "obliques": {
+      "ru": "Косые",
+      "en": "Obliques"
+    },
+    "hip_flexors": {
+      "ru": "Сгибатели бедра",
+      "en": "Hip flexors"
+    },
+    "full_body": {
+      "ru": "Всё тело",
+      "en": "Full body"
+    }
   },
   "equipment": {
-    "barbell": { "ru": "Штанга", "en": "Barbell" },
-    "dumbbell": { "ru": "Гантели", "en": "Dumbbells" },
-    "kettlebell": { "ru": "Гиря", "en": "Kettlebell" },
-    "machine": { "ru": "Тренажёр", "en": "Machine" },
-    "cable": { "ru": "Блок / кроссовер", "en": "Cable" },
-    "bodyweight": { "ru": "Свой вес", "en": "Bodyweight" },
-    "cardio": { "ru": "Кардиотренажёр", "en": "Cardio machine" },
-    "plate": { "ru": "Диск", "en": "Plate" },
-    "other": { "ru": "Прочее", "en": "Other" }
+    "barbell": {
+      "ru": "Штанга",
+      "en": "Barbell"
+    },
+    "dumbbell": {
+      "ru": "Гантели",
+      "en": "Dumbbells"
+    },
+    "kettlebell": {
+      "ru": "Гиря",
+      "en": "Kettlebell"
+    },
+    "machine": {
+      "ru": "Тренажёр",
+      "en": "Machine"
+    },
+    "cable": {
+      "ru": "Блок / кроссовер",
+      "en": "Cable"
+    },
+    "bodyweight": {
+      "ru": "Свой вес",
+      "en": "Bodyweight"
+    },
+    "cardio": {
+      "ru": "Кардиотренажёр",
+      "en": "Cardio machine"
+    },
+    "plate": {
+      "ru": "Диск",
+      "en": "Plate"
+    },
+    "other": {
+      "ru": "Прочее",
+      "en": "Other"
+    }
   },
   "units": {
-    "kg": { "ru": "кг", "en": "kg" },
-    "kg_hand": { "ru": "кг/рука", "en": "kg/hand" },
-    "kg_counter": { "ru": "кг противовес", "en": "kg assist" },
-    "min": { "ru": "мин", "en": "min" },
-    "sec": { "ru": "сек", "en": "sec" },
-    "reps": { "ru": "повторы", "en": "reps" }
+    "kg": {
+      "ru": "кг",
+      "en": "kg"
+    },
+    "kg_hand": {
+      "ru": "кг/рука",
+      "en": "kg/hand"
+    },
+    "kg_counter": {
+      "ru": "кг противовес",
+      "en": "kg assist"
+    },
+    "min": {
+      "ru": "мин",
+      "en": "min"
+    },
+    "sec": {
+      "ru": "сек",
+      "en": "sec"
+    },
+    "reps": {
+      "ru": "повторы",
+      "en": "reps"
+    }
   },
   "aliases": {
     "custom-tritseps-trenazher": "triceps-machine",
-    "step-lunge": "step-up"
+    "step-lunge": "step-up",
+    "hip-glute": "glute-kickback-machine",
+    "glute-drive": "hip-thrust-machine"
   },
   "exercises": [
-    { "id": "squat", "name": { "ru": "Присед со штангой", "en": "Barbell Back Squat" }, "type": "strength", "equipment": "barbell", "primary": ["quads", "glutes"], "secondary": ["hamstrings", "core"], "unit": "kg", "step": 5, "level": "intermediate", "defaultSets": [[40, 8], [50, 8], [50, 8]] },
-    { "id": "front-squat", "name": { "ru": "Фронтальный присед", "en": "Front Squat" }, "type": "strength", "equipment": "barbell", "primary": ["quads"], "secondary": ["glutes", "core"], "unit": "kg", "step": 5, "level": "advanced", "defaultSets": [[30, 8], [40, 8], [40, 8]] },
-    { "id": "smith-squat", "name": { "ru": "Присед в Смите", "en": "Smith Machine Squat" }, "type": "strength", "equipment": "machine", "primary": ["quads", "glutes"], "secondary": ["hamstrings"], "unit": "kg", "step": 5, "level": "beginner", "defaultSets": [[30, 10], [40, 10], [40, 10]] },
-    { "id": "goblet-squat", "name": { "ru": "Гоблет-присед", "en": "Goblet Squat" }, "type": "strength", "equipment": "dumbbell", "primary": ["quads", "glutes"], "secondary": ["core"], "unit": "kg", "step": 2, "level": "beginner", "defaultSets": [[20, 12], [20, 12], [20, 12]] },
-    { "id": "leg-press", "name": { "ru": "Жим ногами", "en": "Leg Press" }, "type": "strength", "equipment": "machine", "primary": ["quads", "glutes"], "secondary": ["hamstrings"], "unit": "kg", "step": 10, "level": "beginner", "defaultSets": [[140, 10], [160, 10], [180, 10]] },
-    { "id": "hack-squat", "name": { "ru": "Гакк-присед", "en": "Hack Squat" }, "type": "strength", "equipment": "machine", "primary": ["quads"], "secondary": ["glutes"], "unit": "kg", "step": 10, "level": "intermediate", "defaultSets": [[60, 10], [80, 10], [80, 10]] },
-    { "id": "leg-extension", "name": { "ru": "Разгибание ног", "en": "Leg Extension" }, "type": "strength", "equipment": "machine", "primary": ["quads"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[55, 10], [60, 10], [60, 10]] },
-    { "id": "leg-curl", "name": { "ru": "Сгибание ног", "en": "Seated Leg Curl" }, "type": "strength", "equipment": "machine", "primary": ["hamstrings"], "secondary": ["calves"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[35, 12], [42.5, 10], [50, 10]] },
-    { "id": "lunge", "name": { "ru": "Выпады с гантелями", "en": "Dumbbell Lunge" }, "type": "strength", "equipment": "dumbbell", "primary": ["quads", "glutes"], "secondary": ["core"], "unit": "kg_hand", "step": 2, "level": "beginner", "defaultSets": [[12, 10], [12, 10], [12, 10]] },
-    { "id": "split-squat", "name": { "ru": "Сплит-присед / болгарский", "en": "Split Squat" }, "type": "strength", "equipment": "dumbbell", "primary": ["quads", "glutes"], "secondary": ["core"], "unit": "kg_hand", "step": 2, "level": "intermediate", "defaultSets": [[16, 10], [16, 10], [16, 10]] },
-    { "id": "step-up", "name": { "ru": "Зашагивания на тумбу", "en": "Step-Up" }, "type": "strength", "equipment": "dumbbell", "primary": ["quads", "glutes"], "secondary": ["core"], "unit": "kg_hand", "step": 2, "level": "beginner", "defaultSets": [[12, 10], [12, 10], [12, 10]] },
-    { "id": "hip-thrust-machine", "name": { "ru": "Ягодичный мост в тренажёре", "en": "Hip Thrust Machine" }, "type": "strength", "equipment": "machine", "primary": ["glutes"], "secondary": ["hamstrings"], "unit": "kg", "step": 5, "level": "beginner", "defaultSets": [[40, 12], [50, 10], [50, 10]] },
-    { "id": "barbell-hip-thrust", "name": { "ru": "Ягодичный мост со штангой", "en": "Barbell Hip Thrust" }, "type": "strength", "equipment": "barbell", "primary": ["glutes"], "secondary": ["hamstrings"], "unit": "kg", "step": 5, "level": "intermediate", "defaultSets": [[40, 12], [50, 10], [50, 10]] },
-    { "id": "glute-bridge", "name": { "ru": "Ягодичный мост без веса", "en": "Glute Bridge" }, "type": "strength", "equipment": "bodyweight", "primary": ["glutes"], "secondary": ["hamstrings", "core"], "unit": "reps", "step": 1, "level": "beginner", "defaultSets": [[0, 15], [0, 15], [0, 15]] },
-    { "id": "glute-kickback-machine", "name": { "ru": "Отведение ноги назад в тренажёре", "en": "Glute Kickback Machine" }, "type": "strength", "equipment": "machine", "primary": ["glutes"], "secondary": ["hamstrings"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[25, 12], [30, 12], [30, 12]] },
-    { "id": "cable-glute-kickback", "name": { "ru": "Отведение ноги на блоке", "en": "Cable Glute Kickback" }, "type": "strength", "equipment": "cable", "primary": ["glutes"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[10, 12], [12.5, 12], [12.5, 12]] },
-    { "id": "hip-abduction", "name": { "ru": "Разведение ног в тренажёре", "en": "Hip Abduction" }, "type": "strength", "equipment": "machine", "primary": ["abductors", "glutes"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[30, 15], [35, 12], [35, 12]] },
-    { "id": "hip-adduction", "name": { "ru": "Сведение ног в тренажёре", "en": "Hip Adduction" }, "type": "strength", "equipment": "machine", "primary": ["adductors"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[30, 15], [35, 12], [35, 12]] },
-    { "id": "calf-flex", "name": { "ru": "Икры: жим носками", "en": "Calf Press" }, "type": "strength", "equipment": "machine", "primary": ["calves"], "secondary": [], "unit": "kg", "step": 5, "level": "beginner", "defaultSets": [[80, 12], [90, 12], [95, 12]] },
-    { "id": "standing-calf-raise", "name": { "ru": "Икры стоя", "en": "Standing Calf Raise" }, "type": "strength", "equipment": "machine", "primary": ["calves"], "secondary": [], "unit": "kg", "step": 5, "level": "beginner", "defaultSets": [[40, 15], [50, 12], [50, 12]] },
-    { "id": "seated-calf-raise", "name": { "ru": "Икры сидя", "en": "Seated Calf Raise" }, "type": "strength", "equipment": "machine", "primary": ["calves"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[20, 15], [25, 12], [25, 12]] },
-    { "id": "deadlift", "name": { "ru": "Становая тяга", "en": "Deadlift" }, "type": "strength", "equipment": "barbell", "primary": ["hamstrings", "glutes", "lower_back"], "secondary": ["traps", "forearms"], "unit": "kg", "step": 5, "level": "intermediate", "defaultSets": [[60, 8], [70, 8], [80, 6]] },
-    { "id": "barbell-rdl", "name": { "ru": "Румынская тяга со штангой", "en": "Barbell Romanian Deadlift" }, "type": "strength", "equipment": "barbell", "primary": ["hamstrings", "glutes"], "secondary": ["lower_back"], "unit": "kg", "step": 5, "level": "intermediate", "defaultSets": [[40, 10], [50, 10], [50, 10]] },
-    { "id": "rdl", "name": { "ru": "Румынская тяга с гантелями", "en": "Dumbbell Romanian Deadlift" }, "type": "strength", "equipment": "dumbbell", "primary": ["hamstrings", "glutes"], "secondary": ["lower_back"], "unit": "kg_hand", "step": 2.5, "level": "beginner", "defaultSets": [[20, 10], [22.5, 10], [22.5, 10]] },
-    { "id": "single-leg-rdl", "name": { "ru": "Румынская тяга на одной ноге", "en": "Single-Leg RDL" }, "type": "strength", "equipment": "dumbbell", "primary": ["hamstrings", "glutes"], "secondary": ["core"], "unit": "kg", "step": 2, "level": "intermediate", "defaultSets": [[16, 10], [16, 10], [16, 10]] },
-    { "id": "back-extension", "name": { "ru": "Гиперэкстензия", "en": "Back Extension" }, "type": "strength", "equipment": "machine", "primary": ["lower_back", "glutes"], "secondary": ["hamstrings"], "unit": "kg", "step": 5, "level": "beginner", "defaultSets": [[15, 10], [15, 10], [15, 10]] },
-    { "id": "kettlebell-swing", "name": { "ru": "Махи гирей", "en": "Kettlebell Swing" }, "type": "functional", "equipment": "kettlebell", "primary": ["glutes", "hamstrings"], "secondary": ["core", "shoulders"], "unit": "kg", "step": 2, "level": "intermediate", "defaultSets": [[24, 10], [24, 10], [24, 10]] },
-    { "id": "superman", "name": { "ru": "Лодочка", "en": "Superman Hold" }, "type": "functional", "equipment": "bodyweight", "primary": ["lower_back"], "secondary": ["glutes"], "unit": "sec", "step": 5, "level": "beginner", "defaultSets": [[0, 30], [0, 30], [0, 30]] },
-    { "id": "pull-up", "name": { "ru": "Подтягивания", "en": "Pull-Up" }, "type": "strength", "equipment": "bodyweight", "primary": ["lats", "upper_back"], "secondary": ["biceps", "core"], "unit": "reps", "step": 1, "level": "advanced", "defaultSets": [[0, 6], [0, 6], [0, 6]] },
-    { "id": "chin-up", "name": { "ru": "Подтягивания обратным хватом", "en": "Chin-Up" }, "type": "strength", "equipment": "bodyweight", "primary": ["lats", "biceps"], "secondary": ["core"], "unit": "reps", "step": 1, "level": "intermediate", "defaultSets": [[0, 6], [0, 6], [0, 6]] },
-    { "id": "gravitron", "name": { "ru": "Гравитрон: подтягивания", "en": "Assisted Pull-Up" }, "type": "strength", "equipment": "machine", "primary": ["lats", "upper_back"], "secondary": ["biceps"], "unit": "kg_counter", "step": -2.5, "lowerIsBetter": true, "level": "beginner", "defaultSets": [[40, 8], [35, 8], [30, 8]] },
-    { "id": "lat-pulldown", "name": { "ru": "Тяга верхнего блока", "en": "Lat Pulldown" }, "type": "strength", "equipment": "cable", "primary": ["lats"], "secondary": ["biceps", "upper_back"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[52, 10], [56, 10], [60, 8]] },
-    { "id": "row", "name": { "ru": "Тяга горизонтального блока", "en": "Seated Cable Row" }, "type": "strength", "equipment": "cable", "primary": ["upper_back", "lats"], "secondary": ["biceps"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[57, 10], [67, 8], [67, 10]] },
-    { "id": "machine-row", "name": { "ru": "Рычажная тяга", "en": "Machine Row" }, "type": "strength", "equipment": "machine", "primary": ["upper_back", "lats"], "secondary": ["biceps"], "unit": "kg", "step": 5, "level": "beginner", "defaultSets": [[40, 10], [50, 10], [50, 10]] },
-    { "id": "barbell-row", "name": { "ru": "Тяга штанги в наклоне", "en": "Barbell Row" }, "type": "strength", "equipment": "barbell", "primary": ["upper_back", "lats"], "secondary": ["lower_back", "biceps"], "unit": "kg", "step": 5, "level": "intermediate", "defaultSets": [[40, 8], [50, 8], [50, 8]] },
-    { "id": "one-arm-row", "name": { "ru": "Тяга гантели одной рукой", "en": "One-Arm Dumbbell Row" }, "type": "strength", "equipment": "dumbbell", "primary": ["lats", "upper_back"], "secondary": ["biceps", "core"], "unit": "kg_hand", "step": 2, "level": "beginner", "defaultSets": [[22, 10], [26, 10], [28, 10]] },
-    { "id": "t-bar-row", "name": { "ru": "Т-тяга", "en": "T-Bar Row" }, "type": "strength", "equipment": "barbell", "primary": ["upper_back", "lats"], "secondary": ["biceps"], "unit": "kg", "step": 5, "level": "intermediate", "defaultSets": [[30, 10], [40, 10], [40, 10]] },
-    { "id": "straight-arm-pulldown", "name": { "ru": "Тяга прямыми руками", "en": "Straight-Arm Pulldown" }, "type": "strength", "equipment": "cable", "primary": ["lats"], "secondary": ["core"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[25, 12], [30, 12], [30, 12]] },
-    { "id": "shrugs", "name": { "ru": "Шраги с гантелями", "en": "Dumbbell Shrug" }, "type": "strength", "equipment": "dumbbell", "primary": ["traps"], "secondary": ["forearms"], "unit": "kg_hand", "step": 2.5, "level": "beginner", "defaultSets": [[20, 12], [24, 12], [24, 12]] },
-    { "id": "face-pull", "name": { "ru": "Фейспул", "en": "Face Pull" }, "type": "strength", "equipment": "cable", "primary": ["rear_delts", "upper_back"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[20, 15], [25, 12], [25, 12]] },
-    { "id": "bench", "name": { "ru": "Жим штанги лёжа", "en": "Barbell Bench Press" }, "type": "strength", "equipment": "barbell", "primary": ["chest"], "secondary": ["triceps", "shoulders"], "unit": "kg", "step": 2.5, "level": "intermediate", "defaultSets": [[50, 8], [55, 8], [60, 8]] },
-    { "id": "incline-bench", "name": { "ru": "Жим штанги на наклонной", "en": "Incline Bench Press" }, "type": "strength", "equipment": "barbell", "primary": ["chest", "shoulders"], "secondary": ["triceps"], "unit": "kg", "step": 2.5, "level": "intermediate", "defaultSets": [[40, 8], [45, 8], [50, 8]] },
-    { "id": "db-press", "name": { "ru": "Жим гантелей лёжа", "en": "Dumbbell Bench Press" }, "type": "strength", "equipment": "dumbbell", "primary": ["chest"], "secondary": ["triceps", "shoulders"], "unit": "kg_hand", "step": 2.5, "level": "beginner", "defaultSets": [[20, 10], [20, 10], [22.5, 8]] },
-    { "id": "incline-db-press", "name": { "ru": "Жим гантелей на наклонной", "en": "Incline Dumbbell Press" }, "type": "strength", "equipment": "dumbbell", "primary": ["chest", "shoulders"], "secondary": ["triceps"], "unit": "kg_hand", "step": 2.5, "level": "beginner", "defaultSets": [[18, 10], [20, 8], [20, 8]] },
-    { "id": "chest-machine", "name": { "ru": "Жим от груди в тренажёре", "en": "Chest Press Machine" }, "type": "strength", "equipment": "machine", "primary": ["chest"], "secondary": ["triceps"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[40, 10], [50, 8], [55, 8]] },
-    { "id": "incline-press", "name": { "ru": "Жим в тренажёре под углом", "en": "Incline Press Machine" }, "type": "strength", "equipment": "machine", "primary": ["chest", "shoulders"], "secondary": ["triceps"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[40, 10], [50, 8], [55, 8]] },
-    { "id": "decline-chest-machine", "name": { "ru": "Жим в тренажёре с наклоном вниз", "en": "Decline Press Machine" }, "type": "strength", "equipment": "machine", "primary": ["chest"], "secondary": ["triceps"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[40, 10], [50, 8], [55, 8]] },
-    { "id": "butterfly", "name": { "ru": "Сведение рук (бабочка)", "en": "Pec Deck Fly" }, "type": "strength", "equipment": "machine", "primary": ["chest"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[40, 10], [45, 10], [50, 8]] },
-    { "id": "cable-crossover", "name": { "ru": "Кроссовер", "en": "Cable Crossover" }, "type": "strength", "equipment": "cable", "primary": ["chest"], "secondary": ["shoulders"], "unit": "kg", "step": 2.5, "level": "intermediate", "defaultSets": [[15, 12], [17.5, 12], [17.5, 12]] },
-    { "id": "db-fly", "name": { "ru": "Разведение гантелей лёжа", "en": "Dumbbell Fly" }, "type": "strength", "equipment": "dumbbell", "primary": ["chest"], "secondary": ["shoulders"], "unit": "kg_hand", "step": 2, "level": "intermediate", "defaultSets": [[10, 12], [12, 10], [12, 10]] },
-    { "id": "push-up", "name": { "ru": "Отжимания", "en": "Push-Up" }, "type": "strength", "equipment": "bodyweight", "primary": ["chest"], "secondary": ["triceps", "shoulders", "core"], "unit": "reps", "step": 1, "level": "beginner", "defaultSets": [[0, 12], [0, 12], [0, 12]] },
-    { "id": "dip", "name": { "ru": "Отжимания на брусьях", "en": "Dip" }, "type": "strength", "equipment": "bodyweight", "primary": ["chest", "triceps"], "secondary": ["shoulders"], "unit": "reps", "step": 1, "level": "advanced", "defaultSets": [[0, 8], [0, 8], [0, 8]] },
-    { "id": "dips", "name": { "ru": "Брусья в гравитроне", "en": "Assisted Dip" }, "type": "strength", "equipment": "machine", "primary": ["chest", "triceps"], "secondary": ["shoulders"], "unit": "kg_counter", "step": -2.5, "lowerIsBetter": true, "level": "beginner", "defaultSets": [[35, 8], [35, 8], [35, 8]] },
-    { "id": "overhead-press", "name": { "ru": "Жим штанги стоя", "en": "Overhead Press" }, "type": "strength", "equipment": "barbell", "primary": ["shoulders"], "secondary": ["triceps", "core"], "unit": "kg", "step": 2.5, "level": "intermediate", "defaultSets": [[25, 8], [30, 8], [30, 8]] },
-    { "id": "db-shoulder-press", "name": { "ru": "Жим гантелей вверх", "en": "Dumbbell Shoulder Press" }, "type": "strength", "equipment": "dumbbell", "primary": ["shoulders"], "secondary": ["triceps"], "unit": "kg_hand", "step": 2, "level": "beginner", "defaultSets": [[12, 10], [14, 10], [14, 10]] },
-    { "id": "shoulder-press", "name": { "ru": "Жим вверх в тренажёре", "en": "Shoulder Press Machine" }, "type": "strength", "equipment": "machine", "primary": ["shoulders"], "secondary": ["triceps"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[15, 10], [17.5, 10], [20, 10]] },
-    { "id": "deltoid-machine", "name": { "ru": "Махи в тренажёре", "en": "Lateral Raise Machine" }, "type": "strength", "equipment": "machine", "primary": ["shoulders"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[25, 10], [30, 8], [30, 8]] },
-    { "id": "lateral-raise", "name": { "ru": "Махи гантелями в стороны", "en": "Dumbbell Lateral Raise" }, "type": "strength", "equipment": "dumbbell", "primary": ["shoulders"], "secondary": [], "unit": "kg_hand", "step": 1, "level": "beginner", "defaultSets": [[6, 12], [8, 12], [8, 12]] },
-    { "id": "rear-delt-fly", "name": { "ru": "Разведения в наклоне", "en": "Bent-Over Rear Delt Fly" }, "type": "strength", "equipment": "dumbbell", "primary": ["rear_delts"], "secondary": ["upper_back"], "unit": "kg_hand", "step": 1, "level": "beginner", "defaultSets": [[6, 12], [8, 12], [8, 12]] },
-    { "id": "reverse-fly", "name": { "ru": "Обратная бабочка", "en": "Reverse Pec Deck" }, "type": "strength", "equipment": "machine", "primary": ["rear_delts"], "secondary": ["upper_back"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[20, 10], [30, 10], [30, 10]] },
-    { "id": "overhead-plate", "name": { "ru": "Диск вокруг головы", "en": "Plate Halo" }, "type": "functional", "equipment": "plate", "primary": ["shoulders"], "secondary": ["core"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[15, 12], [20, 10], [20, 10]] },
-    { "id": "barbell-curl", "name": { "ru": "Подъём штанги на бицепс", "en": "Barbell Curl" }, "type": "strength", "equipment": "barbell", "primary": ["biceps"], "secondary": ["forearms"], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[20, 10], [25, 10], [25, 8]] },
-    { "id": "db-curl", "name": { "ru": "Сгибания с гантелями", "en": "Dumbbell Curl" }, "type": "strength", "equipment": "dumbbell", "primary": ["biceps"], "secondary": ["forearms"], "unit": "kg_hand", "step": 1, "level": "beginner", "defaultSets": [[10, 10], [12, 10], [12, 8]] },
-    { "id": "hammer-curl", "name": { "ru": "Молотковые сгибания", "en": "Hammer Curl" }, "type": "strength", "equipment": "dumbbell", "primary": ["biceps", "forearms"], "secondary": [], "unit": "kg_hand", "step": 1, "level": "beginner", "defaultSets": [[10, 10], [12, 10], [12, 8]] },
-    { "id": "biceps", "name": { "ru": "Бицепс в тренажёре", "en": "Machine Biceps Curl" }, "type": "strength", "equipment": "machine", "primary": ["biceps"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[25, 10], [30, 8], [30, 8]] },
-    { "id": "triceps-pushdown", "name": { "ru": "Трицепс на верхнем блоке", "en": "Triceps Pushdown" }, "type": "strength", "equipment": "cable", "primary": ["triceps"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[55, 10], [65, 10], [75, 8]] },
-    { "id": "triceps-machine", "name": { "ru": "Трицепс-тренажёр", "en": "Triceps Extension Machine" }, "type": "strength", "equipment": "machine", "primary": ["triceps"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[65, 12], [75, 10], [80, 10]] },
-    { "id": "triceps", "name": { "ru": "Французский жим лёжа", "en": "Lying Triceps Extension" }, "type": "strength", "equipment": "dumbbell", "primary": ["triceps"], "secondary": [], "unit": "kg", "step": 1, "level": "beginner", "defaultSets": [[10, 10], [10, 10], [12, 8]] },
-    { "id": "close-grip-bench", "name": { "ru": "Жим узким хватом", "en": "Close-Grip Bench Press" }, "type": "strength", "equipment": "barbell", "primary": ["triceps", "chest"], "secondary": ["shoulders"], "unit": "kg", "step": 2.5, "level": "intermediate", "defaultSets": [[35, 10], [40, 8], [40, 8]] },
-    { "id": "plank", "name": { "ru": "Планка", "en": "Plank" }, "type": "functional", "equipment": "bodyweight", "primary": ["core"], "secondary": ["shoulders", "glutes"], "unit": "sec", "step": 5, "level": "beginner", "defaultSets": [[0, 40], [0, 40], [0, 40]] },
-    { "id": "side-plank", "name": { "ru": "Боковая планка", "en": "Side Plank" }, "type": "functional", "equipment": "bodyweight", "primary": ["obliques", "core"], "secondary": [], "unit": "sec", "step": 5, "level": "beginner", "defaultSets": [[0, 20], [0, 20], [0, 20]] },
-    { "id": "dead-bug", "name": { "ru": "Дэд-баг", "en": "Dead Bug" }, "type": "functional", "equipment": "bodyweight", "primary": ["core"], "secondary": ["hip_flexors"], "unit": "reps", "step": 1, "level": "beginner", "defaultSets": [[0, 16], [0, 16], [0, 16]] },
-    { "id": "bird-dog", "name": { "ru": "Бёрд-дог", "en": "Bird Dog" }, "type": "functional", "equipment": "bodyweight", "primary": ["core", "lower_back"], "secondary": ["glutes"], "unit": "reps", "step": 1, "level": "beginner", "defaultSets": [[0, 10], [0, 10], [0, 10]] },
-    { "id": "crunch", "name": { "ru": "Скручивания", "en": "Crunch" }, "type": "strength", "equipment": "bodyweight", "primary": ["core"], "secondary": [], "unit": "reps", "step": 1, "level": "beginner", "defaultSets": [[0, 15], [0, 15], [0, 15]] },
-    { "id": "cable-crunch", "name": { "ru": "Скручивания на блоке", "en": "Cable Crunch" }, "type": "strength", "equipment": "cable", "primary": ["core"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[25, 12], [30, 12], [30, 12]] },
-    { "id": "hanging-leg-raise", "name": { "ru": "Подъём ног в висе", "en": "Hanging Leg Raise" }, "type": "strength", "equipment": "bodyweight", "primary": ["core", "hip_flexors"], "secondary": ["forearms"], "unit": "reps", "step": 1, "level": "intermediate", "defaultSets": [[0, 10], [0, 10], [0, 10]] },
-    { "id": "russian-twist", "name": { "ru": "Русские скручивания", "en": "Russian Twist" }, "type": "functional", "equipment": "bodyweight", "primary": ["obliques", "core"], "secondary": [], "unit": "reps", "step": 1, "level": "beginner", "defaultSets": [[0, 20], [0, 20], [0, 20]] },
-    { "id": "ab-wheel", "name": { "ru": "Ролик для пресса", "en": "Ab Wheel Rollout" }, "type": "strength", "equipment": "other", "primary": ["core"], "secondary": ["lats", "shoulders"], "unit": "reps", "step": 1, "level": "advanced", "defaultSets": [[0, 12], [0, 12], [0, 12]] },
-    { "id": "pallof-press", "name": { "ru": "Жим Паллофа", "en": "Pallof Press" }, "type": "functional", "equipment": "cable", "primary": ["core", "obliques"], "secondary": [], "unit": "kg", "step": 2.5, "level": "beginner", "defaultSets": [[10, 12], [12.5, 12], [12.5, 12]] },
-    { "id": "wood-chop", "name": { "ru": "Дровосек на блоке", "en": "Cable Wood Chop" }, "type": "functional", "equipment": "cable", "primary": ["obliques", "core"], "secondary": [], "unit": "kg", "step": 2.5, "level": "intermediate", "defaultSets": [[15, 12], [17.5, 12], [17.5, 12]] },
-    { "id": "farmer-carry", "name": { "ru": "Фермерская прогулка", "en": "Farmer's Carry" }, "type": "functional", "equipment": "dumbbell", "primary": ["forearms", "traps", "core"], "secondary": ["full_body"], "unit": "kg_hand", "step": 2, "level": "beginner", "defaultSets": [[24, 40], [24, 40], [24, 40]] },
-    { "id": "box-jump", "name": { "ru": "Прыжки на тумбу", "en": "Box Jump" }, "type": "functional", "equipment": "bodyweight", "primary": ["quads", "glutes", "calves"], "secondary": [], "unit": "reps", "step": 1, "level": "intermediate", "defaultSets": [[0, 10], [0, 10], [0, 10]] },
-    { "id": "burpee", "name": { "ru": "Бёрпи", "en": "Burpee" }, "type": "functional", "equipment": "bodyweight", "primary": ["full_body"], "secondary": ["core", "chest"], "unit": "reps", "step": 1, "level": "intermediate", "defaultSets": [[0, 10], [0, 10], [0, 10]] },
-    { "id": "mountain-climbers", "name": { "ru": "Скалолаз", "en": "Mountain Climbers" }, "type": "functional", "equipment": "bodyweight", "primary": ["core", "hip_flexors"], "secondary": ["shoulders"], "unit": "sec", "step": 5, "level": "beginner", "defaultSets": [[0, 30], [0, 30], [0, 30]] },
-    { "id": "sled-push", "name": { "ru": "Толкание саней", "en": "Sled Push" }, "type": "functional", "equipment": "other", "primary": ["quads", "glutes", "full_body"], "secondary": [], "unit": "kg", "step": 5, "level": "intermediate", "defaultSets": [[40, 4], [40, 4], [40, 4]] },
-    { "id": "battle-ropes", "name": { "ru": "Канаты", "en": "Battle Ropes" }, "type": "functional", "equipment": "other", "primary": ["shoulders", "core", "full_body"], "secondary": [], "unit": "sec", "step": 5, "level": "beginner", "defaultSets": [[0, 30], [0, 30], [0, 30]] },
-    { "id": "treadmill", "name": { "ru": "Дорожка", "en": "Treadmill" }, "type": "cardio", "equipment": "cardio", "primary": ["full_body"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "beginner", "defaultSets": [[10, 1]] },
-    { "id": "elliptical", "name": { "ru": "Эллипс", "en": "Elliptical" }, "type": "cardio", "equipment": "cardio", "primary": ["full_body"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "beginner", "defaultSets": [[12, 1]] },
-    { "id": "bike", "name": { "ru": "Велотренажёр", "en": "Stationary Bike" }, "type": "cardio", "equipment": "cardio", "primary": ["quads", "full_body"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "beginner", "defaultSets": [[15, 1]] },
-    { "id": "rowing", "name": { "ru": "Гребной тренажёр", "en": "Rowing Machine" }, "type": "cardio", "equipment": "cardio", "primary": ["full_body", "upper_back"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "beginner", "defaultSets": [[5, 1]] },
-    { "id": "stairmaster", "name": { "ru": "Степпер", "en": "Stair Climber" }, "type": "cardio", "equipment": "cardio", "primary": ["glutes", "full_body"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "beginner", "defaultSets": [[10, 1]] },
-    { "id": "assault-bike", "name": { "ru": "Аэробайк", "en": "Air Bike" }, "type": "cardio", "equipment": "cardio", "primary": ["full_body"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "intermediate", "defaultSets": [[8, 1]] },
-    { "id": "ski-erg", "name": { "ru": "Ски-эргометр", "en": "SkiErg" }, "type": "cardio", "equipment": "cardio", "primary": ["full_body", "lats"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "intermediate", "defaultSets": [[5, 1]] },
-    { "id": "jump-rope", "name": { "ru": "Скакалка", "en": "Jump Rope" }, "type": "cardio", "equipment": "other", "primary": ["calves", "full_body"], "secondary": [], "unit": "min", "step": 1, "cardio": true, "level": "beginner", "defaultSets": [[5, 1]] }
+    {
+      "id": "squat",
+      "name": {
+        "ru": "Присед со штангой",
+        "en": "Barbell Back Squat"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "core"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          40,
+          8
+        ],
+        [
+          50,
+          8
+        ],
+        [
+          50,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "front-squat",
+      "name": {
+        "ru": "Фронтальный присед",
+        "en": "Front Squat"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "quads"
+      ],
+      "secondary": [
+        "glutes",
+        "core"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "advanced",
+      "defaultSets": [
+        [
+          30,
+          8
+        ],
+        [
+          40,
+          8
+        ],
+        [
+          40,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "smith-squat",
+      "name": {
+        "ru": "Присед в Смите",
+        "en": "Smith Machine Squat"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          30,
+          10
+        ],
+        [
+          40,
+          10
+        ],
+        [
+          40,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "goblet-squat",
+      "name": {
+        "ru": "Гоблет-присед",
+        "en": "Goblet Squat"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "kg",
+      "step": 2,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          12
+        ],
+        [
+          20,
+          12
+        ],
+        [
+          20,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "leg-press",
+      "name": {
+        "ru": "Жим ногами без наклона",
+        "en": "Leg Press (45°)"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 10,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          140,
+          10
+        ],
+        [
+          160,
+          10
+        ],
+        [
+          180,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "hack-squat",
+      "name": {
+        "ru": "Гакк-присед",
+        "en": "Hack Squat"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "quads"
+      ],
+      "secondary": [
+        "glutes"
+      ],
+      "unit": "kg",
+      "step": 10,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          60,
+          10
+        ],
+        [
+          80,
+          10
+        ],
+        [
+          80,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "leg-extension",
+      "name": {
+        "ru": "Разгибание голени",
+        "en": "Leg Extension"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "quads"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          55,
+          10
+        ],
+        [
+          60,
+          10
+        ],
+        [
+          60,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "leg-curl",
+      "name": {
+        "ru": "Сгибание ног сидя",
+        "en": "Seated Leg Curl"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "hamstrings"
+      ],
+      "secondary": [
+        "calves"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          35,
+          12
+        ],
+        [
+          42.5,
+          10
+        ],
+        [
+          50,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "lunge",
+      "name": {
+        "ru": "Выпады с гантелями",
+        "en": "Dumbbell Lunge"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "kg_hand",
+      "step": 2,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "split-squat",
+      "name": {
+        "ru": "Сплит-присед / болгарский",
+        "en": "Split Squat"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "kg_hand",
+      "step": 2,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          16,
+          10
+        ],
+        [
+          16,
+          10
+        ],
+        [
+          16,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "step-up",
+      "name": {
+        "ru": "Зашагивания на тумбу",
+        "en": "Step-Up"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "kg_hand",
+      "step": 2,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "hip-thrust-machine",
+      "name": {
+        "ru": "Glute Drive",
+        "en": "Glute Drive / Hip Thrust Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          12
+        ],
+        [
+          50,
+          10
+        ],
+        [
+          50,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "barbell-hip-thrust",
+      "name": {
+        "ru": "Ягодичный мост со штангой",
+        "en": "Barbell Hip Thrust"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          40,
+          12
+        ],
+        [
+          50,
+          10
+        ],
+        [
+          50,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "glute-bridge",
+      "name": {
+        "ru": "Glute Bridge",
+        "en": "Glute Bridge"
+      },
+      "type": "strength",
+      "equipment": "bodyweight",
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings",
+        "core"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          15
+        ],
+        [
+          0,
+          15
+        ],
+        [
+          0,
+          15
+        ]
+      ]
+    },
+    {
+      "id": "glute-kickback-machine",
+      "name": {
+        "ru": "Hip & Glute / ягодичные",
+        "en": "Hip & Glute Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          25,
+          12
+        ],
+        [
+          30,
+          12
+        ],
+        [
+          30,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "cable-glute-kickback",
+      "name": {
+        "ru": "Отведение ноги на блоке",
+        "en": "Cable Glute Kickback"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "glutes"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          10,
+          12
+        ],
+        [
+          12.5,
+          12
+        ],
+        [
+          12.5,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "hip-abduction",
+      "name": {
+        "ru": "Разведение ног в тренажёре",
+        "en": "Hip Abduction"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "abductors",
+        "glutes"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          30,
+          15
+        ],
+        [
+          35,
+          12
+        ],
+        [
+          35,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "hip-adduction",
+      "name": {
+        "ru": "Сведение ног в тренажёре",
+        "en": "Hip Adduction"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "adductors"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          30,
+          15
+        ],
+        [
+          35,
+          12
+        ],
+        [
+          35,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "calf-flex",
+      "name": {
+        "ru": "Икры: жим носками",
+        "en": "Calf Press"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "calves"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          80,
+          12
+        ],
+        [
+          90,
+          12
+        ],
+        [
+          95,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "standing-calf-raise",
+      "name": {
+        "ru": "Подъём на носки",
+        "en": "Standing Calf Raise"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "calves"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          15
+        ],
+        [
+          50,
+          12
+        ],
+        [
+          50,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "seated-calf-raise",
+      "name": {
+        "ru": "Икры сидя",
+        "en": "Seated Calf Raise"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "calves"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          15
+        ],
+        [
+          25,
+          12
+        ],
+        [
+          25,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "deadlift",
+      "name": {
+        "ru": "Становая тяга",
+        "en": "Deadlift"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "hamstrings",
+        "glutes",
+        "lower_back"
+      ],
+      "secondary": [
+        "traps",
+        "forearms"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          60,
+          8
+        ],
+        [
+          70,
+          8
+        ],
+        [
+          80,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "barbell-rdl",
+      "name": {
+        "ru": "Румынская тяга со штангой",
+        "en": "Barbell Romanian Deadlift"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "hamstrings",
+        "glutes"
+      ],
+      "secondary": [
+        "lower_back"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          40,
+          10
+        ],
+        [
+          50,
+          10
+        ],
+        [
+          50,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "rdl",
+      "name": {
+        "ru": "Румынская тяга с гантелями",
+        "en": "Dumbbell Romanian Deadlift"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "hamstrings",
+        "glutes"
+      ],
+      "secondary": [
+        "lower_back"
+      ],
+      "unit": "kg_hand",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          10
+        ],
+        [
+          22.5,
+          10
+        ],
+        [
+          22.5,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "single-leg-rdl",
+      "name": {
+        "ru": "Румынская тяга на одной ноге",
+        "en": "Single-Leg RDL"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "hamstrings",
+        "glutes"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "kg",
+      "step": 2,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          16,
+          10
+        ],
+        [
+          16,
+          10
+        ],
+        [
+          16,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "back-extension",
+      "name": {
+        "ru": "Разгибание спины",
+        "en": "Back Extension"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "lower_back",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          15,
+          10
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          15,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "kettlebell-swing",
+      "name": {
+        "ru": "Махи гирей",
+        "en": "Kettlebell Swing"
+      },
+      "type": "functional",
+      "equipment": "kettlebell",
+      "primary": [
+        "glutes",
+        "hamstrings"
+      ],
+      "secondary": [
+        "core",
+        "shoulders"
+      ],
+      "unit": "kg",
+      "step": 2,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          24,
+          10
+        ],
+        [
+          24,
+          10
+        ],
+        [
+          24,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "superman",
+      "name": {
+        "ru": "Лодочка",
+        "en": "Superman Hold"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "lower_back"
+      ],
+      "secondary": [
+        "glutes"
+      ],
+      "unit": "sec",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          30
+        ],
+        [
+          0,
+          30
+        ],
+        [
+          0,
+          30
+        ]
+      ]
+    },
+    {
+      "id": "pull-up",
+      "name": {
+        "ru": "Подтягивания",
+        "en": "Pull-Up"
+      },
+      "type": "strength",
+      "equipment": "bodyweight",
+      "primary": [
+        "lats",
+        "upper_back"
+      ],
+      "secondary": [
+        "biceps",
+        "core"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "advanced",
+      "defaultSets": [
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "chin-up",
+      "name": {
+        "ru": "Подтягивания обратным хватом",
+        "en": "Chin-Up"
+      },
+      "type": "strength",
+      "equipment": "bodyweight",
+      "primary": [
+        "lats",
+        "biceps"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          6
+        ],
+        [
+          0,
+          6
+        ]
+      ]
+    },
+    {
+      "id": "gravitron",
+      "name": {
+        "ru": "Гравитрон: подтягивания",
+        "en": "Assisted Pull-Up"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "lats",
+        "upper_back"
+      ],
+      "secondary": [
+        "biceps"
+      ],
+      "unit": "kg_counter",
+      "step": -2.5,
+      "lowerIsBetter": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          8
+        ],
+        [
+          35,
+          8
+        ],
+        [
+          30,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "lat-pulldown",
+      "name": {
+        "ru": "Тяга верхнего блока / тяга сверху",
+        "en": "Lat Pulldown"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "lats"
+      ],
+      "secondary": [
+        "biceps",
+        "upper_back"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          52,
+          10
+        ],
+        [
+          56,
+          10
+        ],
+        [
+          60,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "row",
+      "name": {
+        "ru": "Тяга нижнего блока",
+        "en": "Seated Cable Row"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "upper_back",
+        "lats"
+      ],
+      "secondary": [
+        "biceps"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          57,
+          10
+        ],
+        [
+          67,
+          8
+        ],
+        [
+          67,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "machine-row",
+      "name": {
+        "ru": "Фронтальная тяга",
+        "en": "Front / Chest-Supported Row"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "upper_back",
+        "lats"
+      ],
+      "secondary": [
+        "biceps"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          10
+        ],
+        [
+          50,
+          10
+        ],
+        [
+          50,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "barbell-row",
+      "name": {
+        "ru": "Тяга штанги в наклоне",
+        "en": "Barbell Row"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "upper_back",
+        "lats"
+      ],
+      "secondary": [
+        "lower_back",
+        "biceps"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          40,
+          8
+        ],
+        [
+          50,
+          8
+        ],
+        [
+          50,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "one-arm-row",
+      "name": {
+        "ru": "Тяга гантели одной рукой",
+        "en": "One-Arm Dumbbell Row"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "lats",
+        "upper_back"
+      ],
+      "secondary": [
+        "biceps",
+        "core"
+      ],
+      "unit": "kg_hand",
+      "step": 2,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          22,
+          10
+        ],
+        [
+          26,
+          10
+        ],
+        [
+          28,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "t-bar-row",
+      "name": {
+        "ru": "Т-тяга",
+        "en": "T-Bar Row"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "upper_back",
+        "lats"
+      ],
+      "secondary": [
+        "biceps"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          30,
+          10
+        ],
+        [
+          40,
+          10
+        ],
+        [
+          40,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "straight-arm-pulldown",
+      "name": {
+        "ru": "Тяга прямыми руками",
+        "en": "Straight-Arm Pulldown"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "lats"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          25,
+          12
+        ],
+        [
+          30,
+          12
+        ],
+        [
+          30,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "shrugs",
+      "name": {
+        "ru": "Шраги с гантелями",
+        "en": "Dumbbell Shrug"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "traps"
+      ],
+      "secondary": [
+        "forearms"
+      ],
+      "unit": "kg_hand",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          12
+        ],
+        [
+          24,
+          12
+        ],
+        [
+          24,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "face-pull",
+      "name": {
+        "ru": "Фейспул",
+        "en": "Face Pull"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "rear_delts",
+        "upper_back"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          15
+        ],
+        [
+          25,
+          12
+        ],
+        [
+          25,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "bench",
+      "name": {
+        "ru": "Жим штанги лёжа",
+        "en": "Barbell Bench Press"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "triceps",
+        "shoulders"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          50,
+          8
+        ],
+        [
+          55,
+          8
+        ],
+        [
+          60,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "incline-bench",
+      "name": {
+        "ru": "Жим штанги на наклонной",
+        "en": "Incline Bench Press"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "chest",
+        "shoulders"
+      ],
+      "secondary": [
+        "triceps"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          40,
+          8
+        ],
+        [
+          45,
+          8
+        ],
+        [
+          50,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "db-press",
+      "name": {
+        "ru": "Жим гантелей лёжа",
+        "en": "Dumbbell Bench Press"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "triceps",
+        "shoulders"
+      ],
+      "unit": "kg_hand",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          10
+        ],
+        [
+          20,
+          10
+        ],
+        [
+          22.5,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "incline-db-press",
+      "name": {
+        "ru": "Жим гантелей на наклонной",
+        "en": "Incline Dumbbell Press"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "chest",
+        "shoulders"
+      ],
+      "secondary": [
+        "triceps"
+      ],
+      "unit": "kg_hand",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          18,
+          10
+        ],
+        [
+          20,
+          8
+        ],
+        [
+          20,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "chest-machine",
+      "name": {
+        "ru": "Жим от груди в тренажёре",
+        "en": "Chest Press Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "triceps"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          10
+        ],
+        [
+          50,
+          8
+        ],
+        [
+          55,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "incline-press",
+      "name": {
+        "ru": "Жим на наклонной скамье (тренажёр)",
+        "en": "Incline Press Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "chest",
+        "shoulders"
+      ],
+      "secondary": [
+        "triceps"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          10
+        ],
+        [
+          50,
+          8
+        ],
+        [
+          55,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "decline-chest-machine",
+      "name": {
+        "ru": "Жим от груди с наклоном назад",
+        "en": "Decline Chest Press"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "triceps"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          10
+        ],
+        [
+          50,
+          8
+        ],
+        [
+          55,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "butterfly",
+      "name": {
+        "ru": "Сведение рук (бабочка)",
+        "en": "Pec Deck Fly"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          40,
+          10
+        ],
+        [
+          45,
+          10
+        ],
+        [
+          50,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "cable-crossover",
+      "name": {
+        "ru": "Кроссовер",
+        "en": "Cable Crossover"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "shoulders"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          15,
+          12
+        ],
+        [
+          17.5,
+          12
+        ],
+        [
+          17.5,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "db-fly",
+      "name": {
+        "ru": "Разведение гантелей лёжа",
+        "en": "Dumbbell Fly"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "shoulders"
+      ],
+      "unit": "kg_hand",
+      "step": 2,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          10,
+          12
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "push-up",
+      "name": {
+        "ru": "Отжимания",
+        "en": "Push-Up"
+      },
+      "type": "strength",
+      "equipment": "bodyweight",
+      "primary": [
+        "chest"
+      ],
+      "secondary": [
+        "triceps",
+        "shoulders",
+        "core"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          12
+        ],
+        [
+          0,
+          12
+        ],
+        [
+          0,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "dip",
+      "name": {
+        "ru": "Отжимания на брусьях",
+        "en": "Dip"
+      },
+      "type": "strength",
+      "equipment": "bodyweight",
+      "primary": [
+        "chest",
+        "triceps"
+      ],
+      "secondary": [
+        "shoulders"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "advanced",
+      "defaultSets": [
+        [
+          0,
+          8
+        ],
+        [
+          0,
+          8
+        ],
+        [
+          0,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "dips",
+      "name": {
+        "ru": "Брусья в гравитроне",
+        "en": "Assisted Dip"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "chest",
+        "triceps"
+      ],
+      "secondary": [
+        "shoulders"
+      ],
+      "unit": "kg_counter",
+      "step": -2.5,
+      "lowerIsBetter": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          35,
+          8
+        ],
+        [
+          35,
+          8
+        ],
+        [
+          35,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "overhead-press",
+      "name": {
+        "ru": "Жим штанги стоя",
+        "en": "Overhead Press"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "shoulders"
+      ],
+      "secondary": [
+        "triceps",
+        "core"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          25,
+          8
+        ],
+        [
+          30,
+          8
+        ],
+        [
+          30,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "db-shoulder-press",
+      "name": {
+        "ru": "Жим гантелей вверх",
+        "en": "Dumbbell Shoulder Press"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "shoulders"
+      ],
+      "secondary": [
+        "triceps"
+      ],
+      "unit": "kg_hand",
+      "step": 2,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          12,
+          10
+        ],
+        [
+          14,
+          10
+        ],
+        [
+          14,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "shoulder-press",
+      "name": {
+        "ru": "Жим сидя / жим вверх",
+        "en": "Seated Shoulder Press"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "shoulders"
+      ],
+      "secondary": [
+        "triceps"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          15,
+          10
+        ],
+        [
+          17.5,
+          10
+        ],
+        [
+          20,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "deltoid-machine",
+      "name": {
+        "ru": "Дельта-машина",
+        "en": "Lateral Raise Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "shoulders"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          25,
+          10
+        ],
+        [
+          30,
+          8
+        ],
+        [
+          30,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "lateral-raise",
+      "name": {
+        "ru": "Махи гантелями в стороны",
+        "en": "Dumbbell Lateral Raise"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "shoulders"
+      ],
+      "secondary": [],
+      "unit": "kg_hand",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          6,
+          12
+        ],
+        [
+          8,
+          12
+        ],
+        [
+          8,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "rear-delt-fly",
+      "name": {
+        "ru": "Разведения в наклоне",
+        "en": "Bent-Over Rear Delt Fly"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "rear_delts"
+      ],
+      "secondary": [
+        "upper_back"
+      ],
+      "unit": "kg_hand",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          6,
+          12
+        ],
+        [
+          8,
+          12
+        ],
+        [
+          8,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "reverse-fly",
+      "name": {
+        "ru": "Тяга к поясу / задние дельты",
+        "en": "Rear Delt / Reverse Fly Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "rear_delts"
+      ],
+      "secondary": [
+        "upper_back"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          10
+        ],
+        [
+          30,
+          10
+        ],
+        [
+          30,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "overhead-plate",
+      "name": {
+        "ru": "Диск вокруг головы",
+        "en": "Plate Halo"
+      },
+      "type": "functional",
+      "equipment": "plate",
+      "primary": [
+        "shoulders"
+      ],
+      "secondary": [
+        "core"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          15,
+          12
+        ],
+        [
+          20,
+          10
+        ],
+        [
+          20,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "barbell-curl",
+      "name": {
+        "ru": "Подъём штанги на бицепс",
+        "en": "Barbell Curl"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "biceps"
+      ],
+      "secondary": [
+        "forearms"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          10
+        ],
+        [
+          25,
+          10
+        ],
+        [
+          25,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "db-curl",
+      "name": {
+        "ru": "Сгибания с гантелями",
+        "en": "Dumbbell Curl"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "biceps"
+      ],
+      "secondary": [
+        "forearms"
+      ],
+      "unit": "kg_hand",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          10,
+          10
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "hammer-curl",
+      "name": {
+        "ru": "Молотковые сгибания",
+        "en": "Hammer Curl"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "biceps",
+        "forearms"
+      ],
+      "secondary": [],
+      "unit": "kg_hand",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          10,
+          10
+        ],
+        [
+          12,
+          10
+        ],
+        [
+          12,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "biceps",
+      "name": {
+        "ru": "Бицепс / Biceps Curl",
+        "en": "Machine Biceps Curl"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "biceps"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          25,
+          10
+        ],
+        [
+          30,
+          8
+        ],
+        [
+          30,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "triceps-pushdown",
+      "name": {
+        "ru": "Трицепс на верхнем блоке",
+        "en": "Triceps Pushdown"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "triceps"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          55,
+          10
+        ],
+        [
+          65,
+          10
+        ],
+        [
+          75,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "triceps-machine",
+      "name": {
+        "ru": "Жим на трицепс",
+        "en": "Triceps Press Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "triceps"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          65,
+          12
+        ],
+        [
+          75,
+          10
+        ],
+        [
+          80,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "triceps",
+      "name": {
+        "ru": "Французский жим лёжа",
+        "en": "Lying Triceps Extension"
+      },
+      "type": "strength",
+      "equipment": "dumbbell",
+      "primary": [
+        "triceps"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          10,
+          10
+        ],
+        [
+          10,
+          10
+        ],
+        [
+          12,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "close-grip-bench",
+      "name": {
+        "ru": "Жим узким хватом",
+        "en": "Close-Grip Bench Press"
+      },
+      "type": "strength",
+      "equipment": "barbell",
+      "primary": [
+        "triceps",
+        "chest"
+      ],
+      "secondary": [
+        "shoulders"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          35,
+          10
+        ],
+        [
+          40,
+          8
+        ],
+        [
+          40,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "plank",
+      "name": {
+        "ru": "Планка",
+        "en": "Plank"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "core"
+      ],
+      "secondary": [
+        "shoulders",
+        "glutes"
+      ],
+      "unit": "sec",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          40
+        ],
+        [
+          0,
+          40
+        ],
+        [
+          0,
+          40
+        ]
+      ]
+    },
+    {
+      "id": "side-plank",
+      "name": {
+        "ru": "Боковая планка",
+        "en": "Side Plank"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "obliques",
+        "core"
+      ],
+      "secondary": [],
+      "unit": "sec",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          20
+        ],
+        [
+          0,
+          20
+        ],
+        [
+          0,
+          20
+        ]
+      ]
+    },
+    {
+      "id": "dead-bug",
+      "name": {
+        "ru": "Дэд-баг",
+        "en": "Dead Bug"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "core"
+      ],
+      "secondary": [
+        "hip_flexors"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          16
+        ],
+        [
+          0,
+          16
+        ],
+        [
+          0,
+          16
+        ]
+      ]
+    },
+    {
+      "id": "bird-dog",
+      "name": {
+        "ru": "Бёрд-дог",
+        "en": "Bird Dog"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "core",
+        "lower_back"
+      ],
+      "secondary": [
+        "glutes"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "crunch",
+      "name": {
+        "ru": "Скручивания",
+        "en": "Crunch"
+      },
+      "type": "strength",
+      "equipment": "bodyweight",
+      "primary": [
+        "core"
+      ],
+      "secondary": [],
+      "unit": "reps",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          15
+        ],
+        [
+          0,
+          15
+        ],
+        [
+          0,
+          15
+        ]
+      ]
+    },
+    {
+      "id": "cable-crunch",
+      "name": {
+        "ru": "Скручивания на блоке",
+        "en": "Cable Crunch"
+      },
+      "type": "strength",
+      "equipment": "cable",
+      "primary": [
+        "core"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          25,
+          12
+        ],
+        [
+          30,
+          12
+        ],
+        [
+          30,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "hanging-leg-raise",
+      "name": {
+        "ru": "Подъём ног в висе",
+        "en": "Hanging Leg Raise"
+      },
+      "type": "strength",
+      "equipment": "bodyweight",
+      "primary": [
+        "core",
+        "hip_flexors"
+      ],
+      "secondary": [
+        "forearms"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "russian-twist",
+      "name": {
+        "ru": "Русские скручивания",
+        "en": "Russian Twist"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "obliques",
+        "core"
+      ],
+      "secondary": [],
+      "unit": "reps",
+      "step": 1,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          20
+        ],
+        [
+          0,
+          20
+        ],
+        [
+          0,
+          20
+        ]
+      ]
+    },
+    {
+      "id": "ab-wheel",
+      "name": {
+        "ru": "Ролик для пресса",
+        "en": "Ab Wheel Rollout"
+      },
+      "type": "strength",
+      "equipment": "other",
+      "primary": [
+        "core"
+      ],
+      "secondary": [
+        "lats",
+        "shoulders"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "advanced",
+      "defaultSets": [
+        [
+          0,
+          12
+        ],
+        [
+          0,
+          12
+        ],
+        [
+          0,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "pallof-press",
+      "name": {
+        "ru": "Жим Паллофа",
+        "en": "Pallof Press"
+      },
+      "type": "functional",
+      "equipment": "cable",
+      "primary": [
+        "core",
+        "obliques"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          10,
+          12
+        ],
+        [
+          12.5,
+          12
+        ],
+        [
+          12.5,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "wood-chop",
+      "name": {
+        "ru": "Дровосек на блоке",
+        "en": "Cable Wood Chop"
+      },
+      "type": "functional",
+      "equipment": "cable",
+      "primary": [
+        "obliques",
+        "core"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          15,
+          12
+        ],
+        [
+          17.5,
+          12
+        ],
+        [
+          17.5,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "farmer-carry",
+      "name": {
+        "ru": "Фермерская прогулка",
+        "en": "Farmer's Carry"
+      },
+      "type": "functional",
+      "equipment": "dumbbell",
+      "primary": [
+        "forearms",
+        "traps",
+        "core"
+      ],
+      "secondary": [
+        "full_body"
+      ],
+      "unit": "kg_hand",
+      "step": 2,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          24,
+          40
+        ],
+        [
+          24,
+          40
+        ],
+        [
+          24,
+          40
+        ]
+      ]
+    },
+    {
+      "id": "box-jump",
+      "name": {
+        "ru": "Прыжки на тумбу",
+        "en": "Box Jump"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "quads",
+        "glutes",
+        "calves"
+      ],
+      "secondary": [],
+      "unit": "reps",
+      "step": 1,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "burpee",
+      "name": {
+        "ru": "Бёрпи",
+        "en": "Burpee"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "full_body"
+      ],
+      "secondary": [
+        "core",
+        "chest"
+      ],
+      "unit": "reps",
+      "step": 1,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ],
+        [
+          0,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "mountain-climbers",
+      "name": {
+        "ru": "Скалолаз",
+        "en": "Mountain Climbers"
+      },
+      "type": "functional",
+      "equipment": "bodyweight",
+      "primary": [
+        "core",
+        "hip_flexors"
+      ],
+      "secondary": [
+        "shoulders"
+      ],
+      "unit": "sec",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          30
+        ],
+        [
+          0,
+          30
+        ],
+        [
+          0,
+          30
+        ]
+      ]
+    },
+    {
+      "id": "sled-push",
+      "name": {
+        "ru": "Толкание саней",
+        "en": "Sled Push"
+      },
+      "type": "functional",
+      "equipment": "other",
+      "primary": [
+        "quads",
+        "glutes",
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          40,
+          4
+        ],
+        [
+          40,
+          4
+        ],
+        [
+          40,
+          4
+        ]
+      ]
+    },
+    {
+      "id": "battle-ropes",
+      "name": {
+        "ru": "Канаты",
+        "en": "Battle Ropes"
+      },
+      "type": "functional",
+      "equipment": "other",
+      "primary": [
+        "shoulders",
+        "core",
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "sec",
+      "step": 5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          0,
+          30
+        ],
+        [
+          0,
+          30
+        ],
+        [
+          0,
+          30
+        ]
+      ]
+    },
+    {
+      "id": "treadmill",
+      "name": {
+        "ru": "Дорожка",
+        "en": "Treadmill"
+      },
+      "type": "cardio",
+      "equipment": "cardio",
+      "primary": [
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          10,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "elliptical",
+      "name": {
+        "ru": "Эллипс",
+        "en": "Elliptical"
+      },
+      "type": "cardio",
+      "equipment": "cardio",
+      "primary": [
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          12,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "bike",
+      "name": {
+        "ru": "Велотренажёр",
+        "en": "Stationary Bike"
+      },
+      "type": "cardio",
+      "equipment": "cardio",
+      "primary": [
+        "quads",
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          15,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "rowing",
+      "name": {
+        "ru": "Гребной тренажёр",
+        "en": "Rowing Machine"
+      },
+      "type": "cardio",
+      "equipment": "cardio",
+      "primary": [
+        "full_body",
+        "upper_back"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "stairmaster",
+      "name": {
+        "ru": "Степпер",
+        "en": "Stair Climber"
+      },
+      "type": "cardio",
+      "equipment": "cardio",
+      "primary": [
+        "glutes",
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          10,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "assault-bike",
+      "name": {
+        "ru": "Аэробайк",
+        "en": "Air Bike"
+      },
+      "type": "cardio",
+      "equipment": "cardio",
+      "primary": [
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          8,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "ski-erg",
+      "name": {
+        "ru": "Ски-эргометр",
+        "en": "SkiErg"
+      },
+      "type": "cardio",
+      "equipment": "cardio",
+      "primary": [
+        "full_body",
+        "lats"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "jump-rope",
+      "name": {
+        "ru": "Скакалка",
+        "en": "Jump Rope"
+      },
+      "type": "cardio",
+      "equipment": "other",
+      "primary": [
+        "calves",
+        "full_body"
+      ],
+      "secondary": [],
+      "unit": "min",
+      "step": 1,
+      "cardio": true,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          5,
+          1
+        ]
+      ]
+    },
+    {
+      "id": "lying-leg-curl",
+      "name": {
+        "ru": "Сгибание голени лёжа",
+        "en": "Lying Leg Curl"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "hamstrings"
+      ],
+      "secondary": [
+        "calves"
+      ],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          30,
+          12
+        ],
+        [
+          35,
+          10
+        ],
+        [
+          40,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "belt-squat",
+      "name": {
+        "ru": "Belt Squat",
+        "en": "Belt Squat"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 5,
+      "level": "intermediate",
+      "defaultSets": [
+        [
+          40,
+          10
+        ],
+        [
+          50,
+          10
+        ],
+        [
+          60,
+          8
+        ]
+      ]
+    },
+    {
+      "id": "seated-leg-press",
+      "name": {
+        "ru": "Жим ногами сидя",
+        "en": "Seated Leg Press"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "quads",
+        "glutes"
+      ],
+      "secondary": [
+        "hamstrings"
+      ],
+      "unit": "kg",
+      "step": 10,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          80,
+          12
+        ],
+        [
+          100,
+          10
+        ],
+        [
+          120,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "torso-rotation",
+      "name": {
+        "ru": "Вращение корпуса",
+        "en": "Torso Rotation"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "obliques",
+        "core"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          12
+        ],
+        [
+          25,
+          12
+        ],
+        [
+          25,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "ab-machine",
+      "name": {
+        "ru": "Пресс в тренажёре",
+        "en": "Ab Crunch Machine"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "core"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          25,
+          12
+        ],
+        [
+          30,
+          12
+        ],
+        [
+          35,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "foot-flexion",
+      "name": {
+        "ru": "Сгибание ступней",
+        "en": "Seated Toe / Foot Flexion"
+      },
+      "type": "strength",
+      "equipment": "machine",
+      "primary": [
+        "calves"
+      ],
+      "secondary": [],
+      "unit": "kg",
+      "step": 2.5,
+      "level": "beginner",
+      "defaultSets": [
+        [
+          20,
+          15
+        ],
+        [
+          25,
+          12
+        ],
+        [
+          25,
+          12
+        ]
+      ]
+    }
+  ],
+  "defaultGym": [
+    "gravitron",
+    "dips",
+    "leg-press",
+    "lat-pulldown",
+    "deltoid-machine",
+    "butterfly",
+    "glute-bridge",
+    "leg-extension",
+    "glute-kickback-machine",
+    "lying-leg-curl",
+    "triceps-machine",
+    "biceps",
+    "chest-machine",
+    "shoulder-press",
+    "reverse-fly",
+    "decline-chest-machine",
+    "incline-press",
+    "standing-calf-raise",
+    "calf-flex",
+    "seated-calf-raise",
+    "row",
+    "machine-row",
+    "belt-squat",
+    "hip-thrust-machine",
+    "back-extension",
+    "ab-machine",
+    "torso-rotation",
+    "seated-leg-press",
+    "foot-flexion",
+    "hip-abduction",
+    "hip-adduction",
+    "rowing",
+    "bike",
+    "elliptical",
+    "stairmaster",
+    "assault-bike",
+    "battle-ropes",
+    "leg-curl",
+    "face-pull",
+    "triceps-pushdown",
+    "cable-crunch",
+    "straight-arm-pulldown",
+    "cable-glute-kickback",
+    "pallof-press",
+    "squat",
+    "front-squat",
+    "goblet-squat",
+    "lunge",
+    "split-squat",
+    "step-up",
+    "barbell-hip-thrust",
+    "deadlift",
+    "barbell-rdl",
+    "rdl",
+    "single-leg-rdl",
+    "kettlebell-swing",
+    "pull-up",
+    "chin-up",
+    "barbell-row",
+    "one-arm-row",
+    "t-bar-row",
+    "shrugs",
+    "bench",
+    "incline-bench",
+    "db-press",
+    "incline-db-press",
+    "db-fly",
+    "push-up",
+    "dip",
+    "overhead-press",
+    "db-shoulder-press",
+    "lateral-raise",
+    "rear-delt-fly",
+    "overhead-plate",
+    "barbell-curl",
+    "db-curl",
+    "hammer-curl",
+    "triceps",
+    "close-grip-bench",
+    "plank",
+    "side-plank",
+    "dead-bug",
+    "bird-dog",
+    "crunch",
+    "hanging-leg-raise",
+    "russian-twist",
+    "ab-wheel",
+    "superman",
+    "box-jump",
+    "burpee",
+    "mountain-climbers",
+    "jump-rope"
   ]
 }

@@ -79,12 +79,14 @@ lines = ",\n".join(
     for entry in app_exercises
 )
 aliases = json.dumps(catalog["aliases"], ensure_ascii=False, separators=(", ", ": "))
+default_gym = json.dumps(catalog.get("defaultGym") or [], ensure_ascii=False, separators=(", ", ": "))
 
 out = (
     "// Автогенерация: python tools/build-exercise-catalog.py (источник data/exercise-catalog.json). Не править руками.\n"
     "window.exerciseCatalog = {\n"
     f"  version: {catalog['version']},\n"
     f"  aliases: {aliases},\n"
+    f"  defaultGym: {default_gym},\n"
     "  exercises: [\n"
     f"{lines}\n"
     "  ],\n"
