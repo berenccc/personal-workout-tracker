@@ -51,7 +51,7 @@
 
     if (currentUser) {
       setCloudStatus(`${currentUser.email} · защищённое облако`);
-      setAiStatus?.("AI работает через защищённый сервер.");
+      setAiStatus?.("");
     } else {
       setCloudStatus("Войди в аккаунт, чтобы синхронизировать данные.");
       showEmailStep();

@@ -1937,7 +1937,7 @@ function isTouchDevice() {
 
 function initAiCoach() {
   renderAiChat();
-  setAiStatus("AI работает через защищённый сервер.");
+  setAiStatus("");
 }
 
 function setAiStatus(text) {
