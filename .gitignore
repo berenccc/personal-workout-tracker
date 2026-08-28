@@ -12,6 +12,11 @@
 !training-history.js
 !training-feedback.js
 !exercise-catalog.js
+!cloud.js
+!supabase-config.js
+!supabase/
+!supabase/migrations/
+!supabase/migrations/*.sql
 !manifest.webmanifest
 !sw.js
 !data/
