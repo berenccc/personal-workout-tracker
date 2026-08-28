@@ -585,7 +585,6 @@ const elements = {
   aiChatInput: document.querySelector("#aiChatInput"),
   aiChatSendButton: document.querySelector("#aiChatSendButton"),
   aiChatClearButton: document.querySelector("#aiChatClearButton"),
-  aiRetryButton: document.querySelector("#aiRetryButton"),
   aiStatus: document.querySelector("#aiStatus"),
   readinessPill: document.querySelector("#readinessPill"),
   monthlyChart: document.querySelector("#monthlyChart"),
@@ -733,7 +732,9 @@ function bindEvents() {
 
   elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
   elements.aiChatClearButton.addEventListener("click", clearAiChat);
-  elements.aiRetryButton.addEventListener("click", retryAiChat);
+  elements.aiChatLog.addEventListener("click", (event) => {
+    if (event.target.closest(".ai-retry-button")) retryAiChat();
+  });
   document.querySelectorAll(".ai-quick-chip").forEach((chip) => {
     chip.addEventListener("click", () => {
       elements.aiChatInput.value = chip.dataset.question;
@@ -1961,12 +1962,22 @@ function persistAiChat() {
 function clearAiChat() {
   aiChat = [];
   localStorage.removeItem(AI_CHAT_STORAGE);
+  aiError = "";
   renderAiChat();
   setAiStatus("");
-  elements.aiRetryButton.hidden = true;
 }
 
 let aiThinking = false;
+let aiError = "";
+
+function aiErrorBubble() {
+  return `
+    <div class="ai-msg ai-msg-bot ai-msg-error">
+      <p>Не получилось: ${escapeHtml(aiError)}</p>
+      <button class="button secondary ai-retry-button" type="button">Повторить</button>
+    </div>
+  `;
+}
 
 function aiTypingBubble() {
   return `
@@ -1994,7 +2005,8 @@ function renderAiChat() {
       return `<div class="ai-msg ${message.role === "user" ? "ai-msg-user" : "ai-msg-bot"}">${body}</div>`;
     })
     .join("");
-  elements.aiChatLog.innerHTML = bubbles + (aiThinking ? aiTypingBubble() : "");
+  elements.aiChatLog.innerHTML =
+    bubbles + (aiThinking ? aiTypingBubble() : aiError ? aiErrorBubble() : "");
   elements.aiChatLog.scrollTop = elements.aiChatLog.scrollHeight;
 }
 
@@ -2054,9 +2066,9 @@ function refuseAiOfftopic(text) {
   aiChat.push({ role: "assistant", content: AI_OFFTOPIC_REFUSAL });
   persistAiChat();
   elements.aiChatInput.value = "";
+  aiError = "";
   renderAiChat();
   setAiStatus("Запрос вне темы тренировок — ответ без вызова AI.");
-  elements.aiRetryButton.hidden = true;
 }
 
 const AI_TOOL_DEFS = [
@@ -2432,9 +2444,9 @@ async function retryAiChat() {
   if (!isAiMessageInScope(aiChat.at(-1).content)) {
     aiChat.push({ role: "assistant", content: AI_OFFTOPIC_REFUSAL });
     persistAiChat();
+    aiError = "";
     renderAiChat();
     setAiStatus("Запрос вне темы тренировок — ответ без вызова AI.");
-    elements.aiRetryButton.hidden = true;
     return;
   }
   await runAiChatCycle();
@@ -2442,8 +2454,8 @@ async function retryAiChat() {
 
 async function runAiChatCycle() {
   elements.aiChatSendButton.disabled = true;
-  elements.aiRetryButton.hidden = true;
   aiThinking = true;
+  aiError = "";
   renderAiChat();
   setAiStatus("Тренер смотрит твои данные…");
 
@@ -2453,8 +2465,8 @@ async function runAiChatCycle() {
     persistAiChat();
     setAiStatus("");
   } catch (error) {
-    setAiStatus(`Не получилось: ${error.message}.`);
-    elements.aiRetryButton.hidden = false;
+    aiError = error.message || "нет связи с сервером";
+    setAiStatus("");
   } finally {
     aiThinking = false;
     elements.aiChatSendButton.disabled = false;

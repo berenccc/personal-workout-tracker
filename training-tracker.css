@@ -1410,6 +1410,21 @@ select {
   border-bottom-left-radius: 4px;
 }
 
+.ai-msg-error {
+  display: grid;
+  gap: 8px;
+  border-color: rgba(224, 92, 92, 0.5);
+  background: rgba(224, 92, 92, 0.1);
+}
+
+.ai-msg-error p {
+  margin: 0;
+}
+
+.ai-msg-error .ai-retry-button {
+  justify-self: start;
+}
+
 .ai-msg-typing {
   display: inline-flex;
   align-items: center;
