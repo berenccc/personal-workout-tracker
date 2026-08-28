@@ -1469,19 +1469,73 @@ function render() {
   renderScheduleCalendar();
 }
 
+function bestWeeklyStreak(dates) {
+  const weeks = [...new Set([...dates].map((iso) => mondayOf(new Date(iso))))].sort();
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  weeks.forEach((week) => {
+    const gap = prev ? Math.round((new Date(week) - new Date(prev)) / (7 * 86400000)) : null;
+    run = gap === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = week;
+  });
+  return best;
+}
+
+function funTonnageLabel(kg) {
+  if (kg >= 150000) return `≈ ${Math.round(kg / 150000)} синих китов`;
+  if (kg >= 12000) return `≈ ${Math.round(kg / 6000)} слонов`;
+  if (kg >= 3000) return `≈ ${Math.round(kg / 1500)} автомобиля`;
+  if (kg >= 400) return `≈ ${Math.round(kg / 200)} холодильника`;
+  return "";
+}
+
 function renderStats() {
   const workouts = state.workouts;
-  const last = workouts.at(-1);
-  const avgRpe = average(allSets(workouts).map((set) => Number(set.rpe)).filter(Boolean));
-  const streak = getRecentWeekCount(workouts);
-  const totalSets = workouts.reduce((sum, workout) => sum + workoutSetCount(workout), 0);
+  const dates = workoutDateSet();
+
+  let tonnageKg = 0;
+  let totalReps = 0;
+  let totalMinutes = 0;
+  const favoriteCounts = new Map();
+
+  workouts.forEach((workout) => {
+    totalMinutes += workout.durationMinutes || 0;
+    (workout.exercises || []).forEach((item) => {
+      const meta = findExercise(item.exerciseId);
+      const doneSets = (item.sets || []).filter(
+        (set) => (set.done || set.done === undefined) && set.mark !== "skip"
+      );
+      if (!doneSets.length) return;
+      favoriteCounts.set(item.exerciseId, (favoriteCounts.get(item.exerciseId) || 0) + 1);
+      if (meta.cardio) return;
+      doneSets.forEach((set) => {
+        const reps = Number(set.reps) || 0;
+        totalReps += reps;
+        tonnageKg += (Number(set.weight) || 0) * reps;
+      });
+    });
+  });
+
+  const favorite = [...favoriteCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const favoriteName = favorite ? findExercise(favorite[0]).name : null;
+  const bestStreak = bestWeeklyStreak(dates);
+  const firstDate = workouts.length ? formatDate(workouts[0].date) : null;
+  const hours = Math.round(totalMinutes / 60);
+  const comparison = funTonnageLabel(tonnageKg);
+  const tonnageValue = tonnageKg >= 1000
+    ? `${formatNumber(Math.round(tonnageKg / 100) / 10)} т`
+    : `${formatNumber(Math.round(tonnageKg))} кг`;
 
   elements.statsGrid.innerHTML = [
-    stat(workouts.length, "тренировок сохранено"),
-    stat(formatNumber(totalSets), "рабочих подходов"),
-    stat(avgRpe ? avgRpe.toFixed(1) : "n/a", "средний RPE"),
-    stat(last ? streak : 0, "тренировок за последние 14 дней"),
-  ].join("");
+    stat(tonnageValue, `поднято за всё время${comparison ? ` · ${comparison}` : ""}`),
+    stat(formatNumber(totalReps), "повторов сделано"),
+    stat(bestStreak, `${plural(bestStreak, "неделя", "недели", "недель")} подряд — лучшая серия`),
+    favorite ? stat(`${favorite[1]}×`, `любимое упражнение — ${favoriteName}`) : null,
+    hours ? stat(hours, `${plural(hours, "час", "часа", "часов")} в зале суммарно`) : null,
+    stat(workouts.length, firstDate ? `${plural(workouts.length, "тренировка", "тренировки", "тренировок")} с ${firstDate}` : "тренировок сохранено"),
+  ].filter(Boolean).join("");
 }
 
 function stat(value, label) {
@@ -2675,10 +2729,6 @@ function shortUnit(exercise) {
   if (unit === "кг противовес" || unit === "кг/рука" || unit === "кг в руках") return "кг";
   if (unit === "сек/повт") return "сек";
   return unit;
-}
-
-function allSets(workouts) {
-  return workouts.flatMap((workout) => workout.exercises.flatMap((exercise) => exercise.sets));
 }
 
 function workoutVolume(workout) {

@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=97" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=97" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=97" />
-    <link rel="manifest" href="./manifest.webmanifest?v=97" />
-    <link rel="stylesheet" href="./training-tracker.css?v=97" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=98" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=98" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=98" />
+    <link rel="manifest" href="./manifest.webmanifest?v=98" />
+    <link rel="stylesheet" href="./training-tracker.css?v=98" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -57,7 +57,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v97</span>
+          <span class="version-badge">v98</span>
         </div>
       </section>
 
@@ -308,17 +308,27 @@
       </section>
 
       <section class="view" data-view="analytics">
-      <section class="stats-grid compact-stats" id="statsGrid"></section>
+      <section class="layout dashboard-layout">
+        <div class="panel wide">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Рекорды</p>
+              <h2>Лучшие результаты</h2>
+            </div>
+          </div>
+          <div id="prBoard" class="pr-board"></div>
+        </div>
+      </section>
 
       <section class="layout dashboard-layout">
         <div class="panel wide">
           <div class="panel-header">
             <div>
-              <p class="eyebrow">Лучшие маркеры</p>
-              <h2>PR и ориентиры</h2>
+              <p class="eyebrow">Достижения</p>
+              <h2>Твои цифры</h2>
             </div>
           </div>
-          <div id="prBoard" class="pr-board"></div>
+          <div class="stats-grid compact-stats" id="statsGrid"></div>
         </div>
       </section>
 
@@ -404,13 +414,13 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=97"></script>
-    <script src="./training-history.js?v=97"></script>
-    <script src="./training-feedback.js?v=97"></script>
-    <script src="./training-tracker.js?v=97"></script>
+    <script src="./exercise-catalog.js?v=98"></script>
+    <script src="./training-history.js?v=98"></script>
+    <script src="./training-feedback.js?v=98"></script>
+    <script src="./training-tracker.js?v=98"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=97"></script>
-    <script src="./cloud.js?v=97"></script>
+    <script src="./supabase-config.js?v=98"></script>
+    <script src="./cloud.js?v=98"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -436,7 +446,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v97";
+      const APP_VERSION = "v98";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {
