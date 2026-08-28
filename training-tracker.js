@@ -1632,12 +1632,12 @@ function moveSelectedExercise(uid, direction) {
   const targetIndex = currentIndex + direction;
   if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selected.length) return;
 
-  const card = findExerciseCard(uid);
-  const previousTop = card ? card.getBoundingClientRect().top : null;
+  const title = findExerciseTitle(uid);
+  const previousTitleTop = title ? title.getBoundingClientRect().top : null;
   [selected[currentIndex], selected[targetIndex]] = [selected[targetIndex], selected[currentIndex]];
   renderSelectedExercises();
   saveWorkoutDraft();
-  keepExerciseInView(uid, previousTop);
+  keepExerciseTitleInView(uid, previousTitleTop, direction);
 }
 
 function exerciseSubtitle(exercise, item) {
@@ -1650,27 +1650,35 @@ function findExerciseCard(uid) {
   return elements.selectedExercises.querySelector(`[data-uid="${uid}"]`);
 }
 
-function keepExerciseInView(uid, previousTop) {
-  const card = findExerciseCard(uid);
-  if (!card) return;
+function findExerciseTitle(uid) {
+  return findExerciseCard(uid)?.querySelector(".exercise-card-header h3");
+}
 
-  if (previousTop != null) {
-    const delta = card.getBoundingClientRect().top - previousTop;
-    if (delta) window.scrollBy(0, delta);
+function keepExerciseTitleInView(uid, previousTitleTop, direction) {
+  const card = findExerciseCard(uid);
+  const title = findExerciseTitle(uid);
+  if (!card || !title) return;
+
+  // Карточки разной высоты, поэтому якорь — именно название перемещаемого
+  // упражнения. Оно остаётся на той же высоте экрана после перестановки.
+  if (previousTitleTop != null) {
+    const delta = title.getBoundingClientRect().top - previousTitleTop;
+    if (delta) window.scrollBy({ top: delta, behavior: "auto" });
   }
 
-  const rect = card.getBoundingClientRect();
   const timer = elements.workoutPanel?.querySelector(".session-timer");
   const topSafe = ((timer && timer.getBoundingClientRect().bottom) || 8) + 8;
   const bottomSafe = window.innerHeight - 110;
-  if (rect.top < topSafe) {
-    window.scrollBy(0, rect.top - topSafe);
-  } else if (rect.bottom > bottomSafe) {
-    window.scrollBy(0, rect.bottom - bottomSafe);
+  const titleRect = title.getBoundingClientRect();
+  if (titleRect.top < topSafe) {
+    window.scrollBy({ top: titleRect.top - topSafe, behavior: "auto" });
+  } else if (titleRect.bottom > bottomSafe) {
+    window.scrollBy({ top: titleRect.bottom - bottomSafe, behavior: "auto" });
   }
 
   card.classList.add("exercise-moved");
   window.setTimeout(() => card.classList.remove("exercise-moved"), 500);
+  card.querySelector(direction < 0 ? ".move-up" : ".move-down")?.focus({ preventScroll: true });
 }
 
 function planWeightBrief(exercise, sets) {
