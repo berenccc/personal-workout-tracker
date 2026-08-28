@@ -15,7 +15,6 @@ const GITHUB_OWNER = "berenccc";
 const GITHUB_REPO = "personal-workout-tracker";
 const GITHUB_BRANCH = "main";
 const GITHUB_DATA_PATH = "data/workouts.json";
-const UPCOMING_WORKOUT_DATE = "2026-08-26";
 
 // Каталог упражнений загружается из exercise-catalog.js (генерируется скриптом tools/build-exercise-catalog.py из data/exercise-catalog.json).
 const exercises = (window.exerciseCatalog?.exercises || []).map((exercise) => ({ ...exercise }));
@@ -189,6 +188,97 @@ function updateCabinetStatus() {
   elements.cabinetStatus.textContent = parts.join(" · ");
 }
 
+// ── Календарь тренировок: даты планирует пользователь ──────────────
+const SCHEDULE_KEY = "training-tracker-schedule-v1";
+let scheduleSet = null;
+let calendarCursor = new Date();
+
+function schedule() {
+  if (scheduleSet) return scheduleSet;
+  try {
+    const saved = JSON.parse(localStorage.getItem(SCHEDULE_KEY));
+    scheduleSet = new Set(Array.isArray(saved) ? saved : []);
+  } catch {
+    scheduleSet = new Set();
+  }
+  return scheduleSet;
+}
+
+function saveSchedule() {
+  // Храним только последние 90 дней прошлого и всё будущее.
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+  const keep = [...schedule()].filter((date) => date >= formatInputDate(cutoff));
+  scheduleSet = new Set(keep);
+  localStorage.setItem(SCHEDULE_KEY, JSON.stringify(keep.sort()));
+}
+
+function nextScheduledDate() {
+  const today = formatInputDate(new Date());
+  return [...schedule()].filter((date) => date >= today).sort()[0] || null;
+}
+
+function workoutDateSet() {
+  const dates = new Set();
+  (state?.workouts || []).forEach((workout) => dates.add(workout.date));
+  (window.trainingHistory || []).forEach((workout) => dates.add(workout.date));
+  return dates;
+}
+
+function renderScheduleCalendar() {
+  if (!elements.scheduleCalendar) return;
+  const year = calendarCursor.getFullYear();
+  const month = calendarCursor.getMonth();
+  const today = formatInputDate(new Date());
+  const done = workoutDateSet();
+  const planned = schedule();
+
+  elements.calTitle.textContent = calendarCursor.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
+
+  const firstDay = new Date(year, month, 1);
+  const startOffset = (firstDay.getDay() + 6) % 7; // неделя с понедельника
+  const gridStart = new Date(year, month, 1 - startOffset);
+
+  const cells = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+    .map((day) => `<span class="cal-weekday">${day}</span>`);
+
+  for (let i = 0; i < 42; i++) {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + i);
+    const iso = formatInputDate(date);
+    const inMonth = date.getMonth() === month;
+    const classes = ["cal-cell"];
+    if (!inMonth) classes.push("is-out");
+    if (iso === today) classes.push("is-today");
+    if (done.has(iso)) classes.push("is-done");
+    else if (planned.has(iso)) classes.push(iso < today ? "is-missed" : "is-planned");
+    const disabled = !inMonth || done.has(iso);
+    cells.push(
+      `<button type="button" class="${classes.join(" ")}" data-date="${iso}" ${disabled ? "disabled" : ""} aria-label="${iso}">${date.getDate()}</button>`
+    );
+  }
+
+  elements.scheduleCalendar.innerHTML = cells.join("");
+}
+
+function toggleScheduledDate(iso) {
+  const set = schedule();
+  if (set.has(iso)) set.delete(iso);
+  else set.add(iso);
+  saveSchedule();
+  renderScheduleCalendar();
+  // Дата в форме и рекомендации следуют за календарём, пока тренировка не начата.
+  if (!elements.workoutPanel.classList.contains("is-active")) {
+    elements.dateInput.value = nextPlannedWorkoutDate();
+  }
+  renderCoach();
+}
+
+function shiftCalendarMonth(delta) {
+  calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + delta, 1);
+  renderScheduleCalendar();
+}
+
 let state = loadState();
 let selected = [];
 let isFinishingWorkout = false;
@@ -258,6 +348,10 @@ const elements = {
   builderDurationSelect: document.querySelector("#builderDurationSelect"),
   buildWorkoutButton: document.querySelector("#buildWorkoutButton"),
   accentPicker: document.querySelector("#accentPicker"),
+  scheduleCalendar: document.querySelector("#scheduleCalendar"),
+  calTitle: document.querySelector("#calTitle"),
+  calPrevButton: document.querySelector("#calPrevButton"),
+  calNextButton: document.querySelector("#calNextButton"),
 };
 
 const ACCENT_KEY = "training-tracker-accent";
@@ -276,6 +370,7 @@ function boot() {
   fillExerciseSelects();
   fillBuilderGoals();
   renderMyGym();
+  renderScheduleCalendar();
   loadPlannedWorkout();
   applyStoredAiPlan();
   restoreWorkoutDraft();
@@ -412,6 +507,13 @@ function bindEvents() {
     saveMyGym();
     fillExerciseSelects();
     renderMyGym();
+  });
+  elements.calPrevButton?.addEventListener("click", () => shiftCalendarMonth(-1));
+  elements.calNextButton?.addEventListener("click", () => shiftCalendarMonth(1));
+  elements.scheduleCalendar?.addEventListener("click", (event) => {
+    const cell = event.target.closest(".cal-cell[data-date]");
+    if (!cell || cell.disabled) return;
+    toggleScheduledDate(cell.dataset.date);
   });
   elements.gymFromHistoryButton?.addEventListener("click", () => {
     myGymSet = defaultMyGymIds();
@@ -1039,16 +1141,16 @@ function suggestedSetsForExercise(exercise) {
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "Ср 26.08: pull + задняя цепь после возвращения 24.08. RPE 6–7, ~45 мин. Без жима ногами и разгибаний — правое колено. Если колено или левое плечо ноет — пропускай подход, не добивай.";
+  elements.notesInput.value = "Push + лёгкие ноги после pull 26.08. RPE 6–8, ~50 мин, без отказа. Гравитрон и тяги не трогаем — им отдых. Если левое плечо ноет на жимах — снижай вес или пропускай подход.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
   selected = [
     planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("gravitron", [[35, 12, 6], [30, 10, 7], [25, 8, 7]]),
-    planEntry("lat-pulldown", [[50, 12, 6], [55, 10, 7], [55, 10, 7]]),
-    planEntry("row", [[50, 12, 6], [57, 10, 7]]),
-    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7], [45, 10, 7]]),
-    planEntry("chest-machine", [[40, 12, 6], [45, 10, 6]]),
+    planEntry("chest-machine", [[45, 12, 6], [50, 10, 7], [55, 10, 7]]),
+    planEntry("shoulder-press", [[20, 12, 6], [25, 10, 7], [27.5, 8, 7]]),
+    planEntry("butterfly", [[45, 12, 6], [50, 10, 7]]),
+    planEntry("triceps-machine", [[65, 12, 6], [75, 10, 7], [80, 8, 7]]),
+    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7]]),
     planEntry("dead-bug", [[16, 16, 6], [16, 16, 6]]),
     planEntry("treadmill", [[5, 1, 5]]),
   ];
@@ -1194,9 +1296,11 @@ function nextMondayAfterLatestWorkout() {
 }
 
 function nextPlannedWorkoutDate() {
+  // Сначала календарь пользователя: ближайший запланированный день (сегодня или позже).
+  const scheduled = nextScheduledDate();
+  if (scheduled) return scheduled;
+
   const today = formatInputDate(new Date());
-  const plannedWorkoutAlreadyLogged = state.workouts.some((workout) => workout.date === UPCOMING_WORKOUT_DATE);
-  if (!plannedWorkoutAlreadyLogged && today <= UPCOMING_WORKOUT_DATE) return UPCOMING_WORKOUT_DATE;
   if (!state.workouts.some((workout) => workout.date === today)) return today;
   const next = new Date();
   const daysUntilMonday = ((1 - next.getDay() + 7) % 7) || 7;
@@ -1212,6 +1316,7 @@ function render() {
   renderCharts();
   renderMovementBalance();
   renderHistory();
+  renderScheduleCalendar();
 }
 
 function renderStats() {
@@ -1711,19 +1816,52 @@ function renderCoach() {
   elements.readinessPill.textContent = readinessLabel(readiness);
   elements.readinessPill.className = `pill ${readiness === "good" ? "good" : readiness === "bad" ? "bad" : "warn"}`;
 
+  const scheduleCard = scheduleCoachCardHtml();
+
   if (window.trainingFeedback?.cards?.length) {
-    elements.coachBox.innerHTML = trainingFeedbackHtml(window.trainingFeedback);
+    elements.coachBox.innerHTML = scheduleCard + trainingFeedbackHtml(window.trainingFeedback);
     return;
   }
 
   const fatigue = fatigueScore(state.workouts);
   const next = nextSessionSuggestion(state.workouts, readiness, fatigue);
-  elements.coachBox.innerHTML = next.map((item) => `
+  elements.coachBox.innerHTML = scheduleCard + next.map((item) => `
     <article class="coach-card">
       <strong>${item.title}</strong>
       <p>${item.text}</p>
     </article>
   `).join("");
+}
+
+function scheduleCoachCardHtml() {
+  const today = formatInputDate(new Date());
+  const next = nextScheduledDate();
+
+  if (!next) {
+    return `
+      <article class="coach-card schedule-card">
+        <strong>Календарь пуст</strong>
+        <p>Отметь дни тренировок во вкладке «Календарь» — план и рекомендации привяжутся к ближайшей дате.</p>
+      </article>
+    `;
+  }
+
+  const diffDays = Math.round((new Date(next) - new Date(today)) / 86400000);
+  const weekday = new Date(next).toLocaleDateString("ru-RU", { weekday: "long" });
+  const when =
+    diffDays === 0 ? "сегодня" : diffDays === 1 ? "завтра" : `${formatDate(next)}, ${weekday} (через ${diffDays} дн.)`;
+  const doneToday = workoutDateSet().has(today);
+
+  return `
+    <article class="coach-card schedule-card">
+      <strong>Следующая тренировка: ${when}</strong>
+      <p>${doneToday && diffDays === 0
+        ? "Сегодня уже есть сохранённая тренировка — отдыхай или сделай лёгкое кардио."
+        : diffDays === 0
+          ? "День тренировки по твоему календарю. План и веса уже в форме — жми «Начать тренировку»."
+          : "До неё восстанавливаемся: сон, шаги, лёгкая растяжка. План в форме уже подготовлен под эту дату."}</p>
+    </article>
+  `;
 }
 
 function trainingFeedbackHtml(feedback) {
@@ -2068,9 +2206,12 @@ function executeAiTool(name, args) {
       return `- ${exercise ? exercise.name : item.exerciseId} (${item.exerciseId}): ${sets}`;
     });
     const isActive = elements.workoutPanel.classList.contains("is-active");
+    const today = formatInputDate(new Date());
+    const upcoming = [...schedule()].filter((date) => date >= today).sort().slice(0, 5);
     return [
       `Статус: ${isActive ? "тренировка идёт прямо сейчас (✓ = подход уже сделан)" : "тренировка ещё не начата"}`,
       `Дата: ${elements.dateInput.value || "не выбрана"}`,
+      `Календарь пользователя (ближайшие запланированные дни): ${upcoming.length ? upcoming.join(", ") : "пусто — дни не отмечены"}`,
       `Заметка: ${elements.notesInput.value || "нет"}`,
       "Упражнения:",
       plan.join("\n") || "план пуст",

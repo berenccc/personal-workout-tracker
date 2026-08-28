@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=81" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=81" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=81" />
-    <link rel="manifest" href="./manifest.webmanifest?v=81" />
-    <link rel="stylesheet" href="./training-tracker.css?v=81" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=82" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=82" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=82" />
+    <link rel="manifest" href="./manifest.webmanifest?v=82" />
+    <link rel="stylesheet" href="./training-tracker.css?v=82" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -36,6 +36,7 @@
     </section>
 
     <main class="app">
+      <section class="view is-active" data-view="workout">
       <section class="hero">
         <div>
           <p class="eyebrow">Личный трекер</p>
@@ -46,7 +47,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v81</span>
+          <span class="version-badge">v82</span>
         </div>
       </section>
 
@@ -55,7 +56,7 @@
           <div class="panel-header">
             <div>
               <p class="eyebrow">Ближайшая тренировка</p>
-              <h2>Умеренный pull + ноги</h2>
+              <h2>Push + лёгкие ноги</h2>
             </div>
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
@@ -162,7 +163,32 @@
           <div id="coachBox" class="coach-box"></div>
         </div>
       </section>
+      </section>
 
+      <section class="view" data-view="calendar">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Планирование</p>
+              <h2>Календарь тренировок</h2>
+            </div>
+          </div>
+          <div class="calendar-nav">
+            <button id="calPrevButton" class="icon-button" type="button" aria-label="Предыдущий месяц">‹</button>
+            <strong id="calTitle"></strong>
+            <button id="calNextButton" class="icon-button" type="button" aria-label="Следующий месяц">›</button>
+          </div>
+          <div id="scheduleCalendar" class="schedule-calendar"></div>
+          <div class="calendar-legend">
+            <span><i class="cal-dot dot-done"></i> тренировка была</span>
+            <span><i class="cal-dot dot-planned"></i> запланирована</span>
+            <span><i class="cal-dot dot-missed"></i> пропущена</span>
+          </div>
+          <p class="workout-helper">Тапни по дню, чтобы запланировать тренировку или снять отметку. Дата в форме и рекомендации подстраиваются под ближайший запланированный день.</p>
+        </div>
+      </section>
+
+      <section class="view" data-view="ai">
       <section class="panel ai-panel">
         <div class="panel-header">
           <div>
@@ -189,14 +215,17 @@
           </div>
         </div>
       </section>
+      </section>
 
-      <section class="stats-grid compact-stats" id="statsGrid"></section>
-
-      <details class="panel drawer cabinet-drawer">
-        <summary>
-          <span>Кабинет</span>
-          <small id="cabinetStatus">Внешний вид, зал, AI и синхронизация</small>
-        </summary>
+      <section class="view" data-view="cabinet">
+      <section class="panel cabinet-drawer">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Кабинет</p>
+            <h2>Настройки и данные</h2>
+          </div>
+          <small id="cabinetStatus" class="cabinet-status">Внешний вид, зал, AI и синхронизация</small>
+        </div>
 
         <section class="cabinet-section">
           <div class="cabinet-section-head">
@@ -252,13 +281,11 @@
             <button id="resetButton" class="button ghost danger-action" type="button">Очистить локально</button>
           </div>
         </section>
-      </details>
+      </section>
+      </section>
 
-      <details class="drawer analytics-drawer">
-        <summary>
-          <span>Аналитика и история</span>
-          <small>Графики, PR, баланс движений и последние тренировки</small>
-        </summary>
+      <section class="view" data-view="analytics">
+      <section class="stats-grid compact-stats" id="statsGrid"></section>
 
       <section class="layout dashboard-layout">
         <div class="panel wide">
@@ -345,7 +372,7 @@
         </div>
         <div id="historyList" class="history-list"></div>
       </section>
-      </details>
+      </section>
 
       <nav class="bottom-nav" aria-label="Навигация">
         <button class="bottom-nav-btn is-active" data-target="workout" type="button">
@@ -353,6 +380,13 @@
             <line x1="6.5" y1="12" x2="17.5" y2="12"/><line x1="5" y1="9" x2="5" y2="15"/><line x1="8.5" y1="7.5" x2="8.5" y2="16.5"/><line x1="15.5" y1="7.5" x2="15.5" y2="16.5"/><line x1="19" y1="9" x2="19" y2="15"/>
           </svg>
           <span>Тренировка</span>
+          <span class="bottom-nav-dot"></span>
+        </button>
+        <button class="bottom-nav-btn" data-target="calendar" type="button">
+          <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span>Календарь</span>
           <span class="bottom-nav-dot"></span>
         </button>
         <button class="bottom-nav-btn" data-target="ai" type="button">
@@ -398,45 +432,35 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=81"></script>
-    <script src="./training-history.js?v=81"></script>
-    <script src="./training-feedback.js?v=81"></script>
-    <script src="./training-tracker.js?v=81"></script>
+    <script src="./exercise-catalog.js?v=82"></script>
+    <script src="./training-history.js?v=82"></script>
+    <script src="./training-feedback.js?v=82"></script>
+    <script src="./training-tracker.js?v=82"></script>
     <script>
-      // Bottom nav
+      // Вкладки: показываем только активный экран
       (function () {
         const btns = document.querySelectorAll(".bottom-nav-btn");
-        const workoutSection = document.querySelector(".workout-layout");
-        const aiPanel = document.querySelector(".ai-panel");
-        const analyticsDrawer = document.querySelector(".analytics-drawer");
-        const cabinetDrawer = document.querySelector(".cabinet-drawer");
+        const views = document.querySelectorAll(".view");
 
-        function setActive(btn) {
-          btns.forEach((b) => b.classList.remove("is-active"));
-          btn.classList.add("is-active");
+        function showView(target) {
+          btns.forEach((b) => b.classList.toggle("is-active", b.dataset.target === target));
+          views.forEach((view) => view.classList.toggle("is-active", view.dataset.view === target));
+          window.scrollTo(0, 0);
+          try { sessionStorage.setItem("training-tracker-view", target); } catch (error) { /* ок */ }
         }
 
         btns.forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const target = btn.dataset.target;
-            setActive(btn);
-            if (target === "workout") {
-              workoutSection.scrollIntoView({ behavior: "smooth", block: "start" });
-            } else if (target === "ai") {
-              aiPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-            } else if (target === "analytics") {
-              analyticsDrawer.open = true;
-              setTimeout(() => analyticsDrawer.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
-            } else if (target === "cabinet") {
-              cabinetDrawer.open = true;
-              setTimeout(() => cabinetDrawer.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
-            }
-          });
+          btn.addEventListener("click", () => showView(btn.dataset.target));
         });
+
+        try {
+          const saved = sessionStorage.getItem("training-tracker-view");
+          if (saved && document.querySelector(`.view[data-view="${saved}"]`)) showView(saved);
+        } catch (error) { /* ок */ }
       })();
     </script>
     <script>
-      const APP_VERSION = "v81";
+      const APP_VERSION = "v82";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {
