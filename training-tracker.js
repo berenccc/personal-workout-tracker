@@ -2041,7 +2041,7 @@ const AI_SYSTEM_PROMPT = `Ты — персональный AI-тренер вн
 
 ПРОФИЛЬ АТЛЕТА: мужчина, тренируется в зале 2-3 раза в неделю на тренажёрах, гантелях и штанге. Цель — форма, самочувствие и сила без выгорания и без работы в отказ. Не любит farmer-carry. В зале есть гравитрон, жимы/тяги на тренажёрах, Belt Squat, Glute Drive, Hip&Glute, сгибания/разгибания ног, пресс/вращение корпуса, кардио (эллипс, вело, гребля, степпер, аэробайк), канаты, плюс свободные веса, перекладина, брусья, резинки и мячи — бери упражнения только из «Моего зала» / get_exercise_catalog. История знает случаи перегруза ЦНС, боли в левом плече и эпизод с правым коленом на жиме ногами — следи за этими сигналами.
 
-ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план и статус тренировки), get_exercise_catalog (доступные упражнения и их id). Полную замену плана делай через set_planned_workout, точечное добавление одного упражнения — через add_exercise_to_plan. Всё это реально обновляет план в приложении; после вызова коротко подтверди, что именно поменял. Используй только exerciseId из каталога. На оффтоп-запросах инструменты не вызывай.
+ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план и статус тренировки), get_exercise_catalog (доступные упражнения и их id). Для последней тренировки и ближайшего плана запрашивай подробные 3–12 сессий через count. Для вопросов о прогрессе, плато, рекордах, балансе нагрузки и долгосрочном планировании дополнительно вызывай get_recent_workouts с days: 365 — он вернёт компактную историю за год. Полную замену плана делай через set_planned_workout, точечное добавление одного упражнения — через add_exercise_to_plan. Всё это реально обновляет план в приложении; после вызова коротко подтверди, что именно поменял. Используй только exerciseId из каталога. На оффтоп-запросах инструменты не вызывай.
 
 НОВЫЕ УПРАЖНЕНИЯ: если пользователь встретил в зале тренажёр или упражнение, которого нет в каталоге («тут стоит хаммер», «добавь тягу Т-грифа», «есть новый тренажёр на икры»), — добавь его через add_new_exercise (подбери группу, единицу и шаг веса), а затем, если уместно, сразу поставь в текущую тренировку через add_exercise_to_plan с консервативными весами для первого знакомства (RPE 6-7, «прощупать» вес).
 
@@ -2096,11 +2096,12 @@ const AI_TOOL_DEFS = [
     type: "function",
     function: {
       name: "get_recent_workouts",
-      description: "Последние сохранённые тренировки атлета: дата, готовность до, итог после, длительность, заметки и все подходы (вес x повторы @ RPE).",
+      description: "История тренировок. С параметром count возвращает подробно последние 1–12 сессий. С параметром days возвращает компактную историю за период до 365 дней; используй days=365 для прогресса, плато, рекордов и долгосрочного планирования.",
       parameters: {
         type: "object",
         properties: {
           count: { type: "integer", description: "Сколько последних тренировок вернуть, 1-12. По умолчанию 3." },
+          days: { type: "integer", description: "Период компактной истории в днях, 1-365. Если указан, имеет приоритет над count." },
         },
       },
     },
@@ -2263,8 +2264,54 @@ function describeWorkoutForAi(workout) {
   return [header, notes ? `  заметки: ${notes}` : null, ...lines].filter(Boolean).join("\n");
 }
 
+function describeWorkoutCompactForAi(workout) {
+  const exerciseSummary = (workout.exercises || []).map((item) => {
+    const exercise = findExercise(item.exerciseId);
+    const completed = (item.sets || []).filter((set) => set.done !== false);
+    const sets = completed.length ? completed : (item.sets || []);
+    const rpes = sets.map((set) => Number(set.rpe)).filter(Boolean);
+    const representative = sets.reduce((best, set) => {
+      if (!best) return set;
+      if (exercise?.lowerIsBetter) {
+        return Number(set.weight) < Number(best.weight) ? set : best;
+      }
+      return Number(set.weight) > Number(best.weight) ||
+        (Number(set.weight) === Number(best.weight) && Number(set.reps) > Number(best.reps))
+        ? set
+        : best;
+    }, null);
+    const best = representative
+      ? `${formatNumber(representative.weight)}x${representative.reps}${representative.rpe ? `@${representative.rpe}` : ""}`
+      : "нет данных";
+    const avgRpe = rpes.length ? `, ср.RPE ${average(rpes).toFixed(1)}` : "";
+    return `${exercise?.name || item.exerciseId}: ${sets.length}п, лучший ${best}${avgRpe}`;
+  });
+  const note = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ").slice(0, 180);
+  return [
+    `${workout.date} · готовность ${workout.readiness || "?"} · итог ${workout.sessionEffort || "?"}` +
+      `${workout.durationMinutes ? ` · ${workout.durationMinutes} мин` : ""}`,
+    exerciseSummary.join("; "),
+    note ? `заметки: ${note}` : null,
+  ].filter(Boolean).join(" | ");
+}
+
 function executeAiTool(name, args) {
   if (name === "get_recent_workouts") {
+    const requestedDays = Number(args.days);
+    if (Number.isFinite(requestedDays) && requestedDays > 0) {
+      const days = Math.min(Math.max(Math.round(requestedDays), 1), 365);
+      const latestDate = state.workouts.at(-1)?.date || formatInputDate(new Date());
+      const cutoff = new Date(`${latestDate}T00:00:00`);
+      cutoff.setDate(cutoff.getDate() - days + 1);
+      const cutoffDate = formatInputDate(cutoff);
+      const period = state.workouts.filter((workout) => workout.date >= cutoffDate && workout.date <= latestDate);
+      if (!period.length) return `За последние ${days} дней сохранённых тренировок нет.`;
+      return [
+        `Компактная история за ${days} дней: ${period.length} тренировок, период ${period[0].date} — ${period.at(-1).date}.`,
+        ...period.map(describeWorkoutCompactForAi),
+      ].join("\n");
+    }
+
     const count = Math.min(Math.max(Number(args.count) || 3, 1), 12);
     const recent = state.workouts.slice(-count).map(describeWorkoutForAi);
     return recent.length ? recent.join("\n\n") : "Сохранённых тренировок нет.";
