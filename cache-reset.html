@@ -13,7 +13,7 @@
         min-height: 100vh;
         margin: 0;
         place-items: center;
-        background: #101214;
+        background: #101224;
         color: #f1f3f5;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
@@ -49,7 +49,7 @@
           await Promise.all(keys.map((key) => caches.delete(key)));
         }
 
-        window.location.replace(`./training-tracker.html?v=121&fresh=${Date.now()}`);
+        window.location.replace(`./training-tracker.html?v=122&fresh=${Date.now()}`);
       }
 
       resetAppCache();

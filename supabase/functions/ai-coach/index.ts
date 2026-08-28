@@ -139,10 +139,6 @@ Deno.serve(async (request) => {
     return json({ error: "AI отвечает только по тренировкам и спорту" }, 400);
   }
 
-  const { data: usage, error: usageError } = await supabase.rpc("consume_ai_request");
-  if (usageError) return json({ error: "Не удалось проверить лимит AI" }, 500);
-  if (!usage?.allowed) return json({ error: "Дневной лимит AI исчерпан" }, 429);
-
   const openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
