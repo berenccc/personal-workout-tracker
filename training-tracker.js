@@ -689,13 +689,8 @@ function entry(exerciseId, rows) {
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    // Одноразовая миграция владельца со старой версии, где был общий пароль.
-    // Новый пользователь не должен получить встроенную персональную историю.
-    const isLegacyOwner = localStorage.getItem("training-tracker-auth") === "ok";
-    return {
-      version: 3,
-      workouts: isLegacyOwner ? normalizeWorkoutDates(window.trainingHistory || []) : [],
-    };
+    // Чистый старт: история приходит только из облака после входа.
+    return { version: 3, workouts: [] };
   }
 
   try {
@@ -1291,37 +1286,15 @@ function suggestedSetsForExercise(exercise) {
   return Array.from({ length: setCount }, () => [workWeight, workReps]);
 }
 
-// Встроенный план — персональный, показываем его только владельцу этой истории.
-// Новый пользователь начинает с пустого плана и собирает его конструктором или через AI.
-const BUILTIN_PLAN_OWNER_DATE = "2026-08-26";
-
-function hasBuiltinPlanHistory() {
-  return state.workouts.some((workout) => workout.date === BUILTIN_PLAN_OWNER_DATE);
-}
-
+// План следующей тренировки не прошит в код: его собирает пользователь
+// конструктором, AI-тренер (set_planned_workout) или он восстанавливается из черновика.
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
+  elements.notesInput.value = "";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
-
-  if (!hasBuiltinPlanHistory()) {
-    elements.notesInput.value = "";
-    selected = [];
-    return;
-  }
-
-  elements.notesInput.value = "Push + лёгкие ноги после pull 26.08. RPE 6–8, ~50 мин, без отказа. Гравитрон и тяги не трогаем — им отдых. Если левое плечо ноет на жимах — снижай вес или пропускай подход.";
-  selected = [
-    planEntry("elliptical", [[10, 1, 5]]),
-    planEntry("chest-machine", [[45, 12, 6], [50, 10, 7], [55, 10, 7]]),
-    planEntry("shoulder-press", [[20, 12, 6], [25, 10, 7], [27.5, 8, 7]]),
-    planEntry("butterfly", [[45, 12, 6], [50, 10, 7]]),
-    planEntry("triceps-machine", [[65, 12, 6], [75, 10, 7], [80, 8, 7]]),
-    planEntry("leg-curl", [[35, 12, 6], [42.5, 10, 7]]),
-    planEntry("dead-bug", [[16, 16, 6], [16, 16, 6]]),
-    planEntry("treadmill", [[5, 1, 5]]),
-  ];
+  selected = [];
 }
 
 function planEntry(exerciseId, rows) {
@@ -1944,15 +1917,6 @@ function renderCoach() {
 
   const scheduleCard = scheduleCoachCardHtml();
 
-  // Персональный фидбэк показываем только владельцу истории, к которой он относится.
-  const feedback = window.trainingFeedback;
-  const feedbackIsMine = feedback?.cards?.length &&
-    state.workouts.some((workout) => workout.date === feedback.sourceWorkoutDate);
-  if (feedbackIsMine) {
-    elements.coachBox.innerHTML = scheduleCard + trainingFeedbackHtml(feedback);
-    return;
-  }
-
   const fatigue = fatigueScore(state.workouts);
   const next = nextSessionSuggestion(state.workouts, readiness, fatigue);
   elements.coachBox.innerHTML = scheduleCard + next.map((item) => `
@@ -1991,22 +1955,6 @@ function scheduleCoachCardHtml() {
           ? "День тренировки по твоему календарю. План и веса уже в форме — жми «Начать тренировку»."
           : "До неё восстанавливаемся: сон, шаги, лёгкая растяжка. План в форме уже подготовлен под эту дату."}</p>
     </article>
-  `;
-}
-
-function trainingFeedbackHtml(feedback) {
-  const updated = feedback.updatedAt ? `<p class="feedback-meta">Обновлено: ${formatDate(feedback.updatedAt)}</p>` : "";
-  return `
-    <article class="coach-card feedback-card">
-      <strong>${escapeHtml(feedback.title || "Фидбек после тренировки")}</strong>
-      ${updated}
-    </article>
-    ${feedback.cards.map((item) => `
-      <article class="coach-card">
-        <strong>${escapeHtml(item.title)}</strong>
-        <p>${escapeHtml(item.text)}</p>
-      </article>
-    `).join("")}
   `;
 }
 

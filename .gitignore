@@ -9,8 +9,6 @@
 !training-tracker.html
 !training-tracker.css
 !training-tracker.js
-!training-history.js
-!training-feedback.js
 !exercise-catalog.js
 !cloud.js
 !supabase-config.js
@@ -23,7 +21,6 @@
 !manifest.webmanifest
 !sw.js
 !data/
-!data/workouts.json
 !data/exercise-catalog.json
 !tools/
 !tools/build-exercise-catalog.py
