@@ -1342,8 +1342,21 @@ select {
   font-size: 12px;
 }
 
+/* Вкладка AI зафиксирована по высоте экрана: композер всегда виден над
+   нижней навигацией, а лог чата скроллится внутри себя. */
+.view.is-active[data-view="ai"] {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 68px - env(safe-area-inset-bottom, 0px) - 26px);
+  height: calc(100dvh - 68px - env(safe-area-inset-bottom, 0px) - 26px);
+}
+
 .ai-panel {
-  margin-bottom: 18px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  margin-bottom: 0;
 }
 
 .ai-quick {
@@ -1370,17 +1383,21 @@ select {
 }
 
 .ai-chat {
-  display: grid;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 10px;
+  min-height: 0;
 }
 
 .ai-chat-log {
   display: grid;
+  flex: 1 1 0;
   gap: 8px;
   align-content: start;
-  min-height: 260px;
-  max-height: min(52vh, 460px);
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 2px;
 }
 
@@ -1495,19 +1512,12 @@ select {
   }
 
   .ai-chat-composer textarea {
-    min-height: 92px;
+    min-height: 64px;
   }
 
   .ai-chat-composer .button {
     width: 100%;
     min-height: 46px;
-  }
-
-  .ai-chat-log {
-    min-height: 46vh;
-    max-height: 46vh;
-    min-height: max(260px, calc(100dvh - 375px));
-    max-height: max(260px, calc(100dvh - 375px));
   }
 }
 
