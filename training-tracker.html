@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=110" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=110" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=110" />
-    <link rel="manifest" href="./manifest.webmanifest?v=110" />
-    <link rel="stylesheet" href="./training-tracker.css?v=110" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=111" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=111" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=111" />
+    <link rel="manifest" href="./manifest.webmanifest?v=111" />
+    <link rel="stylesheet" href="./training-tracker.css?v=111" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -57,7 +57,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v110</span>
+          <span class="version-badge">v111</span>
         </div>
       </section>
 
@@ -205,16 +205,6 @@
             <div id="weekdayPicker" class="weekday-picker" role="group" aria-label="Дни недели для тренировок"></div>
           </div>
           <div id="dayDetail" class="day-detail" hidden></div>
-        </div>
-
-        <div class="panel">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">Динамика</p>
-            <h2>Тренировки в неделю</h2>
-          </div>
-        </div>
-        <div id="monthlyChart" class="month-chart"></div>
         </div>
       </section>
 
@@ -423,11 +413,11 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=110"></script>
-    <script src="./training-tracker.js?v=110"></script>
+    <script src="./exercise-catalog.js?v=111"></script>
+    <script src="./training-tracker.js?v=111"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=110"></script>
-    <script src="./cloud.js?v=110"></script>
+    <script src="./supabase-config.js?v=111"></script>
+    <script src="./cloud.js?v=111"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -453,7 +443,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v110";
+      const APP_VERSION = "v111";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

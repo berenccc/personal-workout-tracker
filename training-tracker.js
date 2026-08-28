@@ -587,7 +587,6 @@ const elements = {
   aiChatClearButton: document.querySelector("#aiChatClearButton"),
   aiStatus: document.querySelector("#aiStatus"),
   readinessPill: document.querySelector("#readinessPill"),
-  monthlyChart: document.querySelector("#monthlyChart"),
   prBoard: document.querySelector("#prBoard"),
   chartExerciseSelect: document.querySelector("#chartExerciseSelect"),
   weightChart: document.querySelector("#weightChart"),
@@ -1559,73 +1558,7 @@ function stat(value, label) {
 }
 
 function renderDashboard() {
-  renderMonthlyChart();
   renderPrBoard();
-}
-
-// «Тренировки в неделю» в стиле Hevy: последние 8 недель + пунктирная цель
-// из повторяющегося расписания.
-const WEEK_TRACK_HEIGHT = 96;
-const WEEK_LABEL_OFFSET = 19;
-
-function renderMonthlyChart() {
-  if (!elements.monthlyChart) return;
-
-  const counts = new Map();
-  state.workouts.forEach((workout) => {
-    const key = mondayOf(new Date(workout.date));
-    counts.set(key, (counts.get(key) || 0) + 1);
-  });
-
-  const currentMonday = mondayOf(new Date());
-  const weeks = [];
-  for (let i = 7; i >= 0; i--) {
-    const monday = new Date(currentMonday);
-    monday.setDate(monday.getDate() - i * 7);
-    const key = formatInputDate(monday);
-    weeks.push({
-      key,
-      label: `${String(monday.getDate()).padStart(2, "0")}.${String(monday.getMonth() + 1).padStart(2, "0")}`,
-      count: counts.get(key) || 0,
-      isCurrent: key === currentMonday,
-    });
-  }
-
-  const goal = weekdays().size;
-  if (!goal && weeks.every((week) => !week.count)) {
-    elements.monthlyChart.innerHTML = emptyChart("Сохрани первую тренировку — здесь появится динамика по неделям.");
-    return;
-  }
-
-  const max = Math.max(...weeks.map((week) => week.count), goal, 1);
-  const goalOffset = goal
-    ? WEEK_LABEL_OFFSET + Math.round((goal / max) * WEEK_TRACK_HEIGHT)
-    : 0;
-
-  elements.monthlyChart.innerHTML = `
-    <div class="week-chart">
-      ${goal ? `<span class="week-goal-line" style="bottom:${goalOffset}px"><em>цель ${goal}</em></span>` : ""}
-      <div class="week-bars">
-        ${weeks.map((week) => {
-          const height = week.count ? Math.max(Math.round((week.count / max) * 100), 10) : 0;
-          const classes = ["week-bar"];
-          if (week.isCurrent) classes.push("is-current");
-          if (!week.count) classes.push("is-zero");
-          if (goal && week.count >= goal) classes.push("is-goal-met");
-          return `
-            <div class="${classes.join(" ")}" aria-label="Неделя с ${week.label}: ${week.count} тренировок">
-              <span class="week-bar-count">${week.count || ""}</span>
-              <span class="week-bar-track"><i style="height:${height}%"></i></span>
-              <span class="week-bar-label">${week.isCurrent ? "сейчас" : week.label}</span>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </div>
-    <p class="month-bars-hint">Столбик — тренировки за неделю, снизу дата её понедельника. ${goal
-      ? `Пунктир — твоя цель из расписания: ${goal} в неделю.`
-      : "Отметь дни в «Повторяющемся расписании» — появится линия цели."}</p>
-  `;
 }
 
 function renderPrBoard() {
