@@ -1210,16 +1210,42 @@ select {
   height: 300px;
 }
 
-.month-bars {
+.week-chart {
+  position: relative;
+}
+
+.week-goal-line {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  border-top: 2px dashed color-mix(in srgb, var(--accent) 65%, transparent);
+  pointer-events: none;
+}
+
+.week-goal-line em {
+  position: absolute;
+  top: -20px;
+  right: 0;
+  border-radius: 6px;
+  padding: 2px 6px;
+  background: var(--panel-2);
+  color: var(--accent);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.week-bars {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
   align-items: end;
 }
 
-.month-bar {
+.week-bar {
   display: grid;
-  gap: 4px;
+  gap: 5px;
   justify-items: center;
   border: 0;
   padding: 0;
@@ -1228,49 +1254,54 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
-.month-bar-count {
+.week-bar-count {
   min-height: 15px;
   color: var(--text);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 
-.month-bar-track {
+.week-bar-track {
   display: flex;
   align-items: flex-end;
   width: 100%;
-  max-width: 22px;
+  max-width: 30px;
   height: 96px;
-  border-radius: 8px;
+  border-radius: 9px;
   background: var(--panel-2);
   overflow: hidden;
 }
 
-.month-bar-track i {
+.week-bar-track i {
   display: block;
   width: 100%;
-  border-radius: 8px 8px 0 0;
-  background: var(--accent);
+  border-radius: 9px 9px 0 0;
+  background: color-mix(in srgb, var(--accent) 45%, var(--panel-2));
   transition: height 300ms ease;
 }
 
-.month-bar-label {
+.week-bar.is-goal-met .week-bar-track i {
+  background: var(--accent);
+}
+
+.week-bar-label {
+  height: 14px;
   color: var(--muted);
   font-size: 10px;
   font-weight: 700;
-  text-transform: lowercase;
+  line-height: 14px;
 }
 
-.month-bar.is-zero .month-bar-count {
+.week-bar.is-zero .week-bar-count {
   color: var(--muted);
 }
 
-.month-bar.is-current .month-bar-count,
-.month-bar.is-current .month-bar-label {
+.week-bar.is-current .week-bar-count,
+.week-bar.is-current .week-bar-label {
   color: var(--accent);
 }
 
-.month-bar:active .month-bar-track {
+.week-bar:active .week-bar-track {
   filter: brightness(1.2);
 }
 
