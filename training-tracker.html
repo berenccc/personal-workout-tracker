@@ -14,24 +14,34 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=86" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=86" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=86" />
-    <link rel="manifest" href="./manifest.webmanifest?v=86" />
-    <link rel="stylesheet" href="./training-tracker.css?v=86" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=87" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=87" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=87" />
+    <link rel="manifest" href="./manifest.webmanifest?v=87" />
+    <link rel="stylesheet" href="./training-tracker.css?v=87" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
-      <form id="authForm" class="auth-card">
-        <p class="eyebrow">Закрытый доступ</p>
-        <h1>Вход в трекер</h1>
-        <p class="lead">Введи пароль, чтобы открыть тренировки.</p>
-        <label>
-          Пароль
-          <input id="authPasswordInput" type="password" autocomplete="current-password" required />
-        </label>
-        <button class="button primary" type="submit">Открыть</button>
-        <p id="authError" class="auth-error" role="alert"></p>
+      <form id="cloudAuthForm" class="auth-card">
+        <p class="eyebrow">Trainy</p>
+        <h1>Вход в аккаунт</h1>
+        <p class="lead">Тренировки хранятся в защищённом облаке и доступны на всех твоих устройствах.</p>
+        <div id="authEmailRow">
+          <label>
+            Email
+            <input id="authEmailInput" type="email" autocomplete="email" placeholder="you@example.com" required />
+          </label>
+          <button id="authSendCodeButton" class="button primary" type="submit">Получить код</button>
+        </div>
+        <div id="authOtpRow" hidden>
+          <label>
+            Код из письма
+            <input id="authOtpInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6 цифр" />
+          </label>
+          <button id="authVerifyButton" class="button primary" type="button">Войти</button>
+          <button id="authChangeEmailButton" class="button ghost" type="button">Изменить email</button>
+        </div>
+        <p id="authStatus" class="auth-error" role="status">Проверяем сессию…</p>
       </form>
     </section>
 
@@ -43,11 +53,11 @@
           <h1>Тренировки без выгорания</h1>
           <p class="lead">
             Журнал, графики прогресса, контроль RPE и подсказки по следующей тренировке.
-            История подтягивается из git, новые тренировки сохраняются туда после завершения.
+            История синхронизируется с облаком, новые тренировки сохраняются после завершения.
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v86</span>
+          <span class="version-badge">v87</span>
         </div>
       </section>
 
@@ -252,14 +262,6 @@
             <h3>Аккаунт</h3>
             <p id="cloudStatus">Облако не настроено</p>
           </div>
-          <div id="cloudLoggedOut" class="sync-controls cloud-controls">
-            <input id="cloudEmailInput" type="email" placeholder="Email" autocomplete="email" />
-            <button id="cloudSendCodeButton" class="button secondary" type="button">Код на почту</button>
-          </div>
-          <div id="cloudOtpRow" class="sync-controls cloud-controls" hidden>
-            <input id="cloudOtpInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Код из письма" />
-            <button id="cloudVerifyButton" class="button primary" type="button">Войти</button>
-          </div>
           <div id="cloudLoggedIn" class="cabinet-actions" hidden>
             <button id="cloudSyncButton" class="button secondary" type="button">Синхронизировать</button>
             <button id="cloudSignOutButton" class="button ghost" type="button">Выйти</button>
@@ -289,25 +291,7 @@
         <section class="cabinet-section">
           <div class="cabinet-section-head">
             <h3>AI-тренер</h3>
-            <p>Ключ хранится только в этом браузере</p>
-          </div>
-          <div class="sync-controls ai-key-controls">
-            <input id="aiApiKeyInput" type="password" placeholder="OpenAI API key" autocomplete="off" />
-            <button id="saveAiApiKeyButton" class="button secondary" type="button">Сохранить</button>
-          </div>
-        </section>
-
-        <section class="cabinet-section">
-          <div class="cabinet-section-head">
-            <h3>Синхронизация</h3>
-            <p id="syncStatus">Пока локально. После настройки телефон сам пишет в git.</p>
-          </div>
-          <div class="sync-controls">
-            <input id="githubTokenInput" type="password" placeholder="GitHub token для записи в repo" autocomplete="off" />
-            <button id="saveGithubTokenButton" class="button secondary" type="button">Сохранить token</button>
-            <button id="pushLatestWorkoutButton" class="button secondary" type="button">Отправить в git</button>
-            <button id="checkGithubTokenButton" class="button ghost" type="button">Проверить запись</button>
-            <button id="pullRemoteButton" class="button ghost" type="button">Обновить из git</button>
+            <p>Работает через защищённый сервер — личный API-ключ не нужен</p>
           </div>
         </section>
 
@@ -461,13 +445,13 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=86"></script>
-    <script src="./training-history.js?v=86"></script>
-    <script src="./training-feedback.js?v=86"></script>
-    <script src="./training-tracker.js?v=86"></script>
+    <script src="./exercise-catalog.js?v=87"></script>
+    <script src="./training-history.js?v=87"></script>
+    <script src="./training-feedback.js?v=87"></script>
+    <script src="./training-tracker.js?v=87"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=86"></script>
-    <script src="./cloud.js?v=86"></script>
+    <script src="./supabase-config.js?v=87"></script>
+    <script src="./cloud.js?v=87"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -493,7 +477,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v86";
+      const APP_VERSION = "v87";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

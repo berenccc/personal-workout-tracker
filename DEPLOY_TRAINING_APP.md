@@ -1,40 +1,22 @@
-# Размещение трекера тренировок
+# Размещение Trainy
 
-Апка статическая. Для размещения нужны эти файлы:
+Клиент — статическая PWA на GitHub Pages. Аккаунты, тренировки и AI работают через Supabase.
 
-- `training-tracker.html`
-- `training-tracker.css`
-- `training-tracker.js`
-- `training-history.js`
-- `manifest.webmanifest`
-- `sw.js`
-- `icon-192.svg`
-- `icon-512.svg`
+## Supabase
 
-## Быстрый вариант
+1. Выполнить миграции из `supabase/migrations/` по порядку в SQL Editor.
+2. Указать Project URL и publishable key в `supabase-config.js`.
+3. Добавить production URL в Authentication → URL Configuration.
+4. Добавить секрет `OPENAI_API_KEY` для Edge Functions.
+5. Задеплоить функцию `supabase/functions/ai-coach`.
 
-1. Залить файлы на Netlify Drop, Vercel или GitHub Pages.
-2. Открыть `training-tracker.html` с телефона.
-3. Добавить страницу на экран телефона как приложение.
+Никогда не помещать `service_role` и `OPENAI_API_KEY` в клиентские файлы.
 
-## Как присылать отчет в чат
+## Клиент
 
-Во время тренировки отмечай подходи галочками и метками:
+GitHub Actions публикует статические файлы на GitHub Pages. После изменений, видимых в PWA, нужно синхронно обновить:
 
-- `легко`
-- `норм`
-- `тяжело`
-- `скип`
-
-После тренировки нажми `Скопировать отчет` и вставь текст в чат. По этому отчету можно корректировать следующую тренировку.
-
-## GitHub backend
-
-Чтобы кнопка `Завершить тренировку` сохраняла данные в репозиторий:
-
-1. Создай GitHub fine-grained token для репозитория `personal-workout-tracker`.
-2. Дай ему доступ `Contents: Read and write`.
-3. Вставь token в поле `GitHub backend` в приложении.
-4. Нажми `Сохранить token`.
-
-Token хранится только в браузере устройства. В код приложения он не коммитится.
+- query-версии в `training-tracker.html`;
+- `APP_VERSION`;
+- `CACHE_NAME` и список ресурсов в `sw.js`;
+- ссылки в `index.html`, `cache-reset.html` и `manifest.webmanifest`.

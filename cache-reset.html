@@ -35,7 +35,7 @@
   <body>
     <main>
       <h1>Обновляю трекер</h1>
-      <p>Чищу кэш приложения и открываю свежую версию. Локальные данные и GitHub sync token не удаляются.</p>
+      <p>Чищу кэш приложения и открываю свежую версию. Аккаунт и тренировки в защищённом облаке не удаляются.</p>
     </main>
     <script>
       async function resetAppCache() {
@@ -49,7 +49,7 @@
           await Promise.all(keys.map((key) => caches.delete(key)));
         }
 
-        window.location.replace(`./training-tracker.html?v=86&fresh=${Date.now()}`);
+        window.location.replace(`./training-tracker.html?v=87&fresh=${Date.now()}`);
       }
 
       resetAppCache();

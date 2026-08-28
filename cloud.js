@@ -1,52 +1,77 @@
-// ── Облако: аккаунт и синхронизация тренировок через Supabase ───────
-// Работает поверх training-tracker.js (использует его глобальные state/saveState/render/showToast).
-// Если SUPABASE_CONFIG пуст или CDN недоступен — приложение живёт как раньше, локально.
+// Аккаунт, облачная синхронизация и AI через Supabase.
 (function () {
   const config = window.SUPABASE_CONFIG || {};
 
   const els = {
-    status: document.querySelector("#cloudStatus"),
-    loggedOut: document.querySelector("#cloudLoggedOut"),
-    otpRow: document.querySelector("#cloudOtpRow"),
-    loggedIn: document.querySelector("#cloudLoggedIn"),
-    emailInput: document.querySelector("#cloudEmailInput"),
-    otpInput: document.querySelector("#cloudOtpInput"),
-    sendCodeButton: document.querySelector("#cloudSendCodeButton"),
-    verifyButton: document.querySelector("#cloudVerifyButton"),
+    authForm: document.querySelector("#cloudAuthForm"),
+    authEmailRow: document.querySelector("#authEmailRow"),
+    authOtpRow: document.querySelector("#authOtpRow"),
+    authEmailInput: document.querySelector("#authEmailInput"),
+    authOtpInput: document.querySelector("#authOtpInput"),
+    authSendCodeButton: document.querySelector("#authSendCodeButton"),
+    authVerifyButton: document.querySelector("#authVerifyButton"),
+    authChangeEmailButton: document.querySelector("#authChangeEmailButton"),
+    authStatus: document.querySelector("#authStatus"),
+    cloudStatus: document.querySelector("#cloudStatus"),
+    cloudLoggedIn: document.querySelector("#cloudLoggedIn"),
     syncButton: document.querySelector("#cloudSyncButton"),
     signOutButton: document.querySelector("#cloudSignOutButton"),
   };
 
   let client = null;
   let currentUser = null;
-  let pendingEmail = null;
+  let pendingEmail = "";
+  let lastSyncedUserId = null;
 
-  function enabled() {
-    return Boolean(config.url && config.anonKey && window.supabase);
+  function setAuthStatus(text, isError = false) {
+    if (!els.authStatus) return;
+    els.authStatus.textContent = text;
+    els.authStatus.classList.toggle("is-error", isError);
   }
 
-  function setStatus(text) {
-    if (els.status) els.status.textContent = text;
+  function setCloudStatus(text) {
+    if (els.cloudStatus) els.cloudStatus.textContent = text;
   }
 
-  function setUiMode(mode) {
-    if (!els.loggedOut) return;
-    els.loggedOut.hidden = mode !== "logged-out";
-    if (els.otpRow) els.otpRow.hidden = mode !== "otp";
-    if (els.loggedIn) els.loggedIn.hidden = mode !== "logged-in";
+  function showEmailStep() {
+    if (els.authEmailRow) els.authEmailRow.hidden = false;
+    if (els.authOtpRow) els.authOtpRow.hidden = true;
+  }
+
+  function showOtpStep() {
+    if (els.authEmailRow) els.authEmailRow.hidden = true;
+    if (els.authOtpRow) els.authOtpRow.hidden = false;
+    els.authOtpInput?.focus();
+  }
+
+  function setAuthenticated(user) {
+    currentUser = user || null;
+    document.body.classList.toggle("locked", !currentUser);
+    if (els.cloudLoggedIn) els.cloudLoggedIn.hidden = !currentUser;
+
+    if (currentUser) {
+      setCloudStatus(`${currentUser.email} · защищённое облако`);
+      setAiStatus?.("AI работает через защищённый сервер.");
+    } else {
+      setCloudStatus("Войди в аккаунт, чтобы синхронизировать данные.");
+      showEmailStep();
+    }
   }
 
   function workoutKey(workout, index) {
     return workout.id || `legacy-${workout.date}-${index}`;
   }
 
-  async function sendCode() {
-    const email = (els.emailInput?.value || "").trim().toLowerCase();
+  async function sendCode(event) {
+    event?.preventDefault();
+    const email = (els.authEmailInput?.value || "").trim().toLowerCase();
     if (!email || !email.includes("@")) {
-      setStatus("Введи корректный email.");
+      setAuthStatus("Введи корректный email.", true);
       return;
     }
-    els.sendCodeButton.disabled = true;
+
+    els.authSendCodeButton.disabled = true;
+    setAuthStatus("Отправляем код…");
     try {
       const { error } = await client.auth.signInWithOtp({
         email,
@@ -54,46 +79,46 @@
       });
       if (error) throw error;
       pendingEmail = email;
-      setUiMode("otp");
-      setStatus(`Код отправлен на ${email}. Введи его сюда.`);
+      showOtpStep();
+      setAuthStatus(`Код отправлен на ${email}. Можно также перейти по ссылке из письма.`);
     } catch (error) {
-      setStatus(`Не удалось отправить код: ${error.message || error}`);
+      setAuthStatus(`Не удалось отправить код: ${error.message || error}`, true);
     } finally {
-      els.sendCodeButton.disabled = false;
+      els.authSendCodeButton.disabled = false;
     }
   }
 
   async function verifyCode() {
-    const token = (els.otpInput?.value || "").trim();
-    if (!pendingEmail || !token) {
-      setStatus("Введи код из письма.");
+    const token = (els.authOtpInput?.value || "").trim();
+    if (!pendingEmail || token.length < 6) {
+      setAuthStatus("Введи код из письма.", true);
       return;
     }
-    els.verifyButton.disabled = true;
+
+    els.authVerifyButton.disabled = true;
+    setAuthStatus("Проверяем код…");
     try {
-      const { error } = await client.auth.verifyOtp({ email: pendingEmail, token, type: "email" });
+      const { error } = await client.auth.verifyOtp({
+        email: pendingEmail,
+        token,
+        type: "email",
+      });
       if (error) throw error;
-      if (els.otpInput) els.otpInput.value = "";
-      // Дальше отработает onAuthStateChange.
+      if (els.authOtpInput) els.authOtpInput.value = "";
     } catch (error) {
-      setStatus(`Код не подошёл: ${error.message || error}`);
+      setAuthStatus(`Код не подошёл: ${error.message || error}`, true);
     } finally {
-      els.verifyButton.disabled = false;
+      els.authVerifyButton.disabled = false;
     }
   }
 
   async function signOut() {
     await client.auth.signOut();
-  }
-
-  async function pushRows(rows) {
-    for (let i = 0; i < rows.length; i += 50) {
-      const chunk = rows.slice(i, i + 50);
-      const { error } = await client
-        .from("workouts")
-        .upsert(chunk, { onConflict: "user_id,session_uid" });
-      if (error) throw error;
-    }
+    localStorage.removeItem("training-tracker-auth");
+    localStorage.removeItem("training-tracker-github-token");
+    localStorage.removeItem("training-tracker-ai-key");
+    lastSyncedUserId = null;
+    setAuthenticated(null);
   }
 
   function rowFor(key, workout) {
@@ -106,10 +131,19 @@
     };
   }
 
-  // Полная синхронизация: тянем облако, объединяем с локальным, доливаем недостающее наверх.
-  async function fullSync() {
-    if (!currentUser) return;
-    setStatus("Синхронизация…");
+  async function pushRows(rows) {
+    for (let i = 0; i < rows.length; i += 50) {
+      const { error } = await client
+        .from("workouts")
+        .upsert(rows.slice(i, i + 50), { onConflict: "user_id,session_uid" });
+      if (error) throw error;
+    }
+  }
+
+  async function fullSync({ quiet = false } = {}) {
+    if (!currentUser) return false;
+    if (!quiet) setCloudStatus("Синхронизация…");
+
     try {
       const { data, error } = await client
         .from("workouts")
@@ -120,9 +154,10 @@
       const merged = new Map();
       state.workouts.forEach((workout, index) => merged.set(workoutKey(workout, index), workout));
       const remoteKeys = new Set();
-      data.forEach((row) => {
+
+      (data || []).forEach((row) => {
         remoteKeys.add(row.session_uid);
-        merged.set(row.session_uid, row.payload); // облако — источник истины при совпадении ключей
+        merged.set(row.session_uid, row.payload);
       });
 
       state.workouts = [...merged.values()].sort((a, b) => a.date.localeCompare(b.date));
@@ -134,66 +169,113 @@
         await pushRows(localOnly.map(([key, workout]) => rowFor(key, workout)));
       }
 
-      setStatus(`${currentUser.email} · ${merged.size} тренировок в облаке ✓`);
-      showToast("Облако синхронизировано ✓");
-    } catch (error) {
-      setStatus(`Ошибка синхронизации: ${error.message || error}`);
-      showToast("Облако: ошибка синхронизации", "warn");
-    }
-  }
+      // Старые клиентские секреты и флаг общего пароля больше не используются.
+      localStorage.removeItem("training-tracker-auth");
+      localStorage.removeItem("training-tracker-github-token");
+      sessionStorage.removeItem("training-tracker-github-token");
+      localStorage.removeItem("training-tracker-ai-key");
 
-  // Быстрый пуш одной тренировки после «Завершить тренировку».
-  async function pushWorkout(workout) {
-    if (!enabled() || !currentUser || !workout) return false;
-    try {
-      await pushRows([rowFor(workout.id || `manual-${workout.date}`, workout)]);
+      setCloudStatus(`${currentUser.email} · ${merged.size} тренировок в облаке ✓`);
+      if (!quiet) showToast("Облако синхронизировано ✓");
       return true;
     } catch (error) {
-      showToast("В облако не ушло — синхронизируй из Кабинета", "warn");
+      setCloudStatus(`Ошибка синхронизации: ${error.message || error}`);
+      if (!quiet) showToast("Облако: ошибка синхронизации", "warn");
       return false;
     }
   }
 
-  function handleSession(session) {
-    currentUser = session?.user || null;
-    if (currentUser) {
-      setUiMode("logged-in");
-      setStatus(`${currentUser.email} · подтягиваю тренировки…`);
-      fullSync();
-    } else {
-      setUiMode("logged-out");
-      setStatus("Войди по email — тренировки будут храниться в облаке.");
+  async function pushWorkout(workout) {
+    if (!currentUser || !workout) return false;
+    try {
+      await pushRows([rowFor(workout.id || `manual-${workout.date}`, workout)]);
+      return true;
+    } catch {
+      return false;
     }
   }
 
-  function init() {
-    if (!els.status) return;
+  async function callAi(messages, tools) {
+    if (!currentUser) {
+      const error = new Error("Нужно войти в аккаунт");
+      error.status = 401;
+      throw error;
+    }
 
-    if (!config.url || !config.anonKey) {
-      setStatus("Облако не настроено (supabase-config.js пуст) — данные живут локально и в git.");
-      setUiMode("none");
+    const { data, error } = await client.functions.invoke("ai-coach", {
+      body: { messages, tools },
+    });
+
+    if (error) {
+      let status = error.context?.status || 500;
+      let message = error.message || "AI-сервер не отвечает";
+      try {
+        const payload = await error.context?.json();
+        if (payload?.error) message = payload.error;
+      } catch {
+        // Ответ без JSON.
+      }
+      const wrapped = new Error(message);
+      wrapped.status = status;
+      throw wrapped;
+    }
+
+    return data;
+  }
+
+  async function handleSession(session) {
+    const user = session?.user || null;
+    setAuthenticated(user);
+    if (!user) {
+      setAuthStatus("Войди по email, чтобы продолжить.");
       return;
     }
-    if (!window.supabase) {
-      setStatus("Библиотека облака не загрузилась — проверь соединение.");
-      setUiMode("none");
+
+    setAuthStatus("Вход выполнен.");
+    if (lastSyncedUserId !== user.id) {
+      lastSyncedUserId = user.id;
+      await fullSync({ quiet: true });
+    }
+  }
+
+  async function init() {
+    if (!config.url || !config.anonKey || !window.supabase) {
+      setAuthStatus("Облачный сервис временно недоступен. Попробуй обновить страницу.", true);
       return;
     }
 
     client = window.supabase.createClient(config.url, config.anonKey);
-
-    els.sendCodeButton?.addEventListener("click", sendCode);
-    els.verifyButton?.addEventListener("click", verifyCode);
+    els.authForm?.addEventListener("submit", sendCode);
+    els.authVerifyButton?.addEventListener("click", verifyCode);
+    els.authChangeEmailButton?.addEventListener("click", () => {
+      pendingEmail = "";
+      showEmailStep();
+      setAuthStatus("Введи email.");
+    });
+    els.authOtpInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        verifyCode();
+      }
+    });
     els.signOutButton?.addEventListener("click", signOut);
-    els.syncButton?.addEventListener("click", fullSync);
-    els.otpInput?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") verifyCode();
+    els.syncButton?.addEventListener("click", () => fullSync());
+
+    client.auth.onAuthStateChange((_event, session) => {
+      // Не блокируем внутренний lock Supabase длительной синхронизацией.
+      setTimeout(() => handleSession(session), 0);
     });
 
-    client.auth.onAuthStateChange((_event, session) => handleSession(session));
-    client.auth.getSession().then(({ data }) => handleSession(data.session));
+    const { data } = await client.auth.getSession();
+    await handleSession(data.session);
   }
 
-  window.cloudSync = { pushWorkout, fullSync };
+  window.cloudSync = {
+    pushWorkout,
+    fullSync,
+    callAi,
+    isAuthenticated: () => Boolean(currentUser),
+  };
+
   init();
 })();

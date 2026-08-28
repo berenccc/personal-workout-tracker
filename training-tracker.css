@@ -157,8 +157,23 @@ label,
 .auth-error {
   min-height: 18px;
   margin: 0;
-  color: var(--danger);
+  color: var(--muted);
   font-size: 13px;
+}
+
+.auth-error.is-error {
+  color: var(--danger);
+}
+
+#authEmailRow,
+#authOtpRow {
+  display: grid;
+  gap: 12px;
+}
+
+#authEmailRow[hidden],
+#authOtpRow[hidden] {
+  display: none;
 }
 
 .hero,

@@ -17,6 +17,9 @@
 !supabase/
 !supabase/migrations/
 !supabase/migrations/*.sql
+!supabase/functions/
+!supabase/functions/ai-coach/
+!supabase/functions/ai-coach/index.ts
 !manifest.webmanifest
 !sw.js
 !data/

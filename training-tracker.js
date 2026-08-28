@@ -1,20 +1,10 @@
 const STORAGE_KEY = "training-tracker-v3";
-const AUTH_KEY = "training-tracker-auth";
-const GITHUB_TOKEN_KEY = "training-tracker-github-token";
 const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
-const AI_KEY_STORAGE = "training-tracker-ai-key";
 const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
 const CUSTOM_EXERCISES_KEY = "training-tracker-custom-exercises-v1";
-const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
-const AI_MODEL = "gpt-5.6-terra";
 const AI_MAX_TOOL_ROUNDS = 6;
 const AI_CHAT_HISTORY_LIMIT = 30;
-const APP_PASSCODE = "train2026";
-const GITHUB_OWNER = "berenccc";
-const GITHUB_REPO = "personal-workout-tracker";
-const GITHUB_BRANCH = "main";
-const GITHUB_DATA_PATH = "data/workouts.json";
 
 // Каталог упражнений загружается из exercise-catalog.js (генерируется скриптом tools/build-exercise-catalog.py из data/exercise-catalog.json).
 const exercises = (window.exerciseCatalog?.exercises || []).map((exercise) => ({ ...exercise }));
@@ -115,7 +105,7 @@ function defaultMyGymIds() {
   }
 
   const used = new Set();
-  const source = [...(state?.workouts || []), ...(window.trainingHistory || [])];
+  const source = state?.workouts || [];
   source.forEach((workout) =>
     (workout.exercises || []).forEach((item) => {
       const resolved = EXERCISE_ALIASES[item.exerciseId] || item.exerciseId;
@@ -178,12 +168,10 @@ function updateGymStatus() {
 function updateCabinetStatus() {
   if (!elements.cabinetStatus) return;
   const gymCount = exercises.filter((exercise) => isExerciseAvailable(exercise)).length;
-  const syncReady = Boolean(getGithubToken());
-  const aiReady = Boolean(localStorage.getItem(AI_KEY_STORAGE));
   const parts = [
     `Зал ${gymCount}`,
-    syncReady ? "sync ok" : "sync off",
-    aiReady ? "AI ok" : "AI off",
+    "облако",
+    "AI через сервер",
   ];
   elements.cabinetStatus.textContent = parts.join(" · ");
 }
@@ -265,14 +253,11 @@ function nextScheduledDate() {
 function workoutDateSet() {
   const dates = new Set();
   (state?.workouts || []).forEach((workout) => dates.add(workout.date));
-  (window.trainingHistory || []).forEach((workout) => dates.add(workout.date));
   return dates;
 }
 
 function workoutsOnDate(iso) {
-  const own = (state?.workouts || []).filter((workout) => workout.date === iso);
-  if (own.length) return own;
-  return (window.trainingHistory || []).filter((workout) => workout.date === iso);
+  return (state?.workouts || []).filter((workout) => workout.date === iso);
 }
 
 function mondayOf(date) {
@@ -575,18 +560,9 @@ let workoutTimer = {
 };
 
 const elements = {
-  authForm: document.querySelector("#authForm"),
-  authPasswordInput: document.querySelector("#authPasswordInput"),
-  authError: document.querySelector("#authError"),
   statsGrid: document.querySelector("#statsGrid"),
   resetButton: document.querySelector("#resetButton"),
   cabinetStatus: document.querySelector("#cabinetStatus"),
-  syncStatus: document.querySelector("#syncStatus"),
-  githubTokenInput: document.querySelector("#githubTokenInput"),
-  saveGithubTokenButton: document.querySelector("#saveGithubTokenButton"),
-  pushLatestWorkoutButton: document.querySelector("#pushLatestWorkoutButton"),
-  checkGithubTokenButton: document.querySelector("#checkGithubTokenButton"),
-  pullRemoteButton: document.querySelector("#pullRemoteButton"),
   workoutPanel: document.querySelector(".workout-panel"),
   workoutForm: document.querySelector("#workoutForm"),
   startWorkoutButton: document.querySelector("#startWorkoutButton"),
@@ -611,8 +587,6 @@ const elements = {
   aiChatClearButton: document.querySelector("#aiChatClearButton"),
   aiRetryButton: document.querySelector("#aiRetryButton"),
   aiStatus: document.querySelector("#aiStatus"),
-  aiApiKeyInput: document.querySelector("#aiApiKeyInput"),
-  saveAiApiKeyButton: document.querySelector("#saveAiApiKeyButton"),
   readinessPill: document.querySelector("#readinessPill"),
   monthlyChart: document.querySelector("#monthlyChart"),
   prBoard: document.querySelector("#prBoard"),
@@ -651,7 +625,6 @@ const ACCENT_COLORS = [
 ];
 
 function boot() {
-  setupAuth();
   requestPersistentStorage();
   renderAccentPicker();
   fillExerciseSelects();
@@ -664,7 +637,6 @@ function boot() {
   restoreWorkoutDraft();
   bindEvents();
   render();
-  initializeRemoteSync();
   initAiCoach();
 }
 
@@ -711,25 +683,6 @@ async function requestPersistentStorage() {
   }
 }
 
-function setupAuth() {
-  if (localStorage.getItem(AUTH_KEY) === "ok") {
-    document.body.classList.remove("locked");
-  }
-
-  elements.authForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    if (elements.authPasswordInput.value === APP_PASSCODE) {
-      localStorage.setItem(AUTH_KEY, "ok");
-      elements.authPasswordInput.value = "";
-      elements.authError.textContent = "";
-      document.body.classList.remove("locked");
-      return;
-    }
-
-    elements.authError.textContent = "Неверный пароль";
-  });
-}
-
 function entry(exerciseId, rows) {
   return {
     exerciseId,
@@ -739,14 +692,22 @@ function entry(exerciseId, rows) {
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return { version: 3, workouts: normalizeWorkoutDates(window.trainingHistory || []) };
+  if (!raw) {
+    // Одноразовая миграция владельца со старой версии, где был общий пароль.
+    // Новый пользователь не должен получить встроенную персональную историю.
+    const isLegacyOwner = localStorage.getItem("training-tracker-auth") === "ok";
+    return {
+      version: 3,
+      workouts: isLegacyOwner ? normalizeWorkoutDates(window.trainingHistory || []) : [],
+    };
+  }
 
   try {
     const parsed = JSON.parse(raw);
     const saved = Array.isArray(parsed.workouts) ? parsed.workouts : [];
-    return { version: 3, workouts: mergeWorkouts(window.trainingHistory || [], saved) };
+    return { version: 3, workouts: normalizeWorkoutDates(saved) };
   } catch {
-    return { version: 3, workouts: normalizeWorkoutDates(window.trainingHistory || []) };
+    return { version: 3, workouts: [] };
   }
 }
 
@@ -756,7 +717,7 @@ function saveState() {
 
 function bindEvents() {
   elements.resetButton.addEventListener("click", () => {
-    if (!confirm("Очистить локальные данные на этом устройстве? Git-историю это не удалит.")) return;
+    if (!confirm("Очистить локальный кэш на этом устройстве? Тренировки в облаке останутся.")) return;
     state = { workouts: [] };
     saveState();
     render();
@@ -770,8 +731,6 @@ function bindEvents() {
   });
   elements.buildWorkoutButton?.addEventListener("click", runWorkoutBuilder);
 
-  elements.saveGithubTokenButton.addEventListener("click", saveGithubToken);
-  elements.saveAiApiKeyButton.addEventListener("click", saveAiApiKey);
   elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
   elements.aiChatClearButton.addEventListener("click", clearAiChat);
   elements.aiRetryButton.addEventListener("click", retryAiChat);
@@ -787,9 +746,6 @@ function bindEvents() {
       sendAiChatMessage();
     }
   });
-  elements.pushLatestWorkoutButton.addEventListener("click", pushLatestWorkoutToGit);
-  elements.checkGithubTokenButton.addEventListener("click", checkGithubTokenWrite);
-  elements.pullRemoteButton.addEventListener("click", () => pullRemoteWorkouts({ forceStatus: true }));
   elements.gymSelectAllButton?.addEventListener("click", () => {
     exercises.forEach((exercise) => gymSet().add(exercise.id));
     saveMyGym();
@@ -840,7 +796,6 @@ function bindEvents() {
     renderMyGym();
   });
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
-  elements.historyList.addEventListener("click", pushHistoryWorkoutToGit);
   elements.startWorkoutButton.addEventListener("click", startWorkoutTimer);
   elements.dateInput.addEventListener("change", saveWorkoutDraft);
   elements.readinessInput.addEventListener("change", () => {
@@ -875,10 +830,8 @@ function bindEvents() {
       if (navigator.vibrate) navigator.vibrate(80);
       showToast("Тренировка сохранена ✓");
 
-      window.cloudSync?.pushWorkout(workout); // в облако — фоном, не блокируя сохранение
-
-      const pushedToGit = await pushRemoteWorkouts(workout);
-      showToast(pushedToGit ? "Отправлено в git ✓" : "В git не отправлено — сохранено локально", pushedToGit ? "success" : "warn");
+      const pushedToCloud = await window.cloudSync?.pushWorkout(workout);
+      showToast(pushedToCloud ? "Сохранено в облаке ✓" : "Сохранено локально — облако догонит при синхронизации", pushedToCloud ? "success" : "warn");
       try {
         await copyText(buildWorkoutReport(workout));
         elements.copyReportButton.textContent = "Отчет скопирован";
@@ -894,7 +847,7 @@ function bindEvents() {
       loadPlannedWorkout();
       resetWorkoutTimer();
       render();
-      showFinishNotice(workout, pushedToGit);
+      showFinishNotice(workout, pushedToCloud);
     } finally {
       isFinishingWorkout = false;
       setFinishButtonState("idle");
@@ -1053,7 +1006,7 @@ function showToast(message, tone = "success") {
   }, 2800);
 }
 
-function showFinishNotice(workout, pushedToGit) {
+function showFinishNotice(workout, pushedToCloud) {
   const doneSets = workout.exercises.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0);
   const totalSets = workout.exercises.reduce((sum, item) => sum + item.sets.length, 0);
   const rows = workout.exercises.map((item) => {
@@ -1065,16 +1018,16 @@ function showFinishNotice(workout, pushedToGit) {
   });
 
   elements.finishNotice.hidden = false;
-  elements.finishNotice.className = `finish-notice ${pushedToGit ? "is-synced" : "is-local"}`;
+  elements.finishNotice.className = `finish-notice ${pushedToCloud ? "is-synced" : "is-local"}`;
   elements.finishNotice.innerHTML = `
     <div class="finish-notice-header">
-      <span>${pushedToGit ? "Готово, сильная работа" : "Тренировка сохранена локально"}</span>
+      <span>${pushedToCloud ? "Готово, сильная работа" : "Тренировка сохранена локально"}</span>
       <strong>${doneSets}/${totalSets} подходов</strong>
     </div>
     <p>
-      ${pushedToGit
-        ? "Тренировка сохранена и отправлена в git."
-        : "Тренировка сохранена на этом устройстве. Открой Кабинет и нажми Отправить в git."}
+      ${pushedToCloud
+        ? "Тренировка сохранена в защищённом облаке."
+        : "Тренировка сохранена на этом устройстве и отправится в облако при следующей синхронизации."}
     </p>
     ${workout.durationMs ? `<p>Длительность: <strong>${formatDuration(workout.durationMs)}</strong></p>` : ""}
     <ol class="finish-summary-list">${rows.join("")}</ol>
@@ -1085,134 +1038,6 @@ function showFinishNotice(workout, pushedToGit) {
 function hideFinishNotice() {
   elements.finishNotice.hidden = true;
   elements.finishNotice.innerHTML = "";
-}
-
-function initializeRemoteSync() {
-  importGithubTokenFromUrl();
-  const token = getGithubToken();
-  if (token) {
-    elements.githubTokenInput.value = "••••••••";
-    setSyncStatus("GitHub token найден. Можно завершить тренировку или нажать Отправить в git.");
-  }
-
-  pullRemoteWorkouts({ forceStatus: false });
-}
-
-function importGithubTokenFromUrl() {
-  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const token = hash.get("syncToken");
-  const aiKey = hash.get("aiKey");
-  if (!token && !aiKey) return;
-
-  if (token) rememberGithubToken(token);
-  if (aiKey) {
-    localStorage.setItem(AI_KEY_STORAGE, aiKey);
-    setAiStatus("AI key импортирован из ссылки и сохранён в браузере.");
-  }
-  history.replaceState(null, document.title, window.location.pathname + window.location.search);
-}
-
-async function saveGithubToken() {
-  const token = elements.githubTokenInput.value.trim();
-  if (!token || token.includes("•")) {
-    setSyncStatus("Token не изменен.");
-    return;
-  }
-
-  rememberGithubToken(token);
-  elements.githubTokenInput.value = "••••••••";
-  setSyncStatus("Token сохранен. Проверяю запись в git...");
-  await checkGithubTokenWrite();
-}
-
-function getGithubToken() {
-  const token = localStorage.getItem(GITHUB_TOKEN_KEY) || sessionStorage.getItem(GITHUB_TOKEN_KEY) || "";
-  if (token) rememberGithubToken(token);
-  return token;
-}
-
-function rememberGithubToken(token) {
-  localStorage.setItem(GITHUB_TOKEN_KEY, token);
-  sessionStorage.setItem(GITHUB_TOKEN_KEY, token);
-}
-
-function setSyncStatus(message) {
-  elements.syncStatus.textContent = message;
-  updateCabinetStatus();
-}
-
-async function checkGithubTokenWrite() {
-  const token = getGithubToken();
-  if (!token) {
-    setSyncStatus("Token не найден на этом устройстве. Вставь token и нажми Сохранить.");
-    return false;
-  }
-
-  elements.checkGithubTokenButton.disabled = true;
-  setSyncStatus("Проверяю права записи в git...");
-
-  try {
-    const current = await getGitHubFile(token);
-    const payload = {
-      ...(current?.data || {}),
-      updatedAt: current?.data?.updatedAt || null,
-      lastSavedWorkoutId: current?.data?.lastSavedWorkoutId || null,
-      workouts: Array.isArray(current?.data?.workouts) ? removeFutureCompletedWorkouts(normalizeWorkoutDates(current.data.workouts)) : [],
-      syncCheckAt: new Date().toISOString(),
-    };
-    await putGitHubFile(token, payload, current?.sha, "Check workout sync token");
-    setSyncStatus("GitHub token работает: запись в data/workouts.json прошла.");
-    return true;
-  } catch (error) {
-    setSyncStatus(`GitHub token не пишет: ${error.message}`);
-    return false;
-  } finally {
-    elements.checkGithubTokenButton.disabled = false;
-  }
-}
-
-async function pushLatestWorkoutToGit() {
-  if (elements.workoutPanel.classList.contains("is-active")) {
-    setSyncStatus("Сначала заверши текущую тренировку, потом отправляй в git.");
-    return false;
-  }
-
-  const latestWorkout = state.workouts[state.workouts.length - 1];
-  if (!latestWorkout) {
-    setSyncStatus("Нет сохраненной локальной тренировки для отправки.");
-    return false;
-  }
-
-  return pushWorkoutToGit(latestWorkout, elements.pushLatestWorkoutButton);
-}
-
-async function pushHistoryWorkoutToGit(event) {
-  const button = event.target.closest("[data-push-workout-index]");
-  if (!button) return;
-
-  const workout = state.workouts[Number(button.dataset.pushWorkoutIndex)];
-  if (!workout) {
-    setSyncStatus("Не нашел эту тренировку локально. Обнови страницу и попробуй еще раз.");
-    return;
-  }
-
-  await pushWorkoutToGit(workout, button);
-}
-
-async function pushWorkoutToGit(workout, button) {
-  const previousText = button.textContent;
-  button.disabled = true;
-  button.textContent = "Отправляю...";
-  setSyncStatus(`Отправляю тренировку ${formatDate(workout.date)} в git...`);
-
-  try {
-    const pushed = await pushRemoteWorkouts(workout);
-    if (pushed) setSyncStatus(`Готово: тренировка ${formatDate(workout.date)} отправлена в git.`);
-    return pushed;
-  } finally {
-    button.disabled = false;
-    button.textContent = previousText;
-  }
 }
 
 function upsertWorkout(workout) {
@@ -1948,129 +1773,6 @@ async function copyWorkoutReport() {
   }
 }
 
-async function pullRemoteWorkouts({ forceStatus } = { forceStatus: false }) {
-  try {
-    const response = await fetch(rawGitHubDataUrl(), { cache: "no-store" });
-    if (!response.ok) {
-      if (forceStatus) setSyncStatus("В git пока нет сохраненных тренировок.");
-      return;
-    }
-
-    const remote = await response.json();
-    const remoteWorkouts = Array.isArray(remote.workouts) ? remote.workouts : [];
-    if (!remoteWorkouts.length) {
-      if (forceStatus) setSyncStatus("В git пока пусто, используется встроенная история.");
-      return;
-    }
-
-    state.workouts = mergeWorkouts(state.workouts, remoteWorkouts);
-    saveState();
-    render();
-    setSyncStatus(`Обновлено из git: ${remoteWorkouts.length} тренировок.`);
-  } catch (error) {
-    if (forceStatus) setSyncStatus(`Не удалось обновить из git: ${error.message}`);
-  }
-}
-
-async function pushRemoteWorkouts(savedWorkout) {
-  const token = getGithubToken();
-  if (!token) {
-    setSyncStatus("Сохранено локально. Чтобы отправлять в git, добавь GitHub token.");
-    return false;
-  }
-
-  setSyncStatus("Отправляю тренировку в git...");
-
-  try {
-    const current = await getGitHubFile(token);
-    const remoteWorkouts = current?.data?.workouts || [];
-    const merged = mergeWorkouts(remoteWorkouts, state.workouts);
-    const payload = {
-      updatedAt: new Date().toISOString(),
-      lastSavedWorkoutId: savedWorkout.id,
-      workouts: merged,
-    };
-
-    await putGitHubFile(token, payload, current?.sha, `Save workout ${savedWorkout.date}`);
-    state.workouts = merged;
-    saveState();
-    setSyncStatus("Готово: тренировка сохранена в git.");
-    return true;
-  } catch (error) {
-    setSyncStatus(`Не удалось отправить в git: ${error.message}`);
-    return false;
-  }
-}
-
-async function getGitHubFile(token) {
-  const response = await fetch(gitHubContentsUrl(), {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-    },
-  });
-
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`GitHub GET ${response.status}`);
-
-  const file = await response.json();
-  const decoded = decodeUtf8Base64(file.content || "");
-  return {
-    sha: file.sha,
-    data: decoded ? JSON.parse(decoded) : { workouts: [] },
-  };
-}
-
-async function putGitHubFile(token, payload, sha, message = `Save workout data ${new Date().toISOString()}`) {
-  const body = {
-    message,
-    branch: GITHUB_BRANCH,
-    content: encodeUtf8Base64(JSON.stringify(payload, null, 2)),
-  };
-
-  if (sha) body.sha = sha;
-
-  const response = await fetch(gitHubContentsUrl(), {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`GitHub PUT ${response.status}: ${text.slice(0, 120)}`);
-  }
-}
-
-function gitHubContentsUrl() {
-  return `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
-}
-
-function rawGitHubDataUrl() {
-  return `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_DATA_PATH}?t=${Date.now()}`;
-}
-
-function encodeUtf8Base64(value) {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-}
-
-function decodeUtf8Base64(value) {
-  const normalized = value.replace(/\s/g, "");
-  if (!normalized) return "";
-  const binary = atob(normalized);
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
-
 async function copyText(value) {
   await navigator.clipboard.writeText(value);
 }
@@ -2208,30 +1910,11 @@ function isTouchDevice() {
 
 function initAiCoach() {
   renderAiChat();
-  setAiStatus(
-    localStorage.getItem(AI_KEY_STORAGE)
-      ? ""
-      : "Нужен OpenAI API key: Кабинет → AI-тренер → Сохранить."
-  );
+  setAiStatus("AI работает через защищённый сервер.");
 }
 
 function setAiStatus(text) {
   elements.aiStatus.textContent = text;
-}
-
-function saveAiApiKey() {
-  const key = elements.aiApiKeyInput.value.trim();
-  if (!key) {
-    localStorage.removeItem(AI_KEY_STORAGE);
-    setAiStatus("AI key удалён с этого устройства.");
-    updateCabinetStatus();
-    return;
-  }
-
-  localStorage.setItem(AI_KEY_STORAGE, key);
-  elements.aiApiKeyInput.value = "";
-  setAiStatus("AI key сохранён. Он хранится только в этом браузере.");
-  updateCabinetStatus();
 }
 
 function loadAiChat() {
@@ -2622,65 +2305,40 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callOpenAi(key, messages) {
+async function callOpenAi(messages) {
   const maxAttempts = 3;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    let response;
     try {
-      response = await fetch(AI_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-        },
-        body: JSON.stringify({
-          model: AI_MODEL,
-          temperature: 0.4,
-          max_completion_tokens: 900,
-          // Требование API: function tools у reasoning-моделей 5.x в chat/completions работают только с reasoning_effort "none".
-          reasoning_effort: "none",
-          messages,
-          tools: AI_TOOL_DEFS,
-        }),
-      });
-    } catch {
-      // Обрыв сети (в Safari — «Load failed»): пробуем ещё раз с паузой.
+      if (!window.cloudSync?.callAi) throw new Error("сервер AI ещё не готов");
+      return await window.cloudSync.callAi(messages, AI_TOOL_DEFS);
+    } catch (error) {
+      if (error?.status === 401) throw new Error("сессия истекла — войди в аккаунт заново");
+      if (error?.status === 429) throw new Error("дневной лимит AI исчерпан");
       if (attempt < maxAttempts) {
         setAiStatus(`Связь прервалась, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
         await sleep(1200 * attempt);
         continue;
       }
-      throw new Error("нет связи с OpenAI. Проверь интернет и не сворачивай приложение, пока тренер отвечает");
+      throw new Error(error?.message || "нет связи с AI-сервером");
     }
-
-    if (response.status === 401) throw new Error("неверный API key");
-    if ((response.status === 429 || response.status >= 500) && attempt < maxAttempts) {
-      setAiStatus(`OpenAI занят, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
-      await sleep(1500 * attempt);
-      continue;
-    }
-    if (!response.ok) throw new Error(`API вернул ${response.status}`);
-
-    return response.json();
   }
 
-  throw new Error("OpenAI не отвечает, попробуй чуть позже");
+  throw new Error("AI-сервер не отвечает, попробуй чуть позже");
 }
 
-async function runAiConversation(key) {
+async function runAiConversation() {
   const latestUser = [...aiChat].reverse().find((message) => message.role === "user");
   if (latestUser && !isAiMessageInScope(latestUser.content)) {
     return AI_OFFTOPIC_REFUSAL;
   }
 
   const messages = [
-    { role: "system", content: `${AI_SYSTEM_PROMPT}\n\nСегодня ${formatInputDate(new Date())}.` },
     ...aiChat.slice(-16).map((message) => ({ role: message.role, content: message.content })),
   ];
 
   for (let round = 0; round < AI_MAX_TOOL_ROUNDS; round++) {
-    const data = await callOpenAi(key, messages);
+    const data = await callOpenAi(messages);
     const message = data.choices?.[0]?.message;
     if (!message) throw new Error("пустой ответ модели");
 
@@ -2711,9 +2369,8 @@ async function runAiConversation(key) {
 }
 
 async function sendAiChatMessage() {
-  const key = localStorage.getItem(AI_KEY_STORAGE);
-  if (!key) {
-    setAiStatus("Сначала сохрани OpenAI API key в Кабинете.");
+  if (!window.cloudSync?.isAuthenticated?.()) {
+    setAiStatus("Войди в аккаунт, чтобы использовать AI-тренера.");
     return;
   }
 
@@ -2729,12 +2386,11 @@ async function sendAiChatMessage() {
   persistAiChat();
   renderAiChat();
   elements.aiChatInput.value = "";
-  await runAiChatCycle(key);
+  await runAiChatCycle();
 }
 
 async function retryAiChat() {
-  const key = localStorage.getItem(AI_KEY_STORAGE);
-  if (!key || !aiChat.length || aiChat.at(-1).role !== "user") return;
+  if (!window.cloudSync?.isAuthenticated?.() || !aiChat.length || aiChat.at(-1).role !== "user") return;
   if (!isAiMessageInScope(aiChat.at(-1).content)) {
     aiChat.push({ role: "assistant", content: AI_OFFTOPIC_REFUSAL });
     persistAiChat();
@@ -2743,16 +2399,16 @@ async function retryAiChat() {
     elements.aiRetryButton.hidden = true;
     return;
   }
-  await runAiChatCycle(key);
+  await runAiChatCycle();
 }
 
-async function runAiChatCycle(key) {
+async function runAiChatCycle() {
   elements.aiChatSendButton.disabled = true;
   elements.aiRetryButton.hidden = true;
   setAiStatus("Тренер смотрит твои данные…");
 
   try {
-    const reply = await runAiConversation(key);
+    const reply = await runAiConversation();
     aiChat.push({ role: "assistant", content: reply });
     persistAiChat();
     renderAiChat();
@@ -2968,7 +2624,6 @@ function renderHistory() {
             <span>RPE ${averageWorkoutRpe(workout) || "n/a"}</span>
             ${workout.sessionEffort ? `<span>${sessionEffortLabel(workout.sessionEffort)}</span>` : ""}
           </div>
-          <button class="button secondary history-push-button" type="button" data-push-workout-index="${index}">Отправить в git</button>
         </div>
         ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
         ${workout.afterNotes ? `<p>${escapeHtml(workout.afterNotes)}</p>` : ""}
