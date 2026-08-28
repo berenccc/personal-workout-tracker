@@ -2506,11 +2506,14 @@ function sleep(ms) {
 
 async function callOpenAi(messages, toolChoice) {
   const maxAttempts = 3;
+  const tools = toolChoice
+    ? AI_TOOL_DEFS.filter((tool) => tool.function.name === toolChoice.function.name)
+    : AI_TOOL_DEFS;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       if (!window.cloudSync?.callAi) throw new Error("сервер AI ещё не готов");
-      return await window.cloudSync.callAi(messages, AI_TOOL_DEFS, toolChoice);
+      return await window.cloudSync.callAi(messages, tools, toolChoice);
     } catch (error) {
       if (error?.status === 401) throw new Error("сессия истекла — войди в аккаунт заново");
       if (error?.status === 429) throw new Error("дневной лимит AI исчерпан");
@@ -2637,8 +2640,21 @@ async function retryAiChat() {
   await runAiChatCycle();
 }
 
-// После завершения тренировки AI сам даёт фидбэк и сразу планирует следующую сессию.
-function autoAiAfterWorkout() {
+function createFallbackNextWorkoutPlan() {
+  const result = buildWorkoutFromGoal("fullbody", 45);
+  if (!result?.plan?.length) return "";
+
+  selected = result.plan;
+  elements.notesInput.value =
+    "Автоплан после последней тренировки: фулбади ~45 мин, RPE 6–8, без отказа. Вес и ротация подобраны по истории.";
+  renderSelectedExercises();
+  persistAiPlan();
+  saveWorkoutDraft();
+  return `AI не смог записать план инструментом, поэтому приложение собрало надёжный резервный план по твоей истории: ${selected.length} упражнений на ~45 минут.`;
+}
+
+// После завершения тренировки AI даёт фидбэк, записывает план и возвращает пользователя на главную.
+async function autoAiAfterWorkout() {
   if (!window.cloudSync?.isAuthenticated?.()) return;
   window.showAppView?.("ai");
   aiChat.push({
@@ -2647,7 +2663,25 @@ function autoAiAfterWorkout() {
   });
   persistAiChat();
   renderAiChat();
-  runAiChatCycle({ requiredTool: "set_planned_workout" });
+  await runAiChatCycle({ requiredTool: "set_planned_workout" });
+
+  if (!selected.length) {
+    const fallbackMessage = createFallbackNextWorkoutPlan();
+    if (fallbackMessage) {
+      aiChat.push({ role: "assistant", content: fallbackMessage });
+      persistAiChat();
+      renderAiChat();
+    }
+  }
+
+  if (selected.length) {
+    window.showAppView?.("workout");
+    showToast("План следующей тренировки готов на главной ✓");
+    window.setTimeout(
+      () => elements.planSummary?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      80
+    );
+  }
 }
 
 async function runAiChatCycle(options = {}) {
@@ -2662,9 +2696,11 @@ async function runAiChatCycle(options = {}) {
     aiChat.push({ role: "assistant", content: reply });
     persistAiChat();
     setAiStatus("");
+    return true;
   } catch (error) {
     aiError = error.message || "нет связи с сервером";
     setAiStatus("");
+    return false;
   } finally {
     aiThinking = false;
     elements.aiChatSendButton.disabled = false;
