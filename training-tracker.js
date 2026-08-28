@@ -750,17 +750,6 @@ function bindEvents() {
   elements.calPrevButton?.addEventListener("click", () => shiftCalendarMonth(-1));
   elements.calNextButton?.addEventListener("click", () => shiftCalendarMonth(1));
   elements.calModeButton?.addEventListener("click", toggleCalendarMode);
-  elements.monthlyChart?.addEventListener("click", (event) => {
-    const bar = event.target.closest(".week-bar[data-month]");
-    if (!bar) return;
-    calendarCursor = new Date(Number(bar.dataset.year), Number(bar.dataset.month), 1);
-    if (calendarMode === "year") {
-      toggleCalendarMode();
-    } else {
-      renderScheduleCalendar();
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
   elements.scheduleCalendar?.addEventListener("click", (event) => {
     const monthTile = event.target.closest(".year-month[data-month]");
     if (monthTile) {
@@ -1575,7 +1564,7 @@ function renderDashboard() {
 }
 
 // «Тренировки в неделю» в стиле Hevy: последние 8 недель + пунктирная цель
-// из повторяющегося расписания. Тап по неделе открывает её месяц в календаре.
+// из повторяющегося расписания.
 const WEEK_TRACK_HEIGHT = 96;
 const WEEK_LABEL_OFFSET = 19;
 
@@ -1596,8 +1585,6 @@ function renderMonthlyChart() {
     const key = formatInputDate(monday);
     weeks.push({
       key,
-      year: monday.getFullYear(),
-      month: monday.getMonth(),
       label: `${String(monday.getDate()).padStart(2, "0")}.${String(monday.getMonth() + 1).padStart(2, "0")}`,
       count: counts.get(key) || 0,
       isCurrent: key === currentMonday,
@@ -1626,18 +1613,18 @@ function renderMonthlyChart() {
           if (!week.count) classes.push("is-zero");
           if (goal && week.count >= goal) classes.push("is-goal-met");
           return `
-            <button type="button" class="${classes.join(" ")}" data-year="${week.year}" data-month="${week.month}" aria-label="Неделя ${week.label}: ${week.count} тренировок">
+            <div class="${classes.join(" ")}" aria-label="Неделя с ${week.label}: ${week.count} тренировок">
               <span class="week-bar-count">${week.count || ""}</span>
               <span class="week-bar-track"><i style="height:${height}%"></i></span>
               <span class="week-bar-label">${week.isCurrent ? "сейчас" : week.label}</span>
-            </button>
+            </div>
           `;
         }).join("")}
       </div>
     </div>
-    <p class="month-bars-hint">${goal
-      ? `Цель из расписания — ${goal} в неделю.`
-      : "Отметь дни в «Повторяющемся расписании» — появится линия цели."} Тап по столбику откроет месяц в календаре.</p>
+    <p class="month-bars-hint">Столбик — тренировки за неделю, снизу дата её понедельника. ${goal
+      ? `Пунктир — твоя цель из расписания: ${goal} в неделю.`
+      : "Отметь дни в «Повторяющемся расписании» — появится линия цели."}</p>
   `;
 }
 

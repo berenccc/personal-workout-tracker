@@ -1247,11 +1247,6 @@ select {
   display: grid;
   gap: 5px;
   justify-items: center;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .week-bar-count {
@@ -1299,10 +1294,6 @@ select {
 .week-bar.is-current .week-bar-count,
 .week-bar.is-current .week-bar-label {
   color: var(--accent);
-}
-
-.week-bar:active .week-bar-track {
-  filter: brightness(1.2);
 }
 
 .month-bars-hint {
