@@ -23,6 +23,21 @@
   let pendingEmail = "";
   let lastSyncedUserId = null;
 
+  // Каким аккаунтом были записаны локальные данные устройства.
+  const OWNER_KEY = "training-tracker-owner-uid";
+
+  function wipeLocalDataForAccountSwitch() {
+    [
+      "training-tracker-v3",
+      "training-tracker-active-workout-draft-v1",
+      "training-tracker-ai-chat-v1",
+      "training-tracker-ai-plan-v1",
+      "training-tracker-schedule-v1",
+      "training-tracker-weekdays-v1",
+      "training-tracker-schedule-exclude-v1",
+    ].forEach((key) => localStorage.removeItem(key));
+  }
+
   function setAuthStatus(text, isError = false) {
     if (!els.authStatus) return;
     els.authStatus.textContent = text;
@@ -232,6 +247,18 @@
     }
 
     setAuthStatus("Вход выполнен.");
+
+    // Локальные данные принадлежат другому аккаунту — стираем их,
+    // чтобы не показать и не залить чужую историю в это облако.
+    const storedOwner = localStorage.getItem(OWNER_KEY);
+    if (storedOwner && storedOwner !== user.id) {
+      localStorage.setItem(OWNER_KEY, user.id);
+      wipeLocalDataForAccountSwitch();
+      window.location.reload();
+      return;
+    }
+    localStorage.setItem(OWNER_KEY, user.id);
+
     if (lastSyncedUserId !== user.id) {
       lastSyncedUserId = user.id;
       await fullSync({ quiet: true });
