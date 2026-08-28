@@ -36,3 +36,10 @@
 !icon-192.svg
 !icon-512.svg
 !DEPLOY_TRAINING_APP.md
+!IOS_APP.md
+!package.json
+!capacitor.config.json
+!www/
+!www/index.html
+!ios-native/
+!ios-native/*.swift

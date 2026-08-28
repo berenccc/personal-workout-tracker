@@ -1,0 +1,13 @@
+{
+  "appId": "com.trainy.app",
+  "appName": "Trainy",
+  "webDir": "www",
+  "server": {
+    "url": "https://berenccc.github.io/personal-workout-tracker/training-tracker.html",
+    "allowNavigation": ["berenccc.github.io", "*.supabase.co"]
+  },
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0c0d10"
+  }
+}

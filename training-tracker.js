@@ -1467,6 +1467,31 @@ function render() {
   renderCharts();
   renderHistory();
   renderScheduleCalendar();
+  updateNativeWidget();
+}
+
+// В iOS-приложении (Capacitor) передаём сводку виджету на домашнем экране.
+function updateNativeWidget() {
+  const bridge = window.Capacitor?.Plugins?.WidgetBridge;
+  if (!bridge || !window.Capacitor?.isNativePlatform?.()) return;
+
+  const dates = workoutDateSet();
+  const weekStart = mondayOf(new Date());
+  const weekWorkouts = [...dates].filter((iso) => iso >= weekStart).length;
+  const nextIso = nextPlannedWorkoutDate();
+  const nextDate = nextIso
+    ? new Intl.DateTimeFormat("ru-RU", { weekday: "short", day: "2-digit", month: "2-digit" }).format(new Date(nextIso))
+    : "";
+
+  const payload = {
+    streakWeeks: weeklyStreak(dates),
+    weekWorkouts,
+    nextDate,
+    nextFocus: (elements.notesInput?.value || "Следующая тренировка").split(/[.\n]/)[0].trim().slice(0, 60),
+    updatedAt: new Date().toISOString(),
+  };
+
+  bridge.setWidgetData({ json: JSON.stringify(payload) }).catch(() => {});
 }
 
 function bestWeeklyStreak(dates) {
