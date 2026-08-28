@@ -2412,8 +2412,7 @@ select {
   bottom: 0;
   left: 0;
   z-index: 15;
-  height: calc(56px + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--line);
   background: rgba(15, 17, 21, 0.97);
   backdrop-filter: blur(14px);
@@ -2424,7 +2423,7 @@ select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 3px;
   border: 0;
   background: transparent;
@@ -2433,7 +2432,10 @@ select {
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
-  padding: 6px 4px 4px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Тач-зона тянется до самого низа экрана, включая полосу home-индикатора. */
+  padding: 8px 4px calc(env(safe-area-inset-bottom, 0px) + 6px);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: color 140ms ease;
@@ -2463,12 +2465,12 @@ select {
 }
 
 body {
-  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 10px);
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 10px);
 }
 
 @media (max-width: 620px) {
   body {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 8px);
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 8px);
   }
 }
 
