@@ -2500,6 +2500,22 @@ function executeAiTool(name, args) {
   return `Ошибка: неизвестный инструмент ${name}.`;
 }
 
+function describePlannedWorkoutForChat() {
+  if (!selected.length) return "";
+  const rows = selected.map((item, index) => {
+    const exercise = findExercise(item.exerciseId);
+    const sets = item.sets
+      .map((set) => `${formatNumber(set.weight)}×${set.reps}${set.rpe ? ` @ RPE ${set.rpe}` : ""}`)
+      .join(", ");
+    return `${index + 1}. ${exercise?.name || item.exerciseId}: ${sets}`;
+  });
+  return [
+    `План на ${formatDate(elements.dateInput.value)} сохранён на главной:`,
+    ...rows,
+    elements.notesInput.value ? `Фокус: ${elements.notesInput.value}` : "",
+  ].filter(Boolean).join("\n");
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -2580,7 +2596,7 @@ async function runAiConversation({ requiredTool = "" } = {}) {
         messages.push({ role: "tool", tool_call_id: call.id, content: result });
       }
       if (requiredToolApplied && pendingText) {
-        return `${pendingText}\n\n${requiredToolResult}`;
+        return `${pendingText}\n\n${describePlannedWorkoutForChat()}`;
       }
       continue;
     }
@@ -2598,11 +2614,17 @@ async function runAiConversation({ requiredTool = "" } = {}) {
       });
       continue;
     }
-    if (text) return text;
+    if (text) {
+      return requiredToolApplied
+        ? `${text}\n\n${describePlannedWorkoutForChat()}`
+        : text;
+    }
     throw new Error("пустой ответ модели");
   }
 
-  if (requiredToolApplied) return pendingText ? `${pendingText}\n\n${requiredToolResult}` : requiredToolResult;
+  if (requiredToolApplied) {
+    return [pendingText, describePlannedWorkoutForChat() || requiredToolResult].filter(Boolean).join("\n\n");
+  }
   throw new Error("слишком много шагов, сформулируй запрос проще");
 }
 
@@ -2650,16 +2672,20 @@ function createFallbackNextWorkoutPlan() {
   renderSelectedExercises();
   persistAiPlan();
   saveWorkoutDraft();
-  return `AI не смог записать план инструментом, поэтому приложение собрало надёжный резервный план по твоей истории: ${selected.length} упражнений на ~45 минут.`;
+  return [
+    `AI не смог записать план инструментом, поэтому приложение собрало резервный план по твоей истории, нагрузке и упражнениям «Моего зала».`,
+    describePlannedWorkoutForChat(),
+  ].join("\n\n");
 }
 
-// После завершения тренировки AI даёт фидбэк, записывает план и возвращает пользователя на главную.
+// После завершения тренировки остаёмся в AI-чате: там видны фидбэк и описание
+// сохранённого плана, а сам план уже доступен на главной.
 async function autoAiAfterWorkout() {
   if (!window.cloudSync?.isAuthenticated?.()) return;
   window.showAppView?.("ai");
   aiChat.push({
     role: "user",
-    content: "Я только что закончил тренировку. Дай короткий фидбэк по ней и сразу запланируй следующую с учётом моего календаря.",
+    content: "Я только что закончил тренировку. Проанализируй выполненные и пропущенные подходы, веса, повторы, RPE, отметки, готовность, итоговое самочувствие, мои заметки, недавнюю нагрузку и прогресс. Дай короткий фидбэк. Затем с учётом восстановления, календаря и доступных упражнений «Моего зала» собери и сохрани следующую тренировку, после чего кратко опиши её.",
   });
   persistAiChat();
   renderAiChat();
@@ -2675,12 +2701,8 @@ async function autoAiAfterWorkout() {
   }
 
   if (selected.length) {
-    window.showAppView?.("workout");
-    showToast("План следующей тренировки готов на главной ✓");
-    window.setTimeout(
-      () => elements.planSummary?.scrollIntoView({ behavior: "smooth", block: "center" }),
-      80
-    );
+    setAiStatus("План сохранён — он уже доступен на главной.");
+    showToast("Следующая тренировка сохранена на главной ✓");
   }
 }
 
