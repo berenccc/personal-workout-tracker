@@ -2087,6 +2087,121 @@ select {
   outline-offset: 1px;
 }
 
+.cal-mode-button {
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.calendar-nav strong {
+  margin-right: auto;
+}
+
+/* Годовой вид */
+
+.schedule-calendar.year-mode {
+  display: block;
+}
+
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.year-month {
+  display: grid;
+  gap: 6px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-2);
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+}
+
+.year-month-name {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.year-dots {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  justify-items: center;
+}
+
+.year-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.year-dot.is-empty {
+  background: transparent;
+}
+
+.year-dot.is-done {
+  background: #4cc38a;
+}
+
+.year-dot.is-planned {
+  background: var(--accent);
+  opacity: 0.75;
+}
+
+.year-dot.is-today {
+  box-shadow: 0 0 0 1.5px var(--text);
+}
+
+/* Повторяющееся расписание */
+
+.weekday-schedule {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.weekday-picker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.weekday-chip {
+  padding: 9px 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 120ms ease;
+}
+
+.weekday-chip.is-on {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.day-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .day-detail {
   margin-top: 12px;
   display: grid;

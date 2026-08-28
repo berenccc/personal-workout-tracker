@@ -190,32 +190,76 @@ function updateCabinetStatus() {
 
 // ── Календарь тренировок: даты планирует пользователь ──────────────
 const SCHEDULE_KEY = "training-tracker-schedule-v1";
+const WEEKDAYS_KEY = "training-tracker-weekdays-v1";
+const SCHEDULE_EXCLUDE_KEY = "training-tracker-schedule-exclude-v1";
+const WEEKDAY_LABELS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 let scheduleSet = null;
+let weekdaySetCache = null;
+let excludeSetCache = null;
 let calendarCursor = new Date();
+let calendarMode = "month";
+
+function loadStoredSet(key) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(key));
+    return new Set(Array.isArray(saved) ? saved : []);
+  } catch {
+    return new Set();
+  }
+}
 
 function schedule() {
-  if (scheduleSet) return scheduleSet;
-  try {
-    const saved = JSON.parse(localStorage.getItem(SCHEDULE_KEY));
-    scheduleSet = new Set(Array.isArray(saved) ? saved : []);
-  } catch {
-    scheduleSet = new Set();
-  }
+  if (!scheduleSet) scheduleSet = loadStoredSet(SCHEDULE_KEY);
   return scheduleSet;
+}
+
+function weekdays() {
+  if (!weekdaySetCache) weekdaySetCache = loadStoredSet(WEEKDAYS_KEY);
+  return weekdaySetCache;
+}
+
+function excludeSet() {
+  if (!excludeSetCache) excludeSetCache = loadStoredSet(SCHEDULE_EXCLUDE_KEY);
+  return excludeSetCache;
 }
 
 function saveSchedule() {
   // Храним только последние 90 дней прошлого и всё будущее.
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 90);
-  const keep = [...schedule()].filter((date) => date >= formatInputDate(cutoff));
+  const cutoffIso = formatInputDate(cutoff);
+
+  const keep = [...schedule()].filter((date) => date >= cutoffIso);
   scheduleSet = new Set(keep);
   localStorage.setItem(SCHEDULE_KEY, JSON.stringify(keep.sort()));
+
+  const keepExcluded = [...excludeSet()].filter((date) => date >= cutoffIso);
+  excludeSetCache = new Set(keepExcluded);
+  localStorage.setItem(SCHEDULE_EXCLUDE_KEY, JSON.stringify(keepExcluded.sort()));
+
+  localStorage.setItem(WEEKDAYS_KEY, JSON.stringify([...weekdays()].sort()));
+}
+
+function weekdayIndex(iso) {
+  return (new Date(iso).getDay() + 6) % 7; // 0 = понедельник
+}
+
+function isPlannedDate(iso) {
+  if (excludeSet().has(iso)) return false;
+  if (schedule().has(iso)) return true;
+  const today = formatInputDate(new Date());
+  return iso >= today && weekdays().has(weekdayIndex(iso));
 }
 
 function nextScheduledDate() {
-  const today = formatInputDate(new Date());
-  return [...schedule()].filter((date) => date >= today).sort()[0] || null;
+  const start = new Date();
+  for (let i = 0; i < 60; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    const iso = formatInputDate(date);
+    if (isPlannedDate(iso)) return iso;
+  }
+  return null;
 }
 
 function workoutDateSet() {
@@ -260,7 +304,12 @@ function renderCalendarStats() {
   const lastDate = [...dates].sort().pop();
   const restDays = lastDate ? Math.max(0, Math.round((new Date(today) - new Date(lastDate)) / 86400000)) : null;
   const monthDone = [...dates].filter((iso) => iso.startsWith(monthKey)).length;
-  const monthPlanned = [...schedule()].filter((iso) => iso.startsWith(monthKey) && iso >= today && !dates.has(iso)).length;
+  const daysInMonth = new Date(Number(monthKey.slice(0, 4)), Number(monthKey.slice(5, 7)), 0).getDate();
+  let monthPlanned = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const iso = `${monthKey}-${String(day).padStart(2, "0")}`;
+    if (iso >= today && !dates.has(iso) && isPlannedDate(iso)) monthPlanned += 1;
+  }
 
   elements.calendarStats.innerHTML = `
     <div class="cal-stat"><strong>${streak}</strong><span>${plural(streak, "неделя", "недели", "недель")} подряд</span></div>
@@ -282,24 +331,24 @@ let selectedDayIso = null;
 function handleCalendarDayTap(iso) {
   const today = formatInputDate(new Date());
 
-  if (workoutDateSet().has(iso)) {
+  // День с тренировкой или прошедший день: показываем детали (для прошлого — с дологированием).
+  if (workoutDateSet().has(iso) || iso < today) {
     selectedDayIso = selectedDayIso === iso ? null : iso;
     renderDayDetail();
     renderScheduleCalendar();
     return;
   }
 
-  if (iso < today) {
-    // Прошлое: можно только снять забытую отметку плана.
-    if (schedule().has(iso)) {
-      schedule().delete(iso);
-      saveSchedule();
-      renderScheduleCalendar();
-    }
-    return;
-  }
-
   toggleScheduledDate(iso);
+}
+
+function startBackfillWorkout(iso) {
+  elements.dateInput.value = iso;
+  selectedDayIso = null;
+  renderDayDetail();
+  renderScheduleCalendar();
+  window.showAppView?.("workout");
+  showToast(`Дата ${formatDate(iso)} подставлена — начни тренировку и внеси, что помнишь.`);
 }
 
 function renderDayDetail() {
@@ -314,8 +363,28 @@ function renderDayDetail() {
 
   const workouts = workoutsOnDate(selectedDayIso);
   if (!workouts.length) {
-    selectedDayIso = null;
-    box.hidden = true;
+    const today = formatInputDate(new Date());
+    if (selectedDayIso >= today) {
+      selectedDayIso = null;
+      box.hidden = true;
+      return;
+    }
+    // Пустой прошедший день: предложить внести тренировку по памяти.
+    const wasPlanned = schedule().has(selectedDayIso) && !excludeSet().has(selectedDayIso);
+    box.hidden = false;
+    box.innerHTML = `
+      <article class="day-detail-card">
+        <div class="day-detail-head">
+          <strong>${formatDate(selectedDayIso)}</strong>
+          <button class="icon-button day-detail-close" type="button" aria-label="Закрыть">×</button>
+        </div>
+        <p class="day-detail-note">${wasPlanned ? "Тренировка была запланирована, но не записана." : "Тренировки в этот день не записано."}</p>
+        <div class="day-detail-actions">
+          <button class="button secondary" type="button" data-action="backfill">Внести по памяти</button>
+          ${wasPlanned ? '<button class="button ghost" type="button" data-action="unplan">Снять отметку плана</button>' : ""}
+        </div>
+      </article>
+    `;
     return;
   }
 
@@ -354,11 +423,18 @@ function renderDayDetail() {
 
 function renderScheduleCalendar() {
   if (!elements.scheduleCalendar) return;
+  elements.scheduleCalendar.classList.toggle("year-mode", calendarMode === "year");
+
+  if (calendarMode === "year") {
+    renderYearCalendar();
+    renderCalendarStats();
+    return;
+  }
+
   const year = calendarCursor.getFullYear();
   const month = calendarCursor.getMonth();
   const today = formatInputDate(new Date());
   const done = workoutDateSet();
-  const planned = schedule();
 
   elements.calTitle.textContent = calendarCursor.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
 
@@ -366,8 +442,7 @@ function renderScheduleCalendar() {
   const startOffset = (firstDay.getDay() + 6) % 7; // неделя с понедельника
   const gridStart = new Date(year, month, 1 - startOffset);
 
-  const cells = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
-    .map((day) => `<span class="cal-weekday">${day}</span>`);
+  const cells = WEEKDAY_LABELS.map((day) => `<span class="cal-weekday">${day}</span>`);
 
   for (let i = 0; i < 42; i++) {
     const date = new Date(gridStart);
@@ -375,16 +450,16 @@ function renderScheduleCalendar() {
     const iso = formatInputDate(date);
     const inMonth = date.getMonth() === month;
     const isDone = done.has(iso);
-    const isPlanned = planned.has(iso);
+    // В прошлом «запланировано» — только ручные отметки; повторяющиеся дни живут от сегодня и дальше.
+    const isPlanned = iso >= today ? isPlannedDate(iso) : schedule().has(iso) && !excludeSet().has(iso);
     const classes = ["cal-cell"];
     if (!inMonth) classes.push("is-out");
     if (iso === today) classes.push("is-today");
     if (iso === selectedDayIso) classes.push("is-selected");
     if (isDone) classes.push("is-done");
     else if (isPlanned) classes.push(iso < today ? "is-missed" : "is-planned");
-    const disabled = !inMonth || (iso < today && !isDone && !isPlanned);
     cells.push(
-      `<button type="button" class="${classes.join(" ")}" data-date="${iso}" ${disabled ? "disabled" : ""} aria-label="${iso}">${date.getDate()}</button>`
+      `<button type="button" class="${classes.join(" ")}" data-date="${iso}" ${inMonth ? "" : "disabled"} aria-label="${iso}">${date.getDate()}</button>`
     );
   }
 
@@ -392,11 +467,61 @@ function renderScheduleCalendar() {
   renderCalendarStats();
 }
 
+function renderYearCalendar() {
+  const year = calendarCursor.getFullYear();
+  const today = formatInputDate(new Date());
+  const done = workoutDateSet();
+
+  elements.calTitle.textContent = String(year);
+
+  const monthFormatter = new Intl.DateTimeFormat("ru-RU", { month: "short" });
+  const months = [];
+
+  for (let month = 0; month < 12; month++) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startOffset = (new Date(year, month, 1).getDay() + 6) % 7;
+    const doneCount = [];
+    const dots = [];
+
+    for (let i = 0; i < startOffset; i++) dots.push('<i class="year-dot is-empty"></i>');
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = formatInputDate(new Date(year, month, day));
+      const classes = ["year-dot"];
+      if (done.has(iso)) {
+        classes.push("is-done");
+        doneCount.push(iso);
+      } else if (iso >= today && isPlannedDate(iso)) {
+        classes.push("is-planned");
+      }
+      if (iso === today) classes.push("is-today");
+      dots.push(`<i class="${classes.join(" ")}"></i>`);
+    }
+
+    months.push(`
+      <button type="button" class="year-month" data-month="${month}" aria-label="${monthFormatter.format(new Date(year, month, 1))} ${year}">
+        <span class="year-month-name">${monthFormatter.format(new Date(year, month, 1))}${doneCount.length ? ` · ${doneCount.length}` : ""}</span>
+        <span class="year-dots">${dots.join("")}</span>
+      </button>
+    `);
+  }
+
+  elements.scheduleCalendar.innerHTML = `<div class="year-grid">${months.join("")}</div>`;
+}
+
 function toggleScheduledDate(iso) {
-  const set = schedule();
-  if (set.has(iso)) set.delete(iso);
-  else set.add(iso);
+  if (isPlannedDate(iso)) {
+    // Снять план: ручную отметку удаляем, повторяющийся день — исключаем точечно.
+    if (schedule().has(iso)) schedule().delete(iso);
+    else excludeSet().add(iso);
+  } else {
+    excludeSet().delete(iso);
+    if (!weekdays().has(weekdayIndex(iso))) schedule().add(iso);
+  }
   saveSchedule();
+  syncScheduleDependents();
+}
+
+function syncScheduleDependents() {
   renderScheduleCalendar();
   // Дата в форме и рекомендации следуют за календарём, пока тренировка не начата.
   if (!elements.workoutPanel.classList.contains("is-active")) {
@@ -405,8 +530,35 @@ function toggleScheduledDate(iso) {
   renderCoach();
 }
 
+function toggleWeekday(index) {
+  if (weekdays().has(index)) weekdays().delete(index);
+  else weekdays().add(index);
+  saveSchedule();
+  renderWeekdayPicker();
+  syncScheduleDependents();
+}
+
+function renderWeekdayPicker() {
+  if (!elements.weekdayPicker) return;
+  elements.weekdayPicker.innerHTML = WEEKDAY_LABELS.map((label, index) =>
+    `<button type="button" class="weekday-chip${weekdays().has(index) ? " is-on" : ""}" data-weekday="${index}" aria-pressed="${weekdays().has(index)}">${label}</button>`
+  ).join("");
+}
+
 function shiftCalendarMonth(delta) {
-  calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + delta, 1);
+  if (calendarMode === "year") {
+    calendarCursor = new Date(calendarCursor.getFullYear() + delta, calendarCursor.getMonth(), 1);
+  } else {
+    calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + delta, 1);
+  }
+  renderScheduleCalendar();
+}
+
+function toggleCalendarMode() {
+  calendarMode = calendarMode === "month" ? "year" : "month";
+  if (elements.calModeButton) {
+    elements.calModeButton.textContent = calendarMode === "month" ? "Год" : "Месяц";
+  }
   renderScheduleCalendar();
 }
 
@@ -485,6 +637,8 @@ const elements = {
   calNextButton: document.querySelector("#calNextButton"),
   calendarStats: document.querySelector("#calendarStats"),
   dayDetail: document.querySelector("#dayDetail"),
+  weekdayPicker: document.querySelector("#weekdayPicker"),
+  calModeButton: document.querySelector("#calModeButton"),
 };
 
 const ACCENT_KEY = "training-tracker-accent";
@@ -503,6 +657,7 @@ function boot() {
   fillExerciseSelects();
   fillBuilderGoals();
   renderMyGym();
+  renderWeekdayPicker();
   renderScheduleCalendar();
   loadPlannedWorkout();
   applyStoredAiPlan();
@@ -643,16 +798,40 @@ function bindEvents() {
   });
   elements.calPrevButton?.addEventListener("click", () => shiftCalendarMonth(-1));
   elements.calNextButton?.addEventListener("click", () => shiftCalendarMonth(1));
+  elements.calModeButton?.addEventListener("click", toggleCalendarMode);
   elements.scheduleCalendar?.addEventListener("click", (event) => {
+    const monthTile = event.target.closest(".year-month[data-month]");
+    if (monthTile) {
+      calendarCursor = new Date(calendarCursor.getFullYear(), Number(monthTile.dataset.month), 1);
+      toggleCalendarMode();
+      return;
+    }
     const cell = event.target.closest(".cal-cell[data-date]");
     if (!cell || cell.disabled) return;
     handleCalendarDayTap(cell.dataset.date);
   });
+  elements.weekdayPicker?.addEventListener("click", (event) => {
+    const chip = event.target.closest(".weekday-chip[data-weekday]");
+    if (!chip) return;
+    toggleWeekday(Number(chip.dataset.weekday));
+  });
   elements.dayDetail?.addEventListener("click", (event) => {
-    if (!event.target.closest(".day-detail-close")) return;
-    selectedDayIso = null;
-    renderDayDetail();
-    renderScheduleCalendar();
+    if (event.target.closest(".day-detail-close")) {
+      selectedDayIso = null;
+      renderDayDetail();
+      renderScheduleCalendar();
+      return;
+    }
+    if (event.target.closest('[data-action="backfill"]') && selectedDayIso) {
+      startBackfillWorkout(selectedDayIso);
+      return;
+    }
+    if (event.target.closest('[data-action="unplan"]') && selectedDayIso) {
+      schedule().delete(selectedDayIso);
+      saveSchedule();
+      renderDayDetail();
+      renderScheduleCalendar();
+    }
   });
   elements.gymFromHistoryButton?.addEventListener("click", () => {
     myGymSet = defaultMyGymIds();
@@ -1980,7 +2159,7 @@ function scheduleCoachCardHtml() {
     return `
       <article class="coach-card schedule-card">
         <strong>Календарь пуст</strong>
-        <p>Отметь дни тренировок во вкладке «Календарь» — план и рекомендации привяжутся к ближайшей дате.</p>
+        <p>Отметь дни во вкладке «Календарь» — вручную или через повторяющееся расписание (пн/ср/пт), и план с рекомендациями привяжутся к ближайшей дате.</p>
       </article>
     `;
   }
@@ -2345,8 +2524,14 @@ function executeAiTool(name, args) {
       return `- ${exercise ? exercise.name : item.exerciseId} (${item.exerciseId}): ${sets}`;
     });
     const isActive = elements.workoutPanel.classList.contains("is-active");
-    const today = formatInputDate(new Date());
-    const upcoming = [...schedule()].filter((date) => date >= today).sort().slice(0, 5);
+    const upcoming = [];
+    const start = new Date();
+    for (let i = 0; i < 30 && upcoming.length < 5; i++) {
+      const date = new Date(start);
+      date.setDate(start.getDate() + i);
+      const iso = formatInputDate(date);
+      if (isPlannedDate(iso)) upcoming.push(iso);
+    }
     return [
       `Статус: ${isActive ? "тренировка идёт прямо сейчас (✓ = подход уже сделан)" : "тренировка ещё не начата"}`,
       `Дата: ${elements.dateInput.value || "не выбрана"}`,

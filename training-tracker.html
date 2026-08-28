@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=83" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=83" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=83" />
-    <link rel="manifest" href="./manifest.webmanifest?v=83" />
-    <link rel="stylesheet" href="./training-tracker.css?v=83" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=84" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=84" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=84" />
+    <link rel="manifest" href="./manifest.webmanifest?v=84" />
+    <link rel="stylesheet" href="./training-tracker.css?v=84" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -47,7 +47,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v83</span>
+          <span class="version-badge">v84</span>
         </div>
       </section>
 
@@ -175,9 +175,10 @@
           </div>
           <div id="calendarStats" class="calendar-stats"></div>
           <div class="calendar-nav">
-            <button id="calPrevButton" class="icon-button" type="button" aria-label="Предыдущий месяц">‹</button>
+            <button id="calPrevButton" class="icon-button" type="button" aria-label="Назад">‹</button>
             <strong id="calTitle"></strong>
-            <button id="calNextButton" class="icon-button" type="button" aria-label="Следующий месяц">›</button>
+            <button id="calModeButton" class="button ghost cal-mode-button" type="button">Год</button>
+            <button id="calNextButton" class="icon-button" type="button" aria-label="Вперёд">›</button>
           </div>
           <div id="scheduleCalendar" class="schedule-calendar"></div>
           <div class="calendar-legend">
@@ -185,7 +186,14 @@
             <span><i class="cal-dot dot-planned"></i> запланирована</span>
             <span><i class="cal-dot dot-missed"></i> пропущена</span>
           </div>
-          <p class="workout-helper">Тап по зелёному дню — детали тренировки. Тап по пустому дню — запланировать или снять. Дата в форме и рекомендации следуют за ближайшим запланированным днём.</p>
+          <p class="workout-helper">Тап по зелёному дню — детали тренировки, по прошедшему пустому — внести по памяти, по будущему — запланировать или снять. Дата в форме и рекомендации следуют за ближайшим запланированным днём.</p>
+          <div class="weekday-schedule">
+            <div class="cabinet-section-head">
+              <h3>Повторяющееся расписание</h3>
+              <p>Выбери дни недели — календарь сам проставит план вперёд</p>
+            </div>
+            <div id="weekdayPicker" class="weekday-picker" role="group" aria-label="Дни недели для тренировок"></div>
+          </div>
           <div id="dayDetail" class="day-detail" hidden></div>
         </div>
 
@@ -434,10 +442,10 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=83"></script>
-    <script src="./training-history.js?v=83"></script>
-    <script src="./training-feedback.js?v=83"></script>
-    <script src="./training-tracker.js?v=83"></script>
+    <script src="./exercise-catalog.js?v=84"></script>
+    <script src="./training-history.js?v=84"></script>
+    <script src="./training-feedback.js?v=84"></script>
+    <script src="./training-tracker.js?v=84"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -450,6 +458,7 @@
           window.scrollTo(0, 0);
           try { sessionStorage.setItem("training-tracker-view", target); } catch (error) { /* ок */ }
         }
+        window.showAppView = showView;
 
         btns.forEach((btn) => {
           btn.addEventListener("click", () => showView(btn.dataset.target));
@@ -462,7 +471,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v83";
+      const APP_VERSION = "v84";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {
