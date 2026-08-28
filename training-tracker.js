@@ -1631,41 +1631,41 @@ function keepExerciseInView(uid, previousTop) {
   window.setTimeout(() => card.classList.remove("exercise-moved"), 500);
 }
 
-function planSetsBrief(exercise, sets) {
-  if (!sets.length) return "—";
+function planWeightBrief(exercise, sets) {
+  if (!sets.length) return "";
 
   if (exercise.cardio) {
     const minutes = sets.reduce((sum, set) => sum + (Number(set.weight) || 0), 0);
-    return `${formatNumber(minutes)} мин`;
+    return minutes ? `${formatNumber(minutes)} мин` : "";
   }
 
-  const weights = sets.map((set) => Number(set.weight) || 0);
-  const reps = sets.map((set) => Number(set.reps) || 0);
+  const weights = sets.map((set) => Number(set.weight) || 0).filter(Boolean);
+  const reps = sets.map((set) => Number(set.reps) || 0).filter(Boolean);
+  const repsText = reps.length
+    ? (Math.min(...reps) === Math.max(...reps)
+      ? `${Math.max(...reps)} повт`
+      : `${Math.min(...reps)}–${Math.max(...reps)} повт`)
+    : "";
+  if (!weights.length) return repsText;
+
   const minWeight = Math.min(...weights);
   const maxWeight = Math.max(...weights);
-  const minReps = Math.min(...reps);
-  const maxReps = Math.max(...reps);
-
-  const repsText = minReps === maxReps
-    ? `${sets.length}×${maxReps}`
-    : `${sets.length}×${minReps}–${maxReps}`;
-  if (!maxWeight) return repsText;
-
   const unit = shortUnit(exercise);
   const weightText = minWeight === maxWeight
     ? `${formatNumber(maxWeight)} ${unit}`
     : `${formatNumber(minWeight)}–${formatNumber(maxWeight)} ${unit}`;
-  return `${repsText} · ${weightText}`;
+  return repsText ? `${weightText} × ${repsText}` : weightText;
 }
 
 function renderPlanSummary() {
   const totalSets = selected.reduce((sum, item) => sum + item.sets.length, 0);
   const rows = selected.map((item, order) => {
     const exercise = findExercise(item.exerciseId);
+    const brief = planWeightBrief(exercise, item.sets);
     return `
       <li>
-        <span><b>${order + 1}.</b> ${escapeHtml(exercise.name)}</span>
-        <strong>${planSetsBrief(exercise, item.sets)}</strong>
+        <span><b>${order + 1}.</b> ${escapeHtml(exercise.name)}${brief ? `<small>${brief}</small>` : ""}</span>
+        <strong>${item.sets.length} подх.</strong>
       </li>
     `;
   });
