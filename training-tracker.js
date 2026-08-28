@@ -843,6 +843,7 @@ function bindEvents() {
       resetWorkoutTimer();
       render();
       showFinishNotice(workout, pushedToCloud);
+      autoAiAfterWorkout();
     } finally {
       isFinishingWorkout = false;
       setFinishButtonState("idle");
@@ -2478,6 +2479,19 @@ async function retryAiChat() {
     return;
   }
   await runAiChatCycle();
+}
+
+// После завершения тренировки AI сам даёт фидбэк и сразу планирует следующую сессию.
+function autoAiAfterWorkout() {
+  if (!window.cloudSync?.isAuthenticated?.()) return;
+  window.showAppView?.("ai");
+  aiChat.push({
+    role: "user",
+    content: "Я только что закончил тренировку. Дай короткий фидбэк по ней и сразу запланируй следующую с учётом моего календаря.",
+  });
+  persistAiChat();
+  renderAiChat();
+  runAiChatCycle();
 }
 
 async function runAiChatCycle() {
