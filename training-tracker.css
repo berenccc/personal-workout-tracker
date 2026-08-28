@@ -1372,6 +1372,8 @@ select {
 .ai-chat-log {
   display: grid;
   gap: 8px;
+  align-content: start;
+  min-height: 260px;
   max-height: min(52vh, 460px);
   overflow-y: auto;
   padding: 2px;
@@ -1497,7 +1499,10 @@ select {
   }
 
   .ai-chat-log {
+    min-height: 46vh;
     max-height: 46vh;
+    min-height: max(260px, calc(100dvh - 375px));
+    max-height: max(260px, calc(100dvh - 375px));
   }
 }
 
