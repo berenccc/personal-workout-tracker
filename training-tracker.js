@@ -2530,11 +2530,11 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callOpenAi(messages, toolChoice) {
+async function callOpenAi(messages, toolChoice, deferredTool = "") {
   const maxAttempts = 3;
   const tools = toolChoice
     ? AI_TOOL_DEFS.filter((tool) => tool.function.name === toolChoice.function.name)
-    : AI_TOOL_DEFS;
+    : AI_TOOL_DEFS.filter((tool) => tool.function.name !== deferredTool);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
@@ -2555,7 +2555,7 @@ async function callOpenAi(messages, toolChoice) {
   throw new Error("AI-сервер не отвечает, попробуй чуть позже");
 }
 
-async function runAiConversation({ requiredTool = "" } = {}) {
+async function runAiConversation({ requiredTool = "", onIntermediateText } = {}) {
   const latestUser = [...aiChat].reverse().find((message) => message.role === "user");
   if (latestUser && !isAiMessageInScope(latestUser.content)) {
     return AI_OFFTOPIC_REFUSAL;
@@ -2569,16 +2569,20 @@ async function runAiConversation({ requiredTool = "" } = {}) {
   let requiredToolApplied = false;
   let requiredToolResult = "";
   let pendingText = "";
+  let intermediateTextShown = false;
 
   for (let round = 0; round < AI_MAX_TOOL_ROUNDS; round++) {
     const canForceRequiredTool =
       requiredTool &&
       !requiredToolApplied &&
+      pendingText &&
       requiredReads.every((name) => completedReads.has(name));
     const toolChoice = canForceRequiredTool
       ? { type: "function", function: { name: requiredTool } }
       : undefined;
-    const data = await callOpenAi(messages, toolChoice);
+    // В автоматическом сценарии write-tool скрыт, пока AI не прочитал данные
+    // и не сформулировал фидбэк. После этого остаётся только обязательная запись плана.
+    const data = await callOpenAi(messages, toolChoice, requiredTool);
     const message = data.choices?.[0]?.message;
     if (!message) throw new Error("пустой ответ модели");
 
@@ -2606,16 +2610,23 @@ async function runAiConversation({ requiredTool = "" } = {}) {
         messages.push({ role: "tool", tool_call_id: call.id, content: result });
       }
       if (requiredToolApplied && pendingText) {
-        return `${pendingText}\n\n${describePlannedWorkoutForChat()}`;
+        const planText = describePlannedWorkoutForChat();
+        return intermediateTextShown ? planText : `${pendingText}\n\n${planText}`;
       }
       continue;
     }
 
     const text = (message.content || "").trim();
     if (text && requiredTool && !requiredToolApplied) {
-      pendingText ||= text;
       messages.push(message);
       const missingReads = requiredReads.filter((name) => !completedReads.has(name));
+      if (!missingReads.length) {
+        pendingText = text;
+        if (typeof onIntermediateText === "function") {
+          onIntermediateText(text);
+          intermediateTextShown = true;
+        }
+      }
       messages.push({
         role: "user",
         content: missingReads.length
@@ -2633,7 +2644,8 @@ async function runAiConversation({ requiredTool = "" } = {}) {
   }
 
   if (requiredToolApplied) {
-    return [pendingText, describePlannedWorkoutForChat() || requiredToolResult].filter(Boolean).join("\n\n");
+    const planText = describePlannedWorkoutForChat() || requiredToolResult;
+    return intermediateTextShown ? planText : [pendingText, planText].filter(Boolean).join("\n\n");
   }
   throw new Error("слишком много шагов, сформулируй запрос проще");
 }
@@ -2699,7 +2711,14 @@ async function autoAiAfterWorkout() {
   });
   persistAiChat();
   renderAiChat();
-  await runAiChatCycle({ requiredTool: "set_planned_workout" });
+  await runAiChatCycle({
+    requiredTool: "set_planned_workout",
+    onIntermediateText: (feedback) => {
+      aiChat.push({ role: "assistant", content: feedback });
+      persistAiChat();
+      renderAiChat();
+    },
+  });
 
   if (!selected.length) {
     const fallbackMessage = createFallbackNextWorkoutPlan();
