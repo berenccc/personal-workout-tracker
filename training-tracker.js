@@ -2262,16 +2262,26 @@ function applyStoredAiPlan() {
 }
 
 function describeWorkoutForAi(workout) {
-  const header = `${workout.date} · готовность: ${workout.readiness || "?"} · итог: ${workout.sessionEffort || "?"}${workout.durationMinutes ? ` · ${workout.durationMinutes} мин` : ""}`;
-  const notes = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ");
+  const durationMinutes = workout.durationMinutes ||
+    (workout.durationMs ? Math.max(1, Math.round(workout.durationMs / 60000)) : null);
+  const header = `${workout.date} · готовность: ${workout.readiness || "?"} · итог: ${workout.sessionEffort || "?"}${durationMinutes ? ` · ${durationMinutes} мин` : ""}`;
   const lines = (workout.exercises || []).map((item) => {
     const exercise = findExercise(item.exerciseId);
     const sets = (item.sets || [])
-      .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}${set.done === false ? " (не сделан)" : ""}`)
+      .map((set) => {
+        const status = set.done === false ? "не сделан" : "сделан";
+        const mark = setMarkLabel(set.mark || "normal");
+        return `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""} (${status}, метка: ${mark})`;
+      })
       .join(", ");
     return `  - ${exercise ? exercise.name : item.exerciseId}: ${sets}`;
   });
-  return [header, notes ? `  заметки: ${notes}` : null, ...lines].filter(Boolean).join("\n");
+  return [
+    header,
+    workout.notes ? `  заметки до: ${workout.notes}` : null,
+    workout.afterNotes ? `  заметки после: ${workout.afterNotes}` : null,
+    ...lines,
+  ].filter(Boolean).join("\n");
 }
 
 function bestSetForAi(item, exercise) {
