@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=84" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=84" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=84" />
-    <link rel="manifest" href="./manifest.webmanifest?v=84" />
-    <link rel="stylesheet" href="./training-tracker.css?v=84" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=85" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=85" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=85" />
+    <link rel="manifest" href="./manifest.webmanifest?v=85" />
+    <link rel="stylesheet" href="./training-tracker.css?v=85" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -47,7 +47,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v84</span>
+          <span class="version-badge">v85</span>
         </div>
       </section>
 
@@ -249,6 +249,25 @@
 
         <section class="cabinet-section">
           <div class="cabinet-section-head">
+            <h3>Аккаунт</h3>
+            <p id="cloudStatus">Облако не настроено</p>
+          </div>
+          <div id="cloudLoggedOut" class="sync-controls cloud-controls">
+            <input id="cloudEmailInput" type="email" placeholder="Email" autocomplete="email" />
+            <button id="cloudSendCodeButton" class="button secondary" type="button">Код на почту</button>
+          </div>
+          <div id="cloudOtpRow" class="sync-controls cloud-controls" hidden>
+            <input id="cloudOtpInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Код из письма" />
+            <button id="cloudVerifyButton" class="button primary" type="button">Войти</button>
+          </div>
+          <div id="cloudLoggedIn" class="cabinet-actions" hidden>
+            <button id="cloudSyncButton" class="button secondary" type="button">Синхронизировать</button>
+            <button id="cloudSignOutButton" class="button ghost" type="button">Выйти</button>
+          </div>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
             <h3>Внешний вид</h3>
             <p>Акцентный цвет интерфейса</p>
           </div>
@@ -442,10 +461,13 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=84"></script>
-    <script src="./training-history.js?v=84"></script>
-    <script src="./training-feedback.js?v=84"></script>
-    <script src="./training-tracker.js?v=84"></script>
+    <script src="./exercise-catalog.js?v=85"></script>
+    <script src="./training-history.js?v=85"></script>
+    <script src="./training-feedback.js?v=85"></script>
+    <script src="./training-tracker.js?v=85"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="./supabase-config.js?v=85"></script>
+    <script src="./cloud.js?v=85"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -471,7 +493,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v84";
+      const APP_VERSION = "v85";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

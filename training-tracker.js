@@ -875,6 +875,8 @@ function bindEvents() {
       if (navigator.vibrate) navigator.vibrate(80);
       showToast("Тренировка сохранена ✓");
 
+      window.cloudSync?.pushWorkout(workout); // в облако — фоном, не блокируя сохранение
+
       const pushedToGit = await pushRemoteWorkouts(workout);
       showToast(pushedToGit ? "Отправлено в git ✓" : "В git не отправлено — сохранено локально", pushedToGit ? "success" : "warn");
       try {
