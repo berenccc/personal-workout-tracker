@@ -589,12 +589,9 @@ const elements = {
   readinessPill: document.querySelector("#readinessPill"),
   monthlyChart: document.querySelector("#monthlyChart"),
   prBoard: document.querySelector("#prBoard"),
-  fatigueChart: document.querySelector("#fatigueChart"),
-  calendarHeatmap: document.querySelector("#calendarHeatmap"),
   chartExerciseSelect: document.querySelector("#chartExerciseSelect"),
   weightChart: document.querySelector("#weightChart"),
   volumeChart: document.querySelector("#volumeChart"),
-  movementBalance: document.querySelector("#movementBalance"),
   historyList: document.querySelector("#historyList"),
   gymList: document.querySelector("#gymList"),
   gymStatus: document.querySelector("#gymStatus"),
@@ -1053,10 +1050,18 @@ function fillExerciseSelects() {
   const pickList = available.length ? available : exercises;
   const previousChartChoice = elements.chartExerciseSelect.value;
   elements.exerciseSelect.innerHTML = pickList.map(optionFor).join("");
-  elements.chartExerciseSelect.innerHTML = exercises.map(optionFor).join("");
-  elements.chartExerciseSelect.value = exercises.some((exercise) => exercise.id === previousChartChoice)
+
+  // В «Прогрессе» показываем только упражнения, по которым есть история.
+  const doneIds = new Set();
+  state.workouts.forEach((workout) =>
+    (workout.exercises || []).forEach((item) => doneIds.add(item.exerciseId))
+  );
+  const chartList = exercises.filter((exercise) => doneIds.has(exercise.id));
+  const chartPick = chartList.length ? chartList : exercises;
+  elements.chartExerciseSelect.innerHTML = chartPick.map(optionFor).join("");
+  elements.chartExerciseSelect.value = chartPick.some((exercise) => exercise.id === previousChartChoice)
     ? previousChartChoice
-    : "bench";
+    : (chartPick.find((exercise) => exercise.id === "bench") || chartPick[0])?.id || "";
 }
 
 function mergeWorkouts(current, incoming) {
@@ -1460,7 +1465,6 @@ function render() {
   renderSelectedExercises();
   renderCoach();
   renderCharts();
-  renderMovementBalance();
   renderHistory();
   renderScheduleCalendar();
 }
@@ -1487,8 +1491,6 @@ function stat(value, label) {
 function renderDashboard() {
   renderMonthlyChart();
   renderPrBoard();
-  renderFatigueChart();
-  renderHeatmap();
 }
 
 function renderMonthlyChart() {
@@ -1522,28 +1524,6 @@ function renderPrBoard() {
     .join("");
 
   elements.prBoard.innerHTML = rows || `<div class="empty">PR появятся после загрузки истории.</div>`;
-}
-
-function renderFatigueChart() {
-  const points = state.workouts.slice(-24).map((workout) => ({
-    label: workout.date.slice(5),
-    load: workoutSetCount(workout),
-    rpe: Number(averageWorkoutRpe(workout)) || 0,
-  }));
-
-  elements.fatigueChart.innerHTML = points.length
-    ? comboSvg(points, 300)
-    : emptyChart("Пока нет данных для тренда нагрузки.");
-}
-
-function renderHeatmap() {
-  const weeks = weeklyStats(state.workouts).slice(-26);
-  elements.calendarHeatmap.innerHTML = weeks.length
-    ? `<div class="heatmap-label">Последние 26 недель. Число в клетке - количество тренировок за неделю.</div>` + weeks.map((week) => {
-      const level = week.count >= 3 ? 3 : week.count >= 2 ? 2 : week.count >= 1 ? 1 : 0;
-      return `<div class="heatmap-cell level-${level}" title="${week.label}: ${week.count} тренировок">${week.count}</div>`;
-    }).join("")
-    : `<div class="empty">Календарь появится после загрузки истории.</div>`;
 }
 
 function renderSelectedExercises() {
@@ -2609,56 +2589,8 @@ function barSvg(values, labels, chartHeight = 240, title = "Объем, кг x �
   `;
 }
 
-function comboSvg(points, chartHeight = 300) {
-  const width = 720;
-  const height = chartHeight;
-  const padding = 38;
-  const maxLoad = Math.max(...points.map((point) => point.load), 1);
-  const barWidth = (width - padding * 2) / Math.max(points.length, 1) - 6;
-  const rpePoints = points.map((point, index) => {
-    const x = padding + index * (barWidth + 6) + Math.max(barWidth, 4) / 2;
-    const y = height - padding - (point.rpe / 10) * (height - padding * 2);
-    return [x, y];
-  });
-
-  return `
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="RPE и объем по последним тренировкам">
-      <path d="M ${padding} ${height - padding} H ${width - padding}" stroke="var(--line)" fill="none" />
-      ${points.map((point, index) => {
-        const barHeight = (point.load / maxLoad) * (height - padding * 2);
-        const x = padding + index * (barWidth + 6);
-        const y = height - padding - barHeight;
-        return `<rect x="${x}" y="${y}" width="${Math.max(barWidth, 4)}" height="${barHeight}" rx="5" fill="var(--accent-line)"><title>${point.label}: ${formatNumber(point.load)} подходов</title></rect>`;
-      }).join("")}
-      <path d="${rpePoints.map(([x, y], index) => `${index ? "L" : "M"} ${x} ${y}`).join(" ")}" stroke="var(--accent-2)" stroke-width="3" fill="none" />
-      ${rpePoints.map(([x, y], index) => `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--accent-2)"><title>${points[index].label}: RPE ${points[index].rpe || "n/a"}</title></circle>`).join("")}
-      <text x="${padding}" y="22" fill="var(--muted)" font-size="12">Столбцы: рабочие подходы · линия: средний RPE</text>
-      <text x="${padding}" y="${height - 8}" fill="var(--muted)" font-size="12">Последние тренировки</text>
-    </svg>
-  `;
-}
-
 function emptyChart(message) {
   return `<div class="empty">${message}</div>`;
-}
-
-function renderMovementBalance() {
-  const counts = groupCounts(state.workouts);
-  const total = Object.values(counts).reduce((sum, count) => sum + count, 0) || 1;
-  const rows = Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .map(([group, count]) => {
-      const percent = Math.round((count / total) * 100);
-      return `
-        <div class="balance-row">
-          <header><span>${group}</span><strong>${percent}%</strong></header>
-          <div class="bar"><span style="width: ${percent}%"></span></div>
-        </div>
-      `;
-    })
-    .join("");
-
-  elements.movementBalance.innerHTML = rows || `<div class="empty">Загрузи пример или сохрани тренировку.</div>`;
 }
 
 function renderHistory() {
@@ -2698,24 +2630,6 @@ function monthlyStats(workouts) {
     const current = buckets.get(key) || { label: formatter.format(date), count: 0, volume: 0 };
     current.count += 1;
     current.volume += workoutVolume(workout);
-    buckets.set(key, current);
-  });
-
-  return [...buckets.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, value]) => value);
-}
-
-function weeklyStats(workouts) {
-  const buckets = new Map();
-
-  workouts.forEach((workout) => {
-    const date = new Date(workout.date);
-    const monday = new Date(date);
-    monday.setDate(date.getDate() - ((date.getDay() + 6) % 7));
-    const key = monday.toISOString().slice(0, 10);
-    const current = buckets.get(key) || { label: formatDate(key), count: 0 };
-    current.count += 1;
     buckets.set(key, current);
   });
 
