@@ -1966,8 +1966,18 @@ function clearAiChat() {
   elements.aiRetryButton.hidden = true;
 }
 
+let aiThinking = false;
+
+function aiTypingBubble() {
+  return `
+    <div class="ai-msg ai-msg-bot ai-msg-typing" aria-label="Тренер печатает">
+      <span></span><span></span><span></span>
+    </div>
+  `;
+}
+
 function renderAiChat() {
-  if (!aiChat.length) {
+  if (!aiChat.length && !aiThinking) {
     elements.aiChatLog.innerHTML = `
       <div class="ai-chat-empty">
         Это твой AI-тренер: он сам смотрит историю тренировок и план в приложении.
@@ -1978,12 +1988,13 @@ function renderAiChat() {
     return;
   }
 
-  elements.aiChatLog.innerHTML = aiChat
+  const bubbles = aiChat
     .map((message) => {
       const body = escapeHtml(message.content).replace(/\n/g, "<br>");
       return `<div class="ai-msg ${message.role === "user" ? "ai-msg-user" : "ai-msg-bot"}">${body}</div>`;
     })
     .join("");
+  elements.aiChatLog.innerHTML = bubbles + (aiThinking ? aiTypingBubble() : "");
   elements.aiChatLog.scrollTop = elements.aiChatLog.scrollHeight;
 }
 
@@ -2432,19 +2443,22 @@ async function retryAiChat() {
 async function runAiChatCycle() {
   elements.aiChatSendButton.disabled = true;
   elements.aiRetryButton.hidden = true;
+  aiThinking = true;
+  renderAiChat();
   setAiStatus("Тренер смотрит твои данные…");
 
   try {
     const reply = await runAiConversation();
     aiChat.push({ role: "assistant", content: reply });
     persistAiChat();
-    renderAiChat();
     setAiStatus("");
   } catch (error) {
     setAiStatus(`Не получилось: ${error.message}.`);
     elements.aiRetryButton.hidden = false;
   } finally {
+    aiThinking = false;
     elements.aiChatSendButton.disabled = false;
+    renderAiChat();
   }
 }
 
