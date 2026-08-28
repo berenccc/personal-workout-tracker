@@ -1731,7 +1731,8 @@ select {
     margin-bottom: 10px;
   }
 
-  .workout-panel .panel-header {
+  .workout-panel .panel-header,
+  .ai-panel .panel-header {
     align-items: center;
     grid-template-columns: minmax(0, 1fr) auto;
   }
