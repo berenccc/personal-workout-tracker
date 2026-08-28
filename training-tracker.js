@@ -2264,35 +2264,110 @@ function describeWorkoutForAi(workout) {
   return [header, notes ? `  заметки: ${notes}` : null, ...lines].filter(Boolean).join("\n");
 }
 
-function describeWorkoutCompactForAi(workout) {
-  const exerciseSummary = (workout.exercises || []).map((item) => {
-    const exercise = findExercise(item.exerciseId);
-    const completed = (item.sets || []).filter((set) => set.done !== false);
-    const sets = completed.length ? completed : (item.sets || []);
-    const rpes = sets.map((set) => Number(set.rpe)).filter(Boolean);
-    const representative = sets.reduce((best, set) => {
-      if (!best) return set;
-      if (exercise?.lowerIsBetter) {
-        return Number(set.weight) < Number(best.weight) ? set : best;
+function bestSetForAi(item, exercise) {
+  const completed = (item.sets || []).filter((set) => set.done !== false);
+  const sets = completed.length ? completed : (item.sets || []);
+  return sets.reduce((best, set) => {
+    if (!best) return set;
+    if (exercise?.lowerIsBetter) {
+      return Number(set.weight) < Number(best.weight) ? set : best;
+    }
+    return Number(set.weight) > Number(best.weight) ||
+      (Number(set.weight) === Number(best.weight) && Number(set.reps) > Number(best.reps))
+      ? set
+      : best;
+  }, null);
+}
+
+function setForAi(set) {
+  return set
+    ? `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}`
+    : "нет данных";
+}
+
+function buildPeriodHistoryForAi(period, days) {
+  const monthly = new Map();
+  const byExercise = new Map();
+  const safetyNotes = [];
+
+  period.forEach((workout) => {
+    const month = workout.date.slice(0, 7);
+    const monthStats = monthly.get(month) || { sessions: 0, sets: 0, rpes: [] };
+    monthStats.sessions += 1;
+    monthStats.sets += workoutSetCount(workout);
+    monthStats.rpes.push(...(workout.exercises || []).flatMap((item) =>
+      (item.sets || []).map((set) => Number(set.rpe)).filter(Boolean)
+    ));
+    monthly.set(month, monthStats);
+
+    (workout.exercises || []).forEach((item) => {
+      const exercise = findExercise(item.exerciseId);
+      const representative = bestSetForAi(item, exercise);
+      if (!representative) return;
+      const stats = byExercise.get(item.exerciseId) || {
+        exercise,
+        sessions: 0,
+        first: null,
+        latest: null,
+        best: null,
+        rpes: [],
+      };
+      const point = { date: workout.date, set: representative };
+      stats.sessions += 1;
+      stats.first ||= point;
+      stats.latest = point;
+      stats.rpes.push(...(item.sets || []).map((set) => Number(set.rpe)).filter(Boolean));
+      if (!stats.best) {
+        stats.best = point;
+      } else {
+        const current = stats.best.set;
+        const better = exercise?.lowerIsBetter
+          ? Number(representative.weight) < Number(current.weight)
+          : Number(representative.weight) > Number(current.weight) ||
+            (Number(representative.weight) === Number(current.weight) &&
+              Number(representative.reps) > Number(current.reps));
+        if (better) stats.best = point;
       }
-      return Number(set.weight) > Number(best.weight) ||
-        (Number(set.weight) === Number(best.weight) && Number(set.reps) > Number(best.reps))
-        ? set
-        : best;
-    }, null);
-    const best = representative
-      ? `${formatNumber(representative.weight)}x${representative.reps}${representative.rpe ? `@${representative.rpe}` : ""}`
-      : "нет данных";
-    const avgRpe = rpes.length ? `, ср.RPE ${average(rpes).toFixed(1)}` : "";
-    return `${exercise?.name || item.exerciseId}: ${sets.length}п, лучший ${best}${avgRpe}`;
+      byExercise.set(item.exerciseId, stats);
+    });
+
+    const note = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ");
+    if (note && /бол|колен|плеч|травм|пульс|голов|цнс|перегруз|отказ|rpe\s*(?:9|10)|тяжел|плохо/i.test(note)) {
+      safetyNotes.push(`${workout.date}: ${note.slice(0, 220)}`);
+    }
   });
-  const note = [workout.notes, workout.afterNotes].filter(Boolean).join(" | ").slice(0, 180);
+
+  const monthLines = [...monthly.entries()].map(([month, stats]) =>
+    `${month}: ${stats.sessions} сесс., ${stats.sets} подх., ср.RPE ${
+      stats.rpes.length ? average(stats.rpes).toFixed(1) : "н/д"
+    }`
+  );
+  const exerciseLines = [...byExercise.values()]
+    .sort((a, b) => b.sessions - a.sessions)
+    .map((stats) =>
+      `${stats.exercise?.name || "Упражнение"}: ${stats.sessions} сесс.; ` +
+      `старт ${stats.first.date} ${setForAi(stats.first.set)}; ` +
+      `последний ${stats.latest.date} ${setForAi(stats.latest.set)}; ` +
+      `лучший ${stats.best.date} ${setForAi(stats.best.set)}; ` +
+      `ср.RPE ${stats.rpes.length ? average(stats.rpes).toFixed(1) : "н/д"}`
+    );
+  const timeline = period.map((workout) => {
+    const rpes = (workout.exercises || []).flatMap((item) =>
+      (item.sets || []).map((set) => Number(set.rpe)).filter(Boolean)
+    );
+    return `${workout.date}(${workout.readiness || "?"}/${workout.sessionEffort || "?"},` +
+      `${workoutSetCount(workout)}п,RPE${rpes.length ? average(rpes).toFixed(1) : "?"})`;
+  });
+
   return [
-    `${workout.date} · готовность ${workout.readiness || "?"} · итог ${workout.sessionEffort || "?"}` +
-      `${workout.durationMinutes ? ` · ${workout.durationMinutes} мин` : ""}`,
-    exerciseSummary.join("; "),
-    note ? `заметки: ${note}` : null,
-  ].filter(Boolean).join(" | ");
+    `История за ${days} дней: ${period.length} тренировок, ${period[0].date} — ${period.at(-1).date}.`,
+    `Хронология всех сессий: ${timeline.join(" ")}`,
+    "Помесячная нагрузка:",
+    ...monthLines,
+    "Прогресс по упражнениям:",
+    ...exerciseLines,
+    ...(safetyNotes.length ? ["Важные заметки о боли/усталости:", ...safetyNotes.slice(-20)] : []),
+  ].join("\n").slice(0, 15800);
 }
 
 function executeAiTool(name, args) {
@@ -2306,10 +2381,7 @@ function executeAiTool(name, args) {
       const cutoffDate = formatInputDate(cutoff);
       const period = state.workouts.filter((workout) => workout.date >= cutoffDate && workout.date <= latestDate);
       if (!period.length) return `За последние ${days} дней сохранённых тренировок нет.`;
-      return [
-        `Компактная история за ${days} дней: ${period.length} тренировок, период ${period[0].date} — ${period.at(-1).date}.`,
-        ...period.map(describeWorkoutCompactForAi),
-      ].join("\n");
+      return buildPeriodHistoryForAi(period, days);
     }
 
     const count = Math.min(Math.max(Number(args.count) || 3, 1), 12);
