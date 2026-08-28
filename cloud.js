@@ -32,6 +32,7 @@
       "training-tracker-active-workout-draft-v1",
       "training-tracker-ai-chat-v1",
       "training-tracker-ai-plan-v1",
+      "training-tracker-ai-post-workout-pending-v1",
       "training-tracker-schedule-v1",
       "training-tracker-weekdays-v1",
       "training-tracker-schedule-exclude-v1",
@@ -263,6 +264,7 @@
       lastSyncedUserId = user.id;
       await fullSync({ quiet: true });
     }
+    window.resumeAiPlanningIfNeeded?.();
   }
 
   async function init() {

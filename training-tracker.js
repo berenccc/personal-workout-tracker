@@ -2,6 +2,7 @@ const STORAGE_KEY = "training-tracker-v3";
 const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
 const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
+const AI_POST_WORKOUT_PENDING_KEY = "training-tracker-ai-post-workout-pending-v1";
 const CUSTOM_EXERCISES_KEY = "training-tracker-custom-exercises-v1";
 const AI_MAX_TOOL_ROUNDS = 6;
 const AI_CHAT_HISTORY_LIMIT = 30;
@@ -821,6 +822,10 @@ function bindEvents() {
       upsertWorkout(workout);
       state.workouts.sort((a, b) => a.date.localeCompare(b.date));
       saveState();
+      localStorage.setItem(
+        AI_POST_WORKOUT_PENDING_KEY,
+        JSON.stringify({ workoutId: workout.id, workoutDate: workout.date, savedAt: Date.now() })
+      );
       if (navigator.vibrate) navigator.vibrate(80);
       showToast("Тренировка сохранена ✓");
 
@@ -2500,6 +2505,7 @@ function executeAiTool(name, args) {
     renderSelectedExercises();
     persistAiPlan();
     saveWorkoutDraft();
+    localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
 
     const summary = selected
       .map((item) => `${findExercise(item.exerciseId).name}: ${item.sets.length} подх.`)
@@ -2730,8 +2736,67 @@ async function autoAiAfterWorkout() {
   }
 
   if (selected.length) {
+    localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
     setAiStatus("План сохранён — он уже доступен на главной.");
     showToast("Следующая тренировка сохранена на главной ✓");
+  }
+}
+
+let aiPlanningRecoveryRunning = false;
+
+function pendingWorkoutForAiPlanning() {
+  if (selected.length || !state.workouts.length) return null;
+
+  try {
+    const pending = JSON.parse(localStorage.getItem(AI_POST_WORKOUT_PENDING_KEY));
+    if (pending?.workoutId || pending?.workoutDate) {
+      return state.workouts.find((workout) =>
+        workout.id === pending.workoutId || workout.date === pending.workoutDate
+      ) || state.workouts.at(-1);
+    }
+  } catch {
+    localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
+  }
+
+  // Восстанавливаем один раз сценарий, оборванный в v120 и более ранних версиях:
+  // в чате уже есть автозапрос после тренировки, но сохранённого плана ещё нет.
+  let autoRequestIndex = -1;
+  for (let index = aiChat.length - 1; index >= 0; index -= 1) {
+    const message = aiChat[index];
+    if (message.role === "user" && /только что закончил тренировку/i.test(message.content)) {
+      autoRequestIndex = index;
+      break;
+    }
+  }
+  if (autoRequestIndex < 0) return null;
+  const planWasSaved = aiChat.slice(autoRequestIndex + 1).some((message) =>
+    message.role === "assistant" && /план на .+ сохран[её]н на главной/i.test(message.content)
+  );
+  if (planWasSaved) return null;
+
+  const latest = state.workouts.at(-1);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 2);
+  return latest.date >= formatInputDate(cutoff) ? latest : null;
+}
+
+async function resumeAiPlanningIfNeeded() {
+  if (
+    aiPlanningRecoveryRunning ||
+    !window.cloudSync?.isAuthenticated?.() ||
+    !pendingWorkoutForAiPlanning()
+  ) {
+    return;
+  }
+
+  aiPlanningRecoveryRunning = true;
+  try {
+    // План появляется сразу, даже если сеть снова оборвётся. AI затем заменит
+    // его более точным вариантом после анализа полной истории.
+    if (!selected.length) createFallbackNextWorkoutPlan();
+    await autoAiAfterWorkout();
+  } finally {
+    aiPlanningRecoveryRunning = false;
   }
 }
 
