@@ -1210,6 +1210,76 @@ select {
   height: 300px;
 }
 
+.month-bars {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  align-items: end;
+}
+
+.month-bar {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.month-bar-count {
+  min-height: 15px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.month-bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 22px;
+  height: 96px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.month-bar-track i {
+  display: block;
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  background: var(--accent);
+  transition: height 300ms ease;
+}
+
+.month-bar-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+.month-bar.is-zero .month-bar-count {
+  color: var(--muted);
+}
+
+.month-bar.is-current .month-bar-count,
+.month-bar.is-current .month-bar-label {
+  color: var(--accent);
+}
+
+.month-bar:active .month-bar-track {
+  filter: brightness(1.2);
+}
+
+.month-bars-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .pr-board {
   gap: 6px;
 }

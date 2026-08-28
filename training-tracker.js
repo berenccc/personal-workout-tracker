@@ -750,6 +750,17 @@ function bindEvents() {
   elements.calPrevButton?.addEventListener("click", () => shiftCalendarMonth(-1));
   elements.calNextButton?.addEventListener("click", () => shiftCalendarMonth(1));
   elements.calModeButton?.addEventListener("click", toggleCalendarMode);
+  elements.monthlyChart?.addEventListener("click", (event) => {
+    const bar = event.target.closest(".month-bar[data-month]");
+    if (!bar) return;
+    calendarCursor = new Date(Number(bar.dataset.year), Number(bar.dataset.month), 1);
+    if (calendarMode === "year") {
+      toggleCalendarMode();
+    } else {
+      renderScheduleCalendar();
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
   elements.scheduleCalendar?.addEventListener("click", (event) => {
     const monthTile = event.target.closest(".year-month[data-month]");
     if (monthTile) {
@@ -1564,10 +1575,55 @@ function renderDashboard() {
 }
 
 function renderMonthlyChart() {
-  const monthly = monthlyStats(state.workouts);
-  elements.monthlyChart.innerHTML = monthly.length
-    ? barSvg(monthly.map((item) => item.count), monthly.map((item) => item.label), 300, "Тренировок в месяц")
-    : emptyChart("Загрузи историю, чтобы увидеть регулярность по месяцам.");
+  if (!elements.monthlyChart) return;
+
+  const counts = new Map();
+  state.workouts.forEach((workout) => {
+    const key = workout.date.slice(0, 7);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  const now = new Date();
+  const monthFormatter = new Intl.DateTimeFormat("ru-RU", { month: "short" });
+  const months = [];
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = formatInputDate(date).slice(0, 7);
+    months.push({
+      key,
+      year: date.getFullYear(),
+      month: date.getMonth(),
+      label: monthFormatter.format(date).replace(".", ""),
+      count: counts.get(key) || 0,
+    });
+  }
+
+  if (months.every((item) => !item.count)) {
+    elements.monthlyChart.innerHTML = emptyChart("Сохрани первую тренировку — здесь появится динамика по месяцам.");
+    return;
+  }
+
+  const max = Math.max(...months.map((item) => item.count), 1);
+  const currentKey = formatInputDate(now).slice(0, 7);
+
+  elements.monthlyChart.innerHTML = `
+    <div class="month-bars">
+      ${months.map((item) => {
+        const height = item.count ? Math.max(Math.round((item.count / max) * 100), 10) : 0;
+        const classes = ["month-bar"];
+        if (item.key === currentKey) classes.push("is-current");
+        if (!item.count) classes.push("is-zero");
+        return `
+          <button type="button" class="${classes.join(" ")}" data-year="${item.year}" data-month="${item.month}" aria-label="${item.label}: ${item.count} тренировок">
+            <span class="month-bar-count">${item.count || ""}</span>
+            <span class="month-bar-track"><i style="height:${height}%"></i></span>
+            <span class="month-bar-label">${item.label}</span>
+          </button>
+        `;
+      }).join("")}
+    </div>
+    <p class="month-bars-hint">Тренировок за месяц. Тапни столбик — календарь откроет этот месяц.</p>
+  `;
 }
 
 function renderPrBoard() {
@@ -2682,24 +2738,6 @@ function renderHistory() {
     : `<div class="empty">Пока пусто. Нажми “Загрузить пример” или сохрани сегодняшнюю тренировку.</div>`;
 }
 
-function monthlyStats(workouts) {
-  const formatter = new Intl.DateTimeFormat("ru-RU", { month: "short", year: "2-digit" });
-  const buckets = new Map();
-
-  workouts.forEach((workout) => {
-    const date = new Date(workout.date);
-    const key = workout.date.slice(0, 7);
-    const current = buckets.get(key) || { label: formatter.format(date), count: 0, volume: 0 };
-    current.count += 1;
-    current.volume += workoutVolume(workout);
-    buckets.set(key, current);
-  });
-
-  return [...buckets.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, value]) => value);
-}
-
 function bestExercisePerformance(workouts, exerciseId) {
   const exercise = findExercise(exerciseId);
   let best = null;
@@ -2737,10 +2775,6 @@ function shortUnit(exercise) {
   if (unit === "кг противовес" || unit === "кг/рука" || unit === "кг в руках") return "кг";
   if (unit === "сек/повт") return "сек";
   return unit;
-}
-
-function workoutVolume(workout) {
-  return workout.exercises.reduce((sum, exercise) => sum + exerciseVolume(exercise), 0);
 }
 
 function workoutSetCount(workout) {
