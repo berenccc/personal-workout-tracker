@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=98" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=98" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=98" />
-    <link rel="manifest" href="./manifest.webmanifest?v=98" />
-    <link rel="stylesheet" href="./training-tracker.css?v=98" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=99" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=99" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=99" />
+    <link rel="manifest" href="./manifest.webmanifest?v=99" />
+    <link rel="stylesheet" href="./training-tracker.css?v=99" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -57,7 +57,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v98</span>
+          <span class="version-badge">v99</span>
         </div>
       </section>
 
@@ -280,11 +280,14 @@
             <h3>Мой зал</h3>
             <p id="gymStatus"></p>
           </div>
-          <div class="gym-actions">
-            <button id="gymFromHistoryButton" class="button ghost" type="button">Пресет зала</button>
-            <button id="gymSelectAllButton" class="button ghost" type="button">Отметить всё</button>
-          </div>
-          <div id="gymList" class="gym-list"></div>
+          <details class="gym-details">
+            <summary>Список тренажёров и упражнений</summary>
+            <div class="gym-actions">
+              <button id="gymFromHistoryButton" class="button ghost" type="button">Пресет зала</button>
+              <button id="gymSelectAllButton" class="button ghost" type="button">Отметить всё</button>
+            </div>
+            <div id="gymList" class="gym-list"></div>
+          </details>
         </section>
 
         <section class="cabinet-section">
@@ -414,13 +417,13 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=98"></script>
-    <script src="./training-history.js?v=98"></script>
-    <script src="./training-feedback.js?v=98"></script>
-    <script src="./training-tracker.js?v=98"></script>
+    <script src="./exercise-catalog.js?v=99"></script>
+    <script src="./training-history.js?v=99"></script>
+    <script src="./training-feedback.js?v=99"></script>
+    <script src="./training-tracker.js?v=99"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=98"></script>
-    <script src="./cloud.js?v=98"></script>
+    <script src="./supabase-config.js?v=99"></script>
+    <script src="./cloud.js?v=99"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -446,7 +449,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v98";
+      const APP_VERSION = "v99";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

@@ -2520,6 +2520,39 @@ body {
   background: rgba(150, 100, 30, 0.96);
 }
 
+.gym-details summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.gym-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.gym-details summary::before {
+  content: "›";
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.gym-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
 .gym-actions {
   display: flex;
   flex-wrap: wrap;
