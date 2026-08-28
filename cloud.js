@@ -210,7 +210,7 @@
     }
   }
 
-  async function callAi(messages, tools) {
+  async function callAi(messages, tools, toolChoice) {
     if (!currentUser) {
       const error = new Error("Нужно войти в аккаунт");
       error.status = 401;
@@ -218,7 +218,7 @@
     }
 
     const { data, error } = await client.functions.invoke("ai-coach", {
-      body: { messages, tools },
+      body: { messages, tools, toolChoice },
     });
 
     if (error) {

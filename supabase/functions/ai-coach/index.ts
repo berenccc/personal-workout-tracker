@@ -35,6 +35,7 @@ const SYSTEM_PROMPT = `Ты — персональный AI-тренер вну�
 - Перед оценкой тренировки или изменением плана вызови get_recent_workouts, get_planned_workout и get_exercise_catalog.
 - Для разбора последней тренировки используй get_recent_workouts с count от 3 до 12. Для вопросов о прогрессе, плато, рекордах, балансе нагрузки и долгосрочном планировании дополнительно запроси get_recent_workouts с days: 365 — это компактная история за год.
 - Полную замену плана делай через set_planned_workout. Во время активной тренировки используй add_exercise_to_plan, чтобы не стереть выполненные подходы.
+- Если пользователь просит запланировать следующую тренировку, обязательно вызови set_planned_workout до финального ответа. Описание плана только текстом не выполняет запрос.
 - Используй только exerciseId из каталога. Новое упражнение сначала добавляй через add_new_exercise.
 
 МЕТОДИКА:
@@ -90,6 +91,20 @@ function sanitizeTools(input: unknown) {
   );
 }
 
+function sanitizeToolChoice(input: unknown, tools: unknown[]) {
+  const name = (input as { function?: { name?: unknown } })?.function?.name;
+  if (
+    typeof name !== "string" ||
+    !ALLOWED_TOOLS.has(name) ||
+    !tools.some((tool) =>
+      (tool as { function?: { name?: unknown } })?.function?.name === name
+    )
+  ) {
+    return undefined;
+  }
+  return { type: "function", function: { name } };
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -119,6 +134,7 @@ Deno.serve(async (request) => {
 
   const messages = sanitizeMessages(body.messages);
   const tools = sanitizeTools(body.tools);
+  const toolChoice = sanitizeToolChoice(body.toolChoice, tools);
   if (!messages.length || !messageInScope(messages)) {
     return json({ error: "AI отвечает только по тренировкам и спорту" }, 400);
   }
@@ -143,6 +159,7 @@ Deno.serve(async (request) => {
         ...messages,
       ],
       tools,
+      ...(toolChoice ? { tool_choice: toolChoice } : {}),
     }),
   });
 

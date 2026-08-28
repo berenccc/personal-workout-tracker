@@ -2504,13 +2504,13 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callOpenAi(messages) {
+async function callOpenAi(messages, toolChoice) {
   const maxAttempts = 3;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       if (!window.cloudSync?.callAi) throw new Error("сервер AI ещё не готов");
-      return await window.cloudSync.callAi(messages, AI_TOOL_DEFS);
+      return await window.cloudSync.callAi(messages, AI_TOOL_DEFS, toolChoice);
     } catch (error) {
       if (error?.status === 401) throw new Error("сессия истекла — войди в аккаунт заново");
       if (error?.status === 429) throw new Error("дневной лимит AI исчерпан");
@@ -2526,7 +2526,7 @@ async function callOpenAi(messages) {
   throw new Error("AI-сервер не отвечает, попробуй чуть позже");
 }
 
-async function runAiConversation() {
+async function runAiConversation({ requiredTool = "" } = {}) {
   const latestUser = [...aiChat].reverse().find((message) => message.role === "user");
   if (latestUser && !isAiMessageInScope(latestUser.content)) {
     return AI_OFFTOPIC_REFUSAL;
@@ -2535,9 +2535,21 @@ async function runAiConversation() {
   const messages = [
     ...aiChat.slice(-16).map((message) => ({ role: message.role, content: message.content })),
   ];
+  const requiredReads = ["get_recent_workouts", "get_planned_workout", "get_exercise_catalog"];
+  const completedReads = new Set();
+  let requiredToolApplied = false;
+  let requiredToolResult = "";
+  let pendingText = "";
 
   for (let round = 0; round < AI_MAX_TOOL_ROUNDS; round++) {
-    const data = await callOpenAi(messages);
+    const canForceRequiredTool =
+      requiredTool &&
+      !requiredToolApplied &&
+      requiredReads.every((name) => completedReads.has(name));
+    const toolChoice = canForceRequiredTool
+      ? { type: "function", function: { name: requiredTool } }
+      : undefined;
+    const data = await callOpenAi(messages, toolChoice);
     const message = data.choices?.[0]?.message;
     if (!message) throw new Error("пустой ответ модели");
 
@@ -2554,16 +2566,40 @@ async function runAiConversation() {
         } catch (error) {
           result = `Ошибка инструмента: ${error.message}`;
         }
+        if (requiredReads.includes(call.function.name)) completedReads.add(call.function.name);
+        if (
+          call.function.name === requiredTool &&
+          !String(result).startsWith("Ошибка:")
+        ) {
+          requiredToolApplied = true;
+          requiredToolResult = result;
+        }
         messages.push({ role: "tool", tool_call_id: call.id, content: result });
+      }
+      if (requiredToolApplied && pendingText) {
+        return `${pendingText}\n\n${requiredToolResult}`;
       }
       continue;
     }
 
     const text = (message.content || "").trim();
+    if (text && requiredTool && !requiredToolApplied) {
+      pendingText ||= text;
+      messages.push(message);
+      const missingReads = requiredReads.filter((name) => !completedReads.has(name));
+      messages.push({
+        role: "user",
+        content: missingReads.length
+          ? `Продолжи выполнение запроса: сначала вызови ${missingReads.join(", ")}, затем обязательно ${requiredTool}. Не завершай ответ одним текстом.`
+          : `Продолжи выполнение запроса и обязательно вызови ${requiredTool}. План должен быть сохранён в приложении, текста недостаточно.`,
+      });
+      continue;
+    }
     if (text) return text;
     throw new Error("пустой ответ модели");
   }
 
+  if (requiredToolApplied) return pendingText ? `${pendingText}\n\n${requiredToolResult}` : requiredToolResult;
   throw new Error("слишком много шагов, сформулируй запрос проще");
 }
 
@@ -2611,10 +2647,10 @@ function autoAiAfterWorkout() {
   });
   persistAiChat();
   renderAiChat();
-  runAiChatCycle();
+  runAiChatCycle({ requiredTool: "set_planned_workout" });
 }
 
-async function runAiChatCycle() {
+async function runAiChatCycle(options = {}) {
   elements.aiChatSendButton.disabled = true;
   aiThinking = true;
   aiError = "";
@@ -2622,7 +2658,7 @@ async function runAiChatCycle() {
   setAiStatus("Тренер смотрит твои данные…");
 
   try {
-    const reply = await runAiConversation();
+    const reply = await runAiConversation(options);
     aiChat.push({ role: "assistant", content: reply });
     persistAiChat();
     setAiStatus("");
