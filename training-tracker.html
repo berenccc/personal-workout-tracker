@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=82" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=82" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=82" />
-    <link rel="manifest" href="./manifest.webmanifest?v=82" />
-    <link rel="stylesheet" href="./training-tracker.css?v=82" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=83" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=83" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=83" />
+    <link rel="manifest" href="./manifest.webmanifest?v=83" />
+    <link rel="stylesheet" href="./training-tracker.css?v=83" />
   </head>
   <body class="locked">
     <section class="auth-screen" aria-label="Вход">
@@ -47,7 +47,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v82</span>
+          <span class="version-badge">v83</span>
         </div>
       </section>
 
@@ -173,6 +173,7 @@
               <h2>Календарь тренировок</h2>
             </div>
           </div>
+          <div id="calendarStats" class="calendar-stats"></div>
           <div class="calendar-nav">
             <button id="calPrevButton" class="icon-button" type="button" aria-label="Предыдущий месяц">‹</button>
             <strong id="calTitle"></strong>
@@ -184,7 +185,18 @@
             <span><i class="cal-dot dot-planned"></i> запланирована</span>
             <span><i class="cal-dot dot-missed"></i> пропущена</span>
           </div>
-          <p class="workout-helper">Тапни по дню, чтобы запланировать тренировку или снять отметку. Дата в форме и рекомендации подстраиваются под ближайший запланированный день.</p>
+          <p class="workout-helper">Тап по зелёному дню — детали тренировки. Тап по пустому дню — запланировать или снять. Дата в форме и рекомендации следуют за ближайшим запланированным днём.</p>
+          <div id="dayDetail" class="day-detail" hidden></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Динамика</p>
+              <h2>Регулярность по месяцам</h2>
+            </div>
+          </div>
+          <div id="monthlyChart" class="chart tall"></div>
         </div>
       </section>
 
@@ -289,16 +301,6 @@
 
       <section class="layout dashboard-layout">
         <div class="panel wide">
-          <div class="panel-header">
-            <div>
-              <p class="eyebrow">Динамика</p>
-              <h2>Регулярность по месяцам</h2>
-            </div>
-          </div>
-          <div id="monthlyChart" class="chart tall"></div>
-        </div>
-
-        <div class="panel">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Лучшие маркеры</p>
@@ -432,10 +434,10 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=82"></script>
-    <script src="./training-history.js?v=82"></script>
-    <script src="./training-feedback.js?v=82"></script>
-    <script src="./training-tracker.js?v=82"></script>
+    <script src="./exercise-catalog.js?v=83"></script>
+    <script src="./training-history.js?v=83"></script>
+    <script src="./training-feedback.js?v=83"></script>
+    <script src="./training-tracker.js?v=83"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -460,7 +462,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v82";
+      const APP_VERSION = "v83";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

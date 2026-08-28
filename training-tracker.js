@@ -225,6 +225,133 @@ function workoutDateSet() {
   return dates;
 }
 
+function workoutsOnDate(iso) {
+  const own = (state?.workouts || []).filter((workout) => workout.date === iso);
+  if (own.length) return own;
+  return (window.trainingHistory || []).filter((workout) => workout.date === iso);
+}
+
+function mondayOf(date) {
+  const day = new Date(date);
+  day.setDate(day.getDate() - ((day.getDay() + 6) % 7));
+  return formatInputDate(day);
+}
+
+function weeklyStreak(dates) {
+  const weeks = new Set([...dates].map((iso) => mondayOf(new Date(iso))));
+  const cursor = new Date();
+  // Текущая неделя ещё идёт: если в ней нет тренировки, серия не рвётся — считаем с прошлой.
+  if (!weeks.has(mondayOf(cursor))) cursor.setDate(cursor.getDate() - 7);
+  let streak = 0;
+  while (weeks.has(mondayOf(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+
+function renderCalendarStats() {
+  if (!elements.calendarStats) return;
+  const dates = workoutDateSet();
+  const today = formatInputDate(new Date());
+  const monthKey = today.slice(0, 7);
+
+  const streak = weeklyStreak(dates);
+  const lastDate = [...dates].sort().pop();
+  const restDays = lastDate ? Math.max(0, Math.round((new Date(today) - new Date(lastDate)) / 86400000)) : null;
+  const monthDone = [...dates].filter((iso) => iso.startsWith(monthKey)).length;
+  const monthPlanned = [...schedule()].filter((iso) => iso.startsWith(monthKey) && iso >= today && !dates.has(iso)).length;
+
+  elements.calendarStats.innerHTML = `
+    <div class="cal-stat"><strong>${streak}</strong><span>${plural(streak, "неделя", "недели", "недель")} подряд</span></div>
+    <div class="cal-stat"><strong>${restDays === null ? "—" : restDays}</strong><span>${restDays === 1 ? "день" : plural(restDays || 0, "день", "дня", "дней")} отдыха</span></div>
+    <div class="cal-stat"><strong>${monthDone}</strong><span>в этом месяце${monthPlanned ? ` · +${monthPlanned} в плане` : ""}</span></div>
+  `;
+}
+
+function plural(n, one, few, many) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
+let selectedDayIso = null;
+
+function handleCalendarDayTap(iso) {
+  const today = formatInputDate(new Date());
+
+  if (workoutDateSet().has(iso)) {
+    selectedDayIso = selectedDayIso === iso ? null : iso;
+    renderDayDetail();
+    renderScheduleCalendar();
+    return;
+  }
+
+  if (iso < today) {
+    // Прошлое: можно только снять забытую отметку плана.
+    if (schedule().has(iso)) {
+      schedule().delete(iso);
+      saveSchedule();
+      renderScheduleCalendar();
+    }
+    return;
+  }
+
+  toggleScheduledDate(iso);
+}
+
+function renderDayDetail() {
+  const box = elements.dayDetail;
+  if (!box) return;
+
+  if (!selectedDayIso) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+
+  const workouts = workoutsOnDate(selectedDayIso);
+  if (!workouts.length) {
+    selectedDayIso = null;
+    box.hidden = true;
+    return;
+  }
+
+  box.hidden = false;
+  box.innerHTML = workouts.map((workout) => {
+    const meta = [
+      readinessLabel(workout.readiness),
+      `${doneSetCount(workout)}/${workoutSetCount(workout)} подходов`,
+      `RPE ${averageWorkoutRpe(workout) || "n/a"}`,
+      workout.durationMinutes ? `${workout.durationMinutes} мин` : null,
+      workout.sessionEffort ? sessionEffortLabel(workout.sessionEffort) : null,
+    ].filter(Boolean).map((part) => `<span>${part}</span>`).join("");
+
+    const exercisesHtml = (workout.exercises || []).map((item) => {
+      const exercise = findExercise(item.exerciseId);
+      const sets = (item.sets || [])
+        .map((set) => `${formatNumber(set.weight)}×${set.reps}${set.rpe ? `<em>@${set.rpe}</em>` : ""}${set.done === false ? " ✗" : ""}`)
+        .join(", ");
+      return `<li><strong>${escapeHtml(exercise ? exercise.name : item.exerciseId)}</strong><span>${sets}</span></li>`;
+    }).join("");
+
+    return `
+      <article class="day-detail-card">
+        <div class="day-detail-head">
+          <strong>${formatDate(workout.date)}</strong>
+          <button class="icon-button day-detail-close" type="button" aria-label="Закрыть">×</button>
+        </div>
+        <div class="day-detail-meta">${meta}</div>
+        ${workout.notes ? `<p class="day-detail-note">${escapeHtml(workout.notes)}</p>` : ""}
+        ${workout.afterNotes ? `<p class="day-detail-note after">«${escapeHtml(workout.afterNotes)}»</p>` : ""}
+        <ul class="day-detail-exercises">${exercisesHtml}</ul>
+      </article>
+    `;
+  }).join("");
+}
+
 function renderScheduleCalendar() {
   if (!elements.scheduleCalendar) return;
   const year = calendarCursor.getFullYear();
@@ -247,18 +374,22 @@ function renderScheduleCalendar() {
     date.setDate(gridStart.getDate() + i);
     const iso = formatInputDate(date);
     const inMonth = date.getMonth() === month;
+    const isDone = done.has(iso);
+    const isPlanned = planned.has(iso);
     const classes = ["cal-cell"];
     if (!inMonth) classes.push("is-out");
     if (iso === today) classes.push("is-today");
-    if (done.has(iso)) classes.push("is-done");
-    else if (planned.has(iso)) classes.push(iso < today ? "is-missed" : "is-planned");
-    const disabled = !inMonth || done.has(iso);
+    if (iso === selectedDayIso) classes.push("is-selected");
+    if (isDone) classes.push("is-done");
+    else if (isPlanned) classes.push(iso < today ? "is-missed" : "is-planned");
+    const disabled = !inMonth || (iso < today && !isDone && !isPlanned);
     cells.push(
       `<button type="button" class="${classes.join(" ")}" data-date="${iso}" ${disabled ? "disabled" : ""} aria-label="${iso}">${date.getDate()}</button>`
     );
   }
 
   elements.scheduleCalendar.innerHTML = cells.join("");
+  renderCalendarStats();
 }
 
 function toggleScheduledDate(iso) {
@@ -352,6 +483,8 @@ const elements = {
   calTitle: document.querySelector("#calTitle"),
   calPrevButton: document.querySelector("#calPrevButton"),
   calNextButton: document.querySelector("#calNextButton"),
+  calendarStats: document.querySelector("#calendarStats"),
+  dayDetail: document.querySelector("#dayDetail"),
 };
 
 const ACCENT_KEY = "training-tracker-accent";
@@ -513,7 +646,13 @@ function bindEvents() {
   elements.scheduleCalendar?.addEventListener("click", (event) => {
     const cell = event.target.closest(".cal-cell[data-date]");
     if (!cell || cell.disabled) return;
-    toggleScheduledDate(cell.dataset.date);
+    handleCalendarDayTap(cell.dataset.date);
+  });
+  elements.dayDetail?.addEventListener("click", (event) => {
+    if (!event.target.closest(".day-detail-close")) return;
+    selectedDayIso = null;
+    renderDayDetail();
+    renderScheduleCalendar();
   });
   elements.gymFromHistoryButton?.addEventListener("click", () => {
     myGymSet = defaultMyGymIds();
