@@ -719,7 +719,7 @@ function bindEvents() {
     const uid = addExercise(elements.exerciseSelect.value);
     renderSelectedExercises();
     saveWorkoutDraft();
-    keepExerciseInView(uid);
+    keepExerciseTitleInView(uid);
   });
   elements.buildWorkoutButton?.addEventListener("click", runWorkoutBuilder);
 
@@ -1678,7 +1678,9 @@ function keepExerciseTitleInView(uid, previousTitleTop, direction) {
 
   card.classList.add("exercise-moved");
   window.setTimeout(() => card.classList.remove("exercise-moved"), 500);
-  card.querySelector(direction < 0 ? ".move-up" : ".move-down")?.focus({ preventScroll: true });
+  if (direction) {
+    card.querySelector(direction < 0 ? ".move-up" : ".move-down")?.focus({ preventScroll: true });
+  }
 }
 
 function planWeightBrief(exercise, sets) {
