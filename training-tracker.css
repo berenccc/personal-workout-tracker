@@ -2553,6 +2553,10 @@ body {
   transform: rotate(90deg);
 }
 
+.gym-details > .history-list {
+  margin-top: 12px;
+}
+
 .gym-actions {
   display: flex;
   flex-wrap: wrap;
