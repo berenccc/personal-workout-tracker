@@ -25,7 +25,6 @@
   let currentUser = null;
   let pendingEmail = "";
   let lastSyncedUserId = null;
-  let signInScreenOpen = false;
 
   // Каким аккаунтом были записаны локальные данные устройства.
   const OWNER_KEY = "training-tracker-owner-uid";
@@ -66,8 +65,7 @@
 
   function setAuthenticated(user) {
     currentUser = user || null;
-    if (currentUser) signInScreenOpen = false;
-    document.body.classList.toggle("locked", !currentUser && signInScreenOpen);
+    document.body.classList.remove("locked");
     if (els.cloudLoggedOut) els.cloudLoggedOut.hidden = Boolean(currentUser);
     if (els.cloudLoggedIn) els.cloudLoggedIn.hidden = !currentUser;
 
@@ -81,16 +79,10 @@
   }
 
   function showSignInScreen() {
-    if (currentUser) return;
-    signInScreenOpen = true;
-    document.body.classList.add("locked");
-    showEmailStep();
-    setAuthStatus("Войди по email, чтобы синхронизировать тренировки и пользоваться AI-тренером.");
-    els.authEmailInput?.focus();
+    setCloudStatus("Вход временно отключён: приложение работает офлайн.");
   }
 
   function openGuestMode() {
-    signInScreenOpen = false;
     document.body.classList.remove("locked");
     setAuthStatus("");
   }
@@ -155,7 +147,6 @@
     localStorage.removeItem("training-tracker-github-token");
     localStorage.removeItem("training-tracker-ai-key");
     lastSyncedUserId = null;
-    signInScreenOpen = false;
     setAuthenticated(null);
   }
 
