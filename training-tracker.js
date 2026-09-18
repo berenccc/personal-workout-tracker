@@ -1315,15 +1315,22 @@ function suggestedSetsForExercise(exercise) {
   return Array.from({ length: setCount }, () => [workWeight, workReps]);
 }
 
-// План следующей тренировки не прошит в код: его собирает пользователь
-// конструктором, AI-тренер (set_planned_workout) или он восстанавливается из черновика.
 function loadPlannedWorkout() {
   elements.dateInput.value = nextPlannedWorkoutDate();
   elements.readinessInput.value = "okay";
-  elements.notesInput.value = "";
+  elements.notesInput.value = "Возвращение после двух недель без тренировок: фулбади 45–55 минут, всё RPE 5–6. Без отказа и добивок. Если правое колено отзывается на разминке, пропусти жим ногами.";
   elements.sessionEffortInput.value = "normal";
   elements.afterNotesInput.value = "";
-  selected = [];
+  selected = [
+    planEntry("elliptical", [[8, 1, 4]]),
+    planEntry("leg-press", [[120, 12, 5], [140, 10, 6]]),
+    planEntry("leg-curl", [[35, 12, 5], [40, 12, 6]]),
+    planEntry("lat-pulldown", [[50, 10, 5], [55, 10, 6]]),
+    planEntry("chest-machine", [[40, 12, 5], [50, 10, 6]]),
+    planEntry("shoulder-press", [[20, 10, 5], [25, 10, 6]]),
+    planEntry("dead-bug", [[0, 12, 5], [0, 12, 5]]),
+    planEntry("treadmill", [[8, 1, 4]]),
+  ];
 }
 
 function planEntry(exerciseId, rows) {
@@ -2230,9 +2237,10 @@ function applyStoredAiPlan() {
   }
   if (!plan || plan.version !== 1 || !Array.isArray(plan.exercises) || !plan.exercises.length) return;
 
-  // План выполнен: после его сохранения появилась тренировка на эту дату или позже.
   const planDate = plan.planDate || formatInputDate(new Date(plan.savedAt || Date.now()));
-  if (state.workouts.some((workout) => workout.date >= planDate)) {
+  const today = formatInputDate(new Date());
+  // Прошедший план не должен заменять новый дефолтный план после перерыва.
+  if (planDate < today || state.workouts.some((workout) => workout.date >= planDate)) {
     localStorage.removeItem(AI_PLAN_STORAGE);
     return;
   }
