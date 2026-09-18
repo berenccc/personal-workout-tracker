@@ -4,6 +4,7 @@ const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
 const AI_POST_WORKOUT_PENDING_KEY = "training-tracker-ai-post-workout-pending-v1";
 const CUSTOM_EXERCISES_KEY = "training-tracker-custom-exercises-v1";
+const OFFLINE_HISTORY_URL = "./data/workouts.json";
 const AI_MAX_TOOL_ROUNDS = 6;
 const AI_CHAT_HISTORY_LIMIT = 30;
 
@@ -633,6 +634,7 @@ function boot() {
   restoreWorkoutDraft();
   bindEvents();
   render();
+  window.offlineHistoryReady = loadOfflineHistory();
   initAiCoach();
 }
 
@@ -689,7 +691,7 @@ function entry(exerciseId, rows) {
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    // Чистый старт: история приходит только из облака после входа.
+    // Офлайн-история подгружается в boot().
     return { version: 3, workouts: [] };
   }
 
@@ -699,6 +701,26 @@ function loadState() {
     return { version: 3, workouts: normalizeWorkoutDates(saved) };
   } catch {
     return { version: 3, workouts: [] };
+  }
+}
+
+async function loadOfflineHistory() {
+  if (localStorage.getItem(STORAGE_KEY)) return;
+
+  try {
+    const response = await fetch(OFFLINE_HISTORY_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!Array.isArray(data?.workouts)) throw new Error("Некорректный формат истории");
+
+    // Пока история загружалась, пользователь мог уже начать создавать данные.
+    if (localStorage.getItem(STORAGE_KEY)) return;
+
+    state = { version: 3, workouts: normalizeWorkoutDates(data.workouts) };
+    saveState();
+    render();
+  } catch (error) {
+    console.warn("Не удалось загрузить офлайн-историю:", error);
   }
 }
 

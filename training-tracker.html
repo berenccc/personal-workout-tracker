@@ -14,13 +14,13 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=122" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=122" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=122" />
-    <link rel="manifest" href="./manifest.webmanifest?v=122" />
-    <link rel="stylesheet" href="./training-tracker.css?v=122" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=123" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=123" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=123" />
+    <link rel="manifest" href="./manifest.webmanifest?v=123" />
+    <link rel="stylesheet" href="./training-tracker.css?v=123" />
   </head>
-  <body class="locked">
+  <body>
     <section class="auth-screen" aria-label="Вход">
       <form id="cloudAuthForm" class="auth-card">
         <p class="eyebrow">Trainy</p>
@@ -41,6 +41,7 @@
           <button id="authVerifyButton" class="button primary" type="button">Войти</button>
           <button id="authChangeEmailButton" class="button ghost" type="button">Изменить email</button>
         </div>
+        <button id="authGuestButton" class="button ghost" type="button">Открыть мои тренировки без входа</button>
         <p id="authStatus" class="auth-error" role="status">Проверяем сессию…</p>
       </form>
     </section>
@@ -57,7 +58,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v122</span>
+          <span class="version-badge">v123</span>
         </div>
       </section>
 
@@ -251,6 +252,9 @@
             <h3>Аккаунт</h3>
             <p id="cloudStatus">Облако не настроено</p>
           </div>
+          <div id="cloudLoggedOut" class="cabinet-actions">
+            <button id="cloudSignInButton" class="button secondary" type="button">Войти в аккаунт</button>
+          </div>
         </section>
 
         <section class="cabinet-section">
@@ -413,11 +417,11 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=122"></script>
-    <script src="./training-tracker.js?v=122"></script>
+    <script src="./exercise-catalog.js?v=123"></script>
+    <script src="./training-tracker.js?v=123"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=122"></script>
-    <script src="./cloud.js?v=122"></script>
+    <script src="./supabase-config.js?v=123"></script>
+    <script src="./cloud.js?v=123"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -450,7 +454,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v122";
+      const APP_VERSION = "v123";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

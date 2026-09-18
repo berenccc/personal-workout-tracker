@@ -11,9 +11,12 @@
     authSendCodeButton: document.querySelector("#authSendCodeButton"),
     authVerifyButton: document.querySelector("#authVerifyButton"),
     authChangeEmailButton: document.querySelector("#authChangeEmailButton"),
+    authGuestButton: document.querySelector("#authGuestButton"),
     authStatus: document.querySelector("#authStatus"),
     cloudStatus: document.querySelector("#cloudStatus"),
+    cloudLoggedOut: document.querySelector("#cloudLoggedOut"),
     cloudLoggedIn: document.querySelector("#cloudLoggedIn"),
+    signInButton: document.querySelector("#cloudSignInButton"),
     syncButton: document.querySelector("#cloudSyncButton"),
     signOutButton: document.querySelector("#cloudSignOutButton"),
   };
@@ -22,6 +25,7 @@
   let currentUser = null;
   let pendingEmail = "";
   let lastSyncedUserId = null;
+  let signInScreenOpen = false;
 
   // Каким аккаунтом были записаны локальные данные устройства.
   const OWNER_KEY = "training-tracker-owner-uid";
@@ -62,7 +66,9 @@
 
   function setAuthenticated(user) {
     currentUser = user || null;
-    document.body.classList.toggle("locked", !currentUser);
+    if (currentUser) signInScreenOpen = false;
+    document.body.classList.toggle("locked", !currentUser && signInScreenOpen);
+    if (els.cloudLoggedOut) els.cloudLoggedOut.hidden = Boolean(currentUser);
     if (els.cloudLoggedIn) els.cloudLoggedIn.hidden = !currentUser;
 
     if (currentUser) {
@@ -72,6 +78,21 @@
       setCloudStatus("Войди в аккаунт, чтобы синхронизировать данные.");
       showEmailStep();
     }
+  }
+
+  function showSignInScreen() {
+    if (currentUser) return;
+    signInScreenOpen = true;
+    document.body.classList.add("locked");
+    showEmailStep();
+    setAuthStatus("Войди по email, чтобы синхронизировать тренировки и пользоваться AI-тренером.");
+    els.authEmailInput?.focus();
+  }
+
+  function openGuestMode() {
+    signInScreenOpen = false;
+    document.body.classList.remove("locked");
+    setAuthStatus("");
   }
 
   function workoutKey(workout, index) {
@@ -134,6 +155,7 @@
     localStorage.removeItem("training-tracker-github-token");
     localStorage.removeItem("training-tracker-ai-key");
     lastSyncedUserId = null;
+    signInScreenOpen = false;
     setAuthenticated(null);
   }
 
@@ -268,6 +290,8 @@
   }
 
   async function init() {
+    await window.offlineHistoryReady;
+
     if (!config.url || !config.anonKey || !window.supabase) {
       setAuthStatus("Облачный сервис временно недоступен. Попробуй обновить страницу.", true);
       return;
@@ -276,6 +300,7 @@
     client = window.supabase.createClient(config.url, config.anonKey);
     els.authForm?.addEventListener("submit", sendCode);
     els.authVerifyButton?.addEventListener("click", verifyCode);
+    els.authGuestButton?.addEventListener("click", openGuestMode);
     els.authChangeEmailButton?.addEventListener("click", () => {
       pendingEmail = "";
       showEmailStep();
@@ -288,6 +313,7 @@
       }
     });
     els.signOutButton?.addEventListener("click", signOut);
+    els.signInButton?.addEventListener("click", showSignInScreen);
     els.syncButton?.addEventListener("click", () => fullSync());
 
     client.auth.onAuthStateChange((_event, session) => {
