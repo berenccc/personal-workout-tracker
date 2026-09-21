@@ -1,10 +1,19 @@
 {
   "appId": "com.trainy.app",
-  "appName": "Trainy",
+  "appName": "Тренировки v139",
   "webDir": "www",
   "server": {
-    "url": "https://berenccc.github.io/personal-workout-tracker/training-tracker.html",
-    "allowNavigation": ["berenccc.github.io", "*.supabase.co"]
+    "androidScheme": "https",
+    "allowNavigation": [
+      "berenccc.github.io",
+      "*.supabase.co",
+      "cdn.jsdelivr.net",
+      "api.openai.com"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#0c0d10",
+    "adjustMarginsForEdgeToEdge": "force"
   },
   "ios": {
     "contentInset": "always",

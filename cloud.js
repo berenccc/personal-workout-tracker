@@ -1,32 +1,24 @@
-// Аккаунт, облачная синхронизация и AI через Supabase.
+// Личный режим: приложение всегда открыто, без окна входа.
+// Облако подключается само по персональному токену. AI — без тарифов и OTP.
 (function () {
   const config = window.SUPABASE_CONFIG || {};
+  const PENDING_KEY = "training-tracker-cloud-pending-v1";
 
   const els = {
-    authForm: document.querySelector("#cloudAuthForm"),
-    authEmailRow: document.querySelector("#authEmailRow"),
-    authOtpRow: document.querySelector("#authOtpRow"),
-    authEmailInput: document.querySelector("#authEmailInput"),
-    authOtpInput: document.querySelector("#authOtpInput"),
-    authSendCodeButton: document.querySelector("#authSendCodeButton"),
-    authVerifyButton: document.querySelector("#authVerifyButton"),
-    authChangeEmailButton: document.querySelector("#authChangeEmailButton"),
-    authGuestButton: document.querySelector("#authGuestButton"),
-    authStatus: document.querySelector("#authStatus"),
     cloudStatus: document.querySelector("#cloudStatus"),
-    cloudLoggedOut: document.querySelector("#cloudLoggedOut"),
     cloudLoggedIn: document.querySelector("#cloudLoggedIn"),
-    signInButton: document.querySelector("#cloudSignInButton"),
     syncButton: document.querySelector("#cloudSyncButton"),
     signOutButton: document.querySelector("#cloudSignOutButton"),
   };
 
   let client = null;
   let currentUser = null;
-  let pendingEmail = "";
   let lastSyncedUserId = null;
+  let resolveReady;
+  const whenReady = new Promise((resolve) => {
+    resolveReady = resolve;
+  });
 
-  // Каким аккаунтом были записаны локальные данные устройства.
   const OWNER_KEY = "training-tracker-owner-uid";
 
   function wipeLocalDataForAccountSwitch() {
@@ -42,110 +34,63 @@
     ].forEach((key) => localStorage.removeItem(key));
   }
 
-  function setAuthStatus(text, isError = false) {
-    if (!els.authStatus) return;
-    els.authStatus.textContent = text;
-    els.authStatus.classList.toggle("is-error", isError);
-  }
-
   function setCloudStatus(text) {
     if (els.cloudStatus) els.cloudStatus.textContent = text;
-  }
-
-  function showEmailStep() {
-    if (els.authEmailRow) els.authEmailRow.hidden = false;
-    if (els.authOtpRow) els.authOtpRow.hidden = true;
-  }
-
-  function showOtpStep() {
-    if (els.authEmailRow) els.authEmailRow.hidden = true;
-    if (els.authOtpRow) els.authOtpRow.hidden = false;
-    els.authOtpInput?.focus();
   }
 
   function setAuthenticated(user) {
     currentUser = user || null;
     document.body.classList.remove("locked");
-    if (els.cloudLoggedOut) els.cloudLoggedOut.hidden = Boolean(currentUser);
     if (els.cloudLoggedIn) els.cloudLoggedIn.hidden = !currentUser;
+    if (els.signOutButton) els.signOutButton.hidden = true;
 
     if (currentUser) {
-      setCloudStatus(`${currentUser.email} · защищённое облако`);
+      setCloudStatus("Облако подключено · тренировки пишутся сразу");
       setAiStatus?.("");
     } else {
-      setCloudStatus("Войди в аккаунт, чтобы синхронизировать данные.");
-      showEmailStep();
+      setCloudStatus("Подключаю облако…");
     }
-  }
-
-  function showSignInScreen() {
-    setCloudStatus("Вход временно отключён: приложение работает офлайн.");
-  }
-
-  function openGuestMode() {
-    document.body.classList.remove("locked");
-    setAuthStatus("");
+    window.updateCabinetStatus?.();
   }
 
   function workoutKey(workout, index) {
     return workout.id || `legacy-${workout.date}-${index}`;
   }
 
-  async function sendCode(event) {
-    event?.preventDefault();
-    const email = (els.authEmailInput?.value || "").trim().toLowerCase();
-    if (!email || !email.includes("@")) {
-      setAuthStatus("Введи корректный email.", true);
-      return;
-    }
+  function personalHeaders() {
+    const headers = {};
+    if (config.personalToken) headers["x-trainy-token"] = config.personalToken;
+    return headers;
+  }
 
-    els.authSendCodeButton.disabled = true;
-    setAuthStatus("Отправляем код…");
+  function readPending() {
     try {
-      const { error } = await client.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true },
-      });
-      if (error) throw error;
-      pendingEmail = email;
-      showOtpStep();
-      setAuthStatus(`Код отправлен на ${email}. Можно также перейти по ссылке из письма.`);
-    } catch (error) {
-      setAuthStatus(`Не удалось отправить код: ${error.message || error}`, true);
-    } finally {
-      els.authSendCodeButton.disabled = false;
+      const parsed = JSON.parse(localStorage.getItem(PENDING_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
   }
 
-  async function verifyCode() {
-    const token = (els.authOtpInput?.value || "").trim();
-    if (!pendingEmail || token.length < 6) {
-      setAuthStatus("Введи код из письма.", true);
+  function writePending(workouts) {
+    if (!workouts.length) {
+      localStorage.removeItem(PENDING_KEY);
       return;
     }
+    localStorage.setItem(PENDING_KEY, JSON.stringify(workouts.slice(-20)));
+  }
 
-    els.authVerifyButton.disabled = true;
-    setAuthStatus("Проверяем код…");
-    try {
-      const { error } = await client.auth.verifyOtp({
-        email: pendingEmail,
-        token,
-        type: "email",
-      });
-      if (error) throw error;
-      if (els.authOtpInput) els.authOtpInput.value = "";
-    } catch (error) {
-      setAuthStatus(`Код не подошёл: ${error.message || error}`, true);
-    } finally {
-      els.authVerifyButton.disabled = false;
-    }
+  function queuePending(workout) {
+    if (!workout) return;
+    const key = workoutKey(workout, 0);
+    const pending = readPending().filter((item) => workoutKey(item, 0) !== key);
+    pending.push(workout);
+    writePending(pending);
   }
 
   async function signOut() {
+    if (!client) return;
     await client.auth.signOut();
-    localStorage.removeItem("training-tracker-auth");
-    localStorage.removeItem("training-tracker-github-token");
-    localStorage.removeItem("training-tracker-ai-key");
     lastSyncedUserId = null;
     setAuthenticated(null);
   }
@@ -167,6 +112,22 @@
         .upsert(rows.slice(i, i + 50), { onConflict: "user_id,session_uid" });
       if (error) throw error;
     }
+  }
+
+  async function invokePersonal(body) {
+    if (!client) throw new Error("cloud is not ready");
+    const { data, error } = await client.functions.invoke("personal-session", {
+      body,
+      headers: personalHeaders(),
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }
+
+  async function pushViaPersonalToken(workout) {
+    const data = await invokePersonal({ workout });
+    return Boolean(data?.ok);
   }
 
   async function fullSync({ quiet = false } = {}) {
@@ -198,13 +159,7 @@
         await pushRows(localOnly.map(([key, workout]) => rowFor(key, workout)));
       }
 
-      // Старые клиентские секреты и флаг общего пароля больше не используются.
-      localStorage.removeItem("training-tracker-auth");
-      localStorage.removeItem("training-tracker-github-token");
-      sessionStorage.removeItem("training-tracker-github-token");
-      localStorage.removeItem("training-tracker-ai-key");
-
-      setCloudStatus(`${currentUser.email} · ${merged.size} тренировок в облаке ✓`);
+      setCloudStatus(`Облако подключено · ${merged.size} тренировок`);
       if (!quiet) showToast("Облако синхронизировано ✓");
       return true;
     } catch (error) {
@@ -214,10 +169,58 @@
     }
   }
 
-  async function pushWorkout(workout) {
-    if (!currentUser || !workout) return false;
+  async function pushWorkout(workout, { queued = false } = {}) {
+    if (!workout) return false;
+    await Promise.race([whenReady, new Promise((resolve) => setTimeout(resolve, 8000))]);
+    if (!client) {
+      if (!queued) queuePending(workout);
+      return false;
+    }
+
     try {
-      await pushRows([rowFor(workout.id || `manual-${workout.date}`, workout)]);
+      if (currentUser) {
+        await pushRows([rowFor(workout.id || `manual-${workout.date}`, workout)]);
+        return true;
+      }
+    } catch (error) {
+      console.warn("cloud rls push failed", error);
+    }
+
+    try {
+      const ok = await pushViaPersonalToken(workout);
+      if (ok) return true;
+    } catch (error) {
+      console.warn("cloud token push failed", error);
+    }
+
+    if (!queued) queuePending(workout);
+    return false;
+  }
+
+  async function flushPending() {
+    const pending = readPending();
+    if (!pending.length) return;
+    const left = [];
+    for (const workout of pending) {
+      const ok = await pushWorkout(workout, { queued: true });
+      if (!ok) left.push(workout);
+    }
+    writePending(left);
+  }
+
+  async function deleteWorkout(workout) {
+    if (!workout) return false;
+    const key = workout.id || `manual-${workout.date}`;
+    try {
+      if (currentUser && client) {
+        const { error } = await client.from("workouts").delete().eq("session_uid", key);
+        if (!error) return true;
+      }
+    } catch {
+      // fallback below
+    }
+    try {
+      await invokePersonal({ delete: true, session_uid: key });
       return true;
     } catch {
       return false;
@@ -225,14 +228,15 @@
   }
 
   async function callAi(messages, tools, toolChoice) {
-    if (!currentUser) {
-      const error = new Error("Нужно войти в аккаунт");
-      error.status = 401;
+    if (!client) {
+      const error = new Error("AI-сервер ещё не готов");
+      error.status = 503;
       throw error;
     }
 
     const { data, error } = await client.functions.invoke("ai-coach", {
       body: { messages, tools, toolChoice },
+      headers: personalHeaders(),
     });
 
     if (error) {
@@ -252,18 +256,28 @@
     return data;
   }
 
+  async function signInWithPersonalToken() {
+    if (!client || !config.personalToken) return false;
+    try {
+      const data = await invokePersonal({});
+      if (!data?.token_hash) return false;
+      const { error } = await client.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: data.type || "email",
+      });
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.warn("personal session", error);
+      return false;
+    }
+  }
+
   async function handleSession(session) {
     const user = session?.user || null;
     setAuthenticated(user);
-    if (!user) {
-      setAuthStatus("Войди по email, чтобы продолжить.");
-      return;
-    }
+    if (!user) return;
 
-    setAuthStatus("Вход выполнен.");
-
-    // Локальные данные принадлежат другому аккаунту — стираем их,
-    // чтобы не показать и не залить чужую историю в это облако.
     const storedOwner = localStorage.getItem(OWNER_KEY);
     if (storedOwner && storedOwner !== user.id) {
       localStorage.setItem(OWNER_KEY, user.id);
@@ -277,50 +291,66 @@
       lastSyncedUserId = user.id;
       await fullSync({ quiet: true });
     }
+    await flushPending();
     window.resumeAiPlanningIfNeeded?.();
   }
 
   async function init() {
+    document.body.classList.remove("locked");
     await window.offlineHistoryReady;
+    setCloudStatus("Подключаю облако…");
 
     if (!config.url || !config.anonKey || !window.supabase) {
-      setAuthStatus("Облачный сервис временно недоступен. Попробуй обновить страницу.", true);
+      setAuthenticated(null);
+      resolveReady();
       return;
     }
 
-    client = window.supabase.createClient(config.url, config.anonKey);
-    els.authForm?.addEventListener("submit", sendCode);
-    els.authVerifyButton?.addEventListener("click", verifyCode);
-    els.authGuestButton?.addEventListener("click", openGuestMode);
-    els.authChangeEmailButton?.addEventListener("click", () => {
-      pendingEmail = "";
-      showEmailStep();
-      setAuthStatus("Введи email.");
+    client = window.supabase.createClient(config.url, config.anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
     });
-    els.authOtpInput?.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        verifyCode();
-      }
-    });
-    els.signOutButton?.addEventListener("click", signOut);
-    els.signInButton?.addEventListener("click", showSignInScreen);
     els.syncButton?.addEventListener("click", () => fullSync());
+    els.signOutButton?.addEventListener("click", signOut);
+    if (els.signOutButton) els.signOutButton.hidden = true;
 
     client.auth.onAuthStateChange((_event, session) => {
-      // Не блокируем внутренний lock Supabase длительной синхронизацией.
       setTimeout(() => handleSession(session), 0);
     });
 
-    const { data } = await client.auth.getSession();
-    await handleSession(data.session);
+    try {
+      const sessionPromise = client.auth.getSession();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("timeout")), 4000);
+      });
+      const { data } = await Promise.race([sessionPromise, timeoutPromise]);
+      if (data?.session) {
+        await handleSession(data.session);
+      } else {
+        await signInWithPersonalToken();
+      }
+    } catch {
+      await signInWithPersonalToken();
+    }
+
+    await flushPending();
+    resolveReady();
   }
+
+  window.addEventListener("online", () => {
+    flushPending();
+  });
 
   window.cloudSync = {
     pushWorkout,
+    deleteWorkout,
     fullSync,
     callAi,
     isAuthenticated: () => Boolean(currentUser),
+    isReady: () => Boolean(client),
   };
 
   init();

@@ -1,16 +1,8 @@
-# Размещение Trainy
+# Размещение личного трекера
 
-Клиент — статическая PWA на GitHub Pages. Аккаунты, тренировки и AI работают через Supabase.
+Клиент — статическая PWA. Это личное приложение: без экрана входа, тарифов и дневных лимитов AI.
 
-## Supabase
-
-1. Выполнить миграции из `supabase/migrations/` по порядку в SQL Editor.
-2. Указать Project URL и publishable key в `supabase-config.js`.
-3. Добавить production URL в Authentication → URL Configuration.
-4. Добавить секрет `OPENAI_API_KEY` для Edge Functions.
-5. Задеплоить функцию `supabase/functions/ai-coach`.
-
-Никогда не помещать `service_role` и `OPENAI_API_KEY` в клиентские файлы.
+AI работает напрямую с OpenAI по ключу из Кабинета. Облако Supabase необязательно: если проект активен и на устройстве уже есть сессия, тренировки могут синхронизироваться.
 
 ## Клиент
 

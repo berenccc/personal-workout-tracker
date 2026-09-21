@@ -2,7 +2,7 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=125" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=125" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=125" />
-    <link rel="manifest" href="./manifest.webmanifest?v=125" />
-    <link rel="stylesheet" href="./training-tracker.css?v=125" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=139" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=139" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=139" />
+    <link rel="manifest" href="./manifest.webmanifest?v=139" />
+    <link rel="stylesheet" href="./training-tracker.css?v=139" />
   </head>
   <body>
     <main class="app">
@@ -29,11 +29,11 @@
           <h1>Тренировки без выгорания</h1>
           <p class="lead">
             Журнал, графики прогресса, контроль RPE и подсказки по следующей тренировке.
-            История синхронизируется с облаком, новые тренировки сохраняются после завершения.
+            Личное приложение без входа и тарифов: тренировки сохраняются на этом устройстве.
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v125</span>
+          <span class="version-badge">v139</span>
         </div>
       </section>
 
@@ -41,8 +41,8 @@
         <div class="panel workout-panel">
           <div class="panel-header">
             <div>
-              <p class="eyebrow">Ближайшая тренировка</p>
-              <h2>Push + лёгкие ноги</h2>
+              <p class="eyebrow" id="workoutEyebrow">Ближайшая тренировка</p>
+              <h2 id="workoutTitle">Тренировка</h2>
             </div>
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
@@ -63,6 +63,7 @@
                 </select>
               </label>
             </div>
+            <button id="wearableApplyHint" class="wearable-apply" type="button" hidden></button>
 
             <div class="overview-card">
               <span>Краткий план</span>
@@ -79,8 +80,14 @@
               <span>Таймер тренировки</span>
               <strong id="workoutTimerDisplay">00:00</strong>
             </div>
-            <span class="timer-state">Тренировка идет</span>
+            <div class="timer-side">
+              <strong id="bandLiveHr" class="band-live-hr" hidden></strong>
+              <span class="timer-state">Тренировка идет</span>
+            </div>
           </div>
+          <p id="bandNudge" class="band-nudge" hidden>
+            На браслет ушло уведомление. Запусти там <strong>Свободную тренировку</strong> — Xiaomi не даёт стартовать её с телефона сама.
+          </p>
 
           <form id="workoutForm" class="form active-workout">
             <p class="workout-helper active-helper">Идешь сверху вниз: галочка, вес/повторы, RPE. В конце нажми <strong>Завершить тренировку</strong>.</p>
@@ -202,13 +209,39 @@
         <div class="ai-chat">
           <div id="aiChatLog" class="ai-chat-log"></div>
           <div class="ai-chat-composer">
-            <textarea id="aiChatInput" rows="3" placeholder="Напиши тренеру…"></textarea>
+            <textarea id="aiChatInput" rows="2" placeholder="Напиши тренеру…"></textarea>
             <button id="aiChatSendButton" class="button primary" type="button">Отправить</button>
           </div>
           <div class="ai-chat-meta">
             <small id="aiStatus"></small>
           </div>
         </div>
+      </section>
+      </section>
+
+      <section class="view" data-view="band">
+      <section class="panel band-page">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Mi Band</p>
+            <h2>Браслет</h2>
+          </div>
+          <small id="bandPageMeta" class="cabinet-status">Сон, пульс, шаги и калории</small>
+        </div>
+        <p id="wearableStatus" class="wearable-help">Данные идут через Mi Fitness → Health Connect</p>
+        <div class="cabinet-actions">
+          <button id="wearableConnectButton" class="button secondary" type="button">Подключить</button>
+          <button id="wearableRefreshButton" class="button ghost" type="button">Обновить</button>
+          <button id="wearableSettingsButton" class="button ghost" type="button">Health Connect</button>
+        </div>
+        <div id="wearableStats" class="wearable-stats" hidden></div>
+        <div id="bandSleepCard" class="band-sleep" hidden></div>
+        <div id="bandLastSession"></div>
+        <div class="band-page-block">
+          <h3>Последние тренировки</h3>
+          <div id="bandChart" class="band-analytics"></div>
+        </div>
+        <p class="wearable-help">В Mi Fitness: профиль → Health Connect → шаги, пульс, сон, калории и тренировки. После старта зала запусти на браслете свободную тренировку — тогда пульс и зоны попадут в отчёт сессии.</p>
       </section>
       </section>
 
@@ -225,8 +258,50 @@
         <section class="cabinet-section">
           <div class="cabinet-section-head">
             <h3>Аккаунт</h3>
-            <p id="cloudStatus">Офлайн-режим: тренировки хранятся на этом устройстве.</p>
+            <p id="cloudStatus">Подключаю облако…</p>
           </div>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
+            <h3>AI-тренер</h3>
+            <p>Без аккаунта и дневных лимитов. Ключ хранится только на этом устройстве.</p>
+          </div>
+          <div class="cabinet-actions cabinet-actions-stack">
+            <input id="aiApiKeyInput" type="password" placeholder="OpenAI API key" autocomplete="off" />
+            <button id="saveAiApiKeyButton" class="button secondary" type="button">Сохранить ключ</button>
+          </div>
+          <details class="gym-details">
+            <summary>Прокси, если OpenAI недоступен напрямую</summary>
+            <div class="cabinet-actions cabinet-actions-stack">
+              <input id="aiBaseUrlInput" type="url" placeholder="https://api.openai.com/v1" autocomplete="off" />
+              <button id="saveAiBaseUrlButton" class="button ghost" type="button">Сохранить URL</button>
+            </div>
+          </details>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
+            <h3>Браслет</h3>
+            <p>Сон, пульс и калории — во вкладке «Браслет»</p>
+          </div>
+          <div class="cabinet-actions">
+            <button id="openBandViewButton" class="button secondary" type="button">Открыть браслет</button>
+          </div>
+        </section>
+
+        <section class="cabinet-section" id="widgetPinSection" hidden>
+          <div class="cabinet-section-head">
+            <h3>Виджеты на рабочий стол</h3>
+            <p>На Xiaomi обычный список часто прячет Android-виджеты. Добавь отсюда — или через «Android-виджеты».</p>
+          </div>
+          <div class="cabinet-actions">
+            <button class="button secondary" data-widget-pin="start" type="button">Старт 2×1</button>
+            <button class="button ghost" data-widget-pin="session" type="button">Сессия 2×2</button>
+            <button class="button ghost" data-widget-pin="week" type="button">Неделя 3×2</button>
+            <button class="button ghost" data-widget-pin="overview" type="button">Обзор 4×2</button>
+          </div>
+          <p class="wearable-help">Либо долгий тап по столу → Виджеты → Приложения с виджетами → Все → Android-виджеты → Тренировки.</p>
         </section>
 
         <section class="cabinet-section">
@@ -276,7 +351,7 @@
         <section class="cabinet-section">
           <div id="cloudLoggedIn" class="cabinet-actions cabinet-actions-stack" hidden>
             <button id="cloudSyncButton" class="button secondary" type="button">Синхронизировать с другими устройствами</button>
-            <button id="cloudSignOutButton" class="button ghost" type="button">Выйти</button>
+            <button id="cloudSignOutButton" class="button ghost" type="button" hidden>Выйти</button>
           </div>
         </section>
       </section>
@@ -353,6 +428,13 @@
           <span>AI-тренер</span>
           <span class="bottom-nav-dot"></span>
         </button>
+        <button class="bottom-nav-btn" data-target="band" type="button">
+          <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="7"/><polyline points="12 9 12 12 14.5 13.5"/>
+          </svg>
+          <span>Браслет</span>
+          <span class="bottom-nav-dot"></span>
+        </button>
         <button class="bottom-nav-btn" data-target="analytics" type="button">
           <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4v1a3 3 0 0 0 3 3"/><path d="M17 5h3v1a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8"/><path d="M10 17h4v4h-4z"/>
@@ -389,11 +471,12 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=125"></script>
-    <script src="./training-tracker.js?v=125"></script>
+    <script src="./exercise-catalog.js?v=139"></script>
+    <script src="./wearable.js?v=139"></script>
+    <script src="./training-tracker.js?v=139"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=125"></script>
-    <script src="./cloud.js?v=125"></script>
+    <script src="./supabase-config.js?v=139"></script>
+    <script src="./cloud.js?v=139"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -405,11 +488,13 @@
           views.forEach((view) => view.classList.toggle("is-active", view.dataset.view === target));
           window.scrollTo(0, 0);
           if (target === "ai") {
-            // Пока вкладка скрыта, scrollHeight у лога нулевой — мотаем после показа.
             requestAnimationFrame(() => {
               const log = document.querySelector("#aiChatLog");
               if (log) log.scrollTop = log.scrollHeight;
             });
+          }
+          if (target === "band") {
+            window.trainyOpenBandView && window.trainyOpenBandView();
           }
           try { sessionStorage.setItem("training-tracker-view", target); } catch (error) { /* ок */ }
         }
@@ -426,7 +511,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v125";
+      const APP_VERSION = "v139";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

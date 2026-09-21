@@ -24,6 +24,7 @@
 !data/exercise-catalog.json
 !tools/
 !tools/build-exercise-catalog.py
+!tools/sync-android-web.js
 !.cursor/
 !.cursor/rules/
 !.cursor/rules/*.mdc
@@ -34,9 +35,18 @@
 !icon-512.svg
 !DEPLOY_TRAINING_APP.md
 !IOS_APP.md
+!ANDROID.md
 !package.json
+!requirements-qa.txt
+!pytest.ini
+!playwright.config.py
 !capacitor.config.json
 !www/
 !www/index.html
 !ios-native/
 !ios-native/*.swift
+!qa/
+!qa/*.md
+!tests/
+!tests/e2e/
+!tests/e2e/*.py

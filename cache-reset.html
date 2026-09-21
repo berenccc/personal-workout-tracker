@@ -35,7 +35,7 @@
   <body>
     <main>
       <h1>Обновляю трекер</h1>
-      <p>Чищу кэш приложения и открываю свежую версию. Аккаунт и тренировки в защищённом облаке не удаляются.</p>
+      <p>Чищу кэш приложения и открываю свежую версию. Тренировки на устройстве не удаляются.</p>
     </main>
     <script>
       async function resetAppCache() {
@@ -49,7 +49,7 @@
           await Promise.all(keys.map((key) => caches.delete(key)));
         }
 
-        window.location.replace(`./training-tracker.html?v=125&fresh=${Date.now()}`);
+        window.location.replace(`./training-tracker.html?v=139&fresh=${Date.now()}`);
       }
 
       resetAppCache();

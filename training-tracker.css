@@ -116,64 +116,7 @@ label,
 .app {
   width: min(720px, calc(100vw - 16px));
   margin: 0 auto;
-  padding: 16px 0 28px;
-}
-
-.locked .app {
-  display: none;
-}
-
-.auth-screen {
-  display: none;
-  min-height: 100vh;
-  place-items: center;
-  padding: 20px;
-}
-
-.locked .auth-screen {
-  display: grid;
-}
-
-.auth-card {
-  display: grid;
-  width: min(420px, 100%);
-  gap: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 22px;
-  background: var(--panel);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
-}
-
-.auth-card h1 {
-  margin-bottom: 0;
-  font-size: 36px;
-}
-
-.auth-card .lead {
-  font-size: 15px;
-}
-
-.auth-error {
-  min-height: 18px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.auth-error.is-error {
-  color: var(--danger);
-}
-
-#authEmailRow,
-#authOtpRow {
-  display: grid;
-  gap: 12px;
-}
-
-#authEmailRow[hidden],
-#authOtpRow[hidden] {
-  display: none;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 0 28px;
 }
 
 .hero,
@@ -242,6 +185,10 @@ label,
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.cabinet-actions[hidden] {
+  display: none;
 }
 
 .cabinet-actions-stack {
@@ -550,6 +497,245 @@ h3 {
   background: var(--workout-card);
 }
 
+.wearable-apply {
+  display: none;
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--accent-line);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  line-height: 1.35;
+  padding: 10px 12px;
+}
+
+.wearable-apply:not([hidden]) {
+  display: block;
+}
+
+.wearable-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wearable-stat {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+
+.wearable-stat span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wearable-stat strong {
+  font-size: 16px;
+  letter-spacing: -0.03em;
+}
+
+.wearable-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.band-today {
+  display: none;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--workout-line);
+  border-radius: 16px;
+  background: var(--workout-card);
+}
+
+.band-today .wearable-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.band-page {
+  display: grid;
+  gap: 12px;
+}
+
+.band-page-block h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.band-sleep {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-2);
+}
+
+.band-sleep strong {
+  font-size: 14px;
+}
+
+.band-sleep span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.band-today-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.band-today-head span {
+  color: var(--workout-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.band-today-head small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.timer-side {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.band-live-hr {
+  display: none;
+  color: var(--workout-accent);
+  font-size: 22px;
+  letter-spacing: -0.04em;
+}
+
+.band-live-hr:not([hidden]) {
+  display: block;
+}
+
+.wearable-session {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel-2);
+}
+
+.wearable-session-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: baseline;
+}
+
+.wearable-session-top strong {
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.wearable-session-top span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hr-spark {
+  display: block;
+  width: 100%;
+  height: 72px;
+  color: var(--accent);
+}
+
+.band-zones {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.band-zone {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.band-zone i {
+  display: block;
+  height: 8px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+}
+
+.band-zone i em {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.band-zone span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.band-analytics {
+  display: grid;
+  gap: 12px;
+}
+
+.band-analytics-row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.band-analytics-row small,
+.band-analytics-row span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.band-analytics-bar {
+  height: 10px;
+  border-radius: 99px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.band-analytics-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
 .overview-card > span {
   color: var(--workout-muted);
   font-size: 12px;
@@ -674,6 +860,26 @@ h3 {
   font-size: 28px;
   line-height: 1;
   letter-spacing: -0.04em;
+}
+
+.band-nudge {
+  display: none;
+  margin: -4px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--workout-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.band-nudge:not([hidden]) {
+  display: block;
+}
+
+.band-nudge strong {
+  color: var(--text);
 }
 
 .timer-button {
@@ -1347,8 +1553,7 @@ select {
 .view.is-active[data-view="ai"] {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 68px - env(safe-area-inset-bottom, 0px) - 26px);
-  height: calc(100dvh - 68px - env(safe-area-inset-bottom, 0px) - 26px);
+  height: calc(var(--vv-height, 100dvh) - 68px - env(safe-area-inset-bottom, 0px) - 26px);
 }
 
 .ai-panel {
@@ -1449,6 +1654,43 @@ select {
   justify-self: start;
 }
 
+.ai-plan-offer {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(200, 241, 53, 0.08);
+}
+
+.ai-plan-offer-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.ai-plan-offer-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ai-plan-offer-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ai-plan-offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .ai-msg-typing {
   display: inline-flex;
   align-items: center;
@@ -1488,6 +1730,11 @@ select {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: end;
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  background: var(--panel);
+  padding-top: 4px;
 }
 
 .ai-chat-composer textarea {
@@ -1739,6 +1986,19 @@ select {
 
   .cabinet-section {
     padding: 12px 0;
+  }
+
+  .wearable-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .wearable-stat {
+    padding: 8px;
+  }
+
+  .wearable-stat strong {
+    font-size: 14px;
   }
 
   .layout {
@@ -2443,7 +2703,7 @@ select {
   border: 0;
   background: transparent;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -2483,9 +2743,49 @@ body {
   padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 10px);
 }
 
+html.keyboard-open .bottom-nav {
+  transform: translateY(120%);
+  pointer-events: none;
+}
+
+html.keyboard-open body {
+  padding-bottom: 8px;
+}
+
+html.keyboard-open .view.is-active[data-view="ai"] {
+  height: calc(var(--vv-height, 100dvh) - 8px);
+}
+
+html.keyboard-open .ai-quick,
+html.keyboard-open .ai-chat-meta,
+html.keyboard-open .ai-panel .panel-header {
+  display: none;
+}
+
+html.keyboard-open .ai-chat-composer {
+  grid-template-columns: minmax(0, 1fr) auto;
+  position: sticky;
+  bottom: 0;
+}
+
+html.keyboard-open .ai-chat-composer textarea {
+  min-height: 48px;
+  max-height: 72px;
+}
+
+html.keyboard-open .ai-chat-composer .button {
+  width: auto;
+  min-height: 48px;
+  padding-inline: 14px;
+}
+
 @media (max-width: 620px) {
   body {
     padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+
+  html.keyboard-open body {
+    padding-bottom: 8px;
   }
 }
 

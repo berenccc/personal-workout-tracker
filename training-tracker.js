@@ -2,9 +2,16 @@ const STORAGE_KEY = "training-tracker-v3";
 const WORKOUT_DRAFT_KEY = "training-tracker-active-workout-draft-v1";
 const AI_CHAT_STORAGE = "training-tracker-ai-chat-v1";
 const AI_PLAN_STORAGE = "training-tracker-ai-plan-v1";
+const AI_PENDING_PLAN_KEY = "training-tracker-ai-pending-plan-v1";
 const AI_POST_WORKOUT_PENDING_KEY = "training-tracker-ai-post-workout-pending-v1";
+const DISCARD_TEST_SESSION_KEY = "training-tracker-discard-test-2026-09-21-b";
+const TEST_SESSION_DATE = "2026-09-21";
 const CUSTOM_EXERCISES_KEY = "training-tracker-custom-exercises-v1";
 const OFFLINE_HISTORY_URL = "./data/workouts.json";
+const AI_KEY_STORAGE = "training-tracker-ai-key";
+const AI_BASE_STORAGE = "training-tracker-ai-base-url";
+const AI_DEFAULT_BASE_URL = "https://api.openai.com/v1";
+const AI_MODEL = "gpt-5.6-terra";
 // Технические предохранители, чтобы не раздувать запрос до лимитов провайдера
 // и не зациклить вызовы инструментов.
 const AI_MAX_TOOL_ROUNDS = 12;
@@ -174,8 +181,8 @@ function updateCabinetStatus() {
   const gymCount = exercises.filter((exercise) => isExerciseAvailable(exercise)).length;
   const parts = [
     `Зал ${gymCount}`,
-    "облако",
-    "AI через сервер",
+    window.cloudSync?.isAuthenticated?.() ? "облако" : "личное устройство",
+    getAiApiKey() || window.cloudSync?.isReady?.() ? "AI без лимитов" : "AI: нужен ключ",
   ];
   elements.cabinetStatus.textContent = parts.join(" · ");
 }
@@ -385,6 +392,8 @@ function renderDayDetail() {
       `RPE ${averageWorkoutRpe(workout) || "n/a"}`,
       workout.durationMinutes ? `${workout.durationMinutes} мин` : null,
       workout.sessionEffort ? sessionEffortLabel(workout.sessionEffort) : null,
+      workout.wearable?.sessionTypeLabel || (workout.wearable?.hrAvg ? `пульс ${workout.wearable.hrAvg}` : null),
+      workout.wearable?.calories ? `${workout.wearable.calories} ккал` : null,
     ].filter(Boolean).map((part) => `<span>${part}</span>`).join("");
 
     const exercisesHtml = (workout.exercises || []).map((item) => {
@@ -404,7 +413,11 @@ function renderDayDetail() {
         <div class="day-detail-meta">${meta}</div>
         ${workout.notes ? `<p class="day-detail-note">${escapeHtml(workout.notes)}</p>` : ""}
         ${workout.afterNotes ? `<p class="day-detail-note after">«${escapeHtml(workout.afterNotes)}»</p>` : ""}
+        ${wearableCardHtml(workout.wearable)}
         <ul class="day-detail-exercises">${exercisesHtml}</ul>
+        <div class="day-detail-actions">
+          <button class="button ghost danger-action" type="button" data-action="delete-workout" data-index="${state.workouts.indexOf(workout)}">Удалить тренировку</button>
+        </div>
       </article>
     `;
   }).join("");
@@ -562,6 +575,7 @@ let workoutTimer = {
   stoppedAt: null,
   intervalId: null,
 };
+let liveBandHrTimer = null;
 
 const elements = {
   statsGrid: document.querySelector("#statsGrid"),
@@ -590,6 +604,10 @@ const elements = {
   aiChatSendButton: document.querySelector("#aiChatSendButton"),
   aiChatClearButton: document.querySelector("#aiChatClearButton"),
   aiStatus: document.querySelector("#aiStatus"),
+  aiApiKeyInput: document.querySelector("#aiApiKeyInput"),
+  saveAiApiKeyButton: document.querySelector("#saveAiApiKeyButton"),
+  aiBaseUrlInput: document.querySelector("#aiBaseUrlInput"),
+  saveAiBaseUrlButton: document.querySelector("#saveAiBaseUrlButton"),
   readinessPill: document.querySelector("#readinessPill"),
   prBoard: document.querySelector("#prBoard"),
   chartExerciseSelect: document.querySelector("#chartExerciseSelect"),
@@ -612,6 +630,20 @@ const elements = {
   dayDetail: document.querySelector("#dayDetail"),
   weekdayPicker: document.querySelector("#weekdayPicker"),
   calModeButton: document.querySelector("#calModeButton"),
+  workoutTitle: document.querySelector("#workoutTitle"),
+  workoutEyebrow: document.querySelector("#workoutEyebrow"),
+  wearableStatus: document.querySelector("#wearableStatus"),
+  wearableStats: document.querySelector("#wearableStats"),
+  wearableConnectButton: document.querySelector("#wearableConnectButton"),
+  wearableRefreshButton: document.querySelector("#wearableRefreshButton"),
+  wearableSettingsButton: document.querySelector("#wearableSettingsButton"),
+  wearableApplyHint: document.querySelector("#wearableApplyHint"),
+  bandPageMeta: document.querySelector("#bandPageMeta"),
+  bandSleepCard: document.querySelector("#bandSleepCard"),
+  bandLastSession: document.querySelector("#bandLastSession"),
+  openBandViewButton: document.querySelector("#openBandViewButton"),
+  bandLiveHr: document.querySelector("#bandLiveHr"),
+  bandChart: document.querySelector("#bandChart"),
 };
 
 const ACCENT_KEY = "training-tracker-accent";
@@ -623,6 +655,41 @@ const ACCENT_COLORS = [
   { id: "amber", color: "#ffb454", label: "Янтарь" },
 ];
 
+function bindKeyboardInset() {
+  window.trainySetKeyboardInset = (cssIme) => {
+    window.trainyNativeImePx = Math.max(0, Number(cssIme) || 0);
+    syncKeyboardInset();
+  };
+  const viewport = window.visualViewport;
+  const sync = () => window.requestAnimationFrame(syncKeyboardInset);
+  window.addEventListener("resize", sync);
+  window.addEventListener("focusin", sync);
+  window.addEventListener("focusout", () => window.setTimeout(sync, 80));
+  viewport?.addEventListener("resize", sync);
+  viewport?.addEventListener("scroll", sync);
+  syncKeyboardInset();
+}
+
+function syncKeyboardInset() {
+  const focused = Boolean(document.activeElement?.closest?.("input, textarea, select"));
+  let open = false;
+  if (typeof window.trainyNativeImePx === "number") {
+    open = window.trainyNativeImePx > 80 && focused;
+    document.documentElement.style.setProperty("--keyboard-inset", "0px");
+    document.documentElement.style.setProperty("--vv-height", `${Math.round(window.innerHeight)}px`);
+  } else {
+    const viewport = window.visualViewport;
+    const visible = viewport ? viewport.height : window.innerHeight;
+    const offset = viewport ? viewport.offsetTop : 0;
+    const inset = Math.max(0, Math.round(window.innerHeight - visible - offset));
+    open = inset > 80 && focused;
+    document.documentElement.style.setProperty("--keyboard-inset", `${open ? inset : 0}px`);
+    document.documentElement.style.setProperty("--vv-height", `${Math.round(visible)}px`);
+  }
+  document.documentElement.classList.toggle("keyboard-open", open);
+  if (open && elements.aiChatLog) elements.aiChatLog.scrollTop = elements.aiChatLog.scrollHeight;
+}
+
 function boot() {
   requestPersistentStorage();
   renderAccentPicker();
@@ -633,11 +700,15 @@ function boot() {
   renderScheduleCalendar();
   loadPlannedWorkout();
   applyStoredAiPlan();
+  discardTestSessionOnce();
   restoreWorkoutDraft();
   bindEvents();
   render();
   window.offlineHistoryReady = loadOfflineHistory();
   initAiCoach();
+  initWearable();
+  consumeWidgetLaunch();
+  bindKeyboardInset();
 }
 
 function currentAccent() {
@@ -730,9 +801,35 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 3, workouts: state.workouts }));
 }
 
+function isTestSession(workout) {
+  if (!workout) return false;
+  return workout.date === TEST_SESSION_DATE || String(workout.id || "").startsWith(`manual-${TEST_SESSION_DATE}`);
+}
+
+function discardTestSessionOnce() {
+  if (localStorage.getItem(DISCARD_TEST_SESSION_KEY)) return;
+  localStorage.setItem(DISCARD_TEST_SESSION_KEY, "1");
+
+  const hadDraft = Boolean(localStorage.getItem(WORKOUT_DRAFT_KEY));
+  localStorage.removeItem(WORKOUT_DRAFT_KEY);
+  localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
+
+  const removed = (state.workouts || []).filter(isTestSession);
+  if (removed.length) {
+    const removedIds = new Set(removed.map((workout) => workout.id).filter(Boolean));
+    state.workouts = state.workouts.filter((workout) => !isTestSession(workout) && !removedIds.has(workout.id));
+    saveState();
+    const dropCloud = () => removed.forEach((workout) => window.cloudSync?.deleteWorkout?.(workout));
+    dropCloud();
+    setTimeout(dropCloud, 1500);
+  }
+
+  if (hadDraft || removed.length) showToast("Тестовая тренировка удалена");
+}
+
 function bindEvents() {
   elements.resetButton.addEventListener("click", () => {
-    if (!confirm("Очистить локальный кэш на этом устройстве? Тренировки в облаке останутся.")) return;
+    if (!confirm("Очистить локальный кэш на этом устройстве?")) return;
     state = { workouts: [] };
     saveState();
     localStorage.removeItem(WORKOUT_DRAFT_KEY);
@@ -749,8 +846,16 @@ function bindEvents() {
   elements.buildWorkoutButton?.addEventListener("click", runWorkoutBuilder);
 
   elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
+  elements.saveAiApiKeyButton?.addEventListener("click", saveAiApiKey);
+  elements.saveAiBaseUrlButton?.addEventListener("click", saveAiBaseUrl);
   elements.aiChatClearButton.addEventListener("click", clearAiChat);
   elements.aiChatLog.addEventListener("click", (event) => {
+    const planButton = event.target.closest("[data-ai-plan]");
+    if (planButton) {
+      if (planButton.dataset.aiPlan === "accept") acceptPendingAiPlan();
+      else declinePendingAiPlan();
+      return;
+    }
     if (event.target.closest(".ai-retry-button")) retryAiChat();
   });
   document.querySelectorAll(".ai-quick-chip").forEach((chip) => {
@@ -765,6 +870,7 @@ function bindEvents() {
       sendAiChatMessage();
     }
   });
+  elements.aiChatInput.addEventListener("focus", syncKeyboardInset);
   elements.gymSelectAllButton?.addEventListener("click", () => {
     exercises.forEach((exercise) => gymSet().add(exercise.id));
     saveMyGym();
@@ -801,6 +907,11 @@ function bindEvents() {
       startBackfillWorkout(selectedDayIso);
       return;
     }
+    const removeButton = event.target.closest('[data-action="delete-workout"]');
+    if (removeButton) {
+      deleteWorkoutAt(Number(removeButton.dataset.index));
+      return;
+    }
     if (event.target.closest('[data-action="unplan"]') && selectedDayIso) {
       schedule().delete(selectedDayIso);
       saveSchedule();
@@ -816,6 +927,15 @@ function bindEvents() {
   });
   elements.copyReportButton.addEventListener("click", copyWorkoutReport);
   elements.startWorkoutButton.addEventListener("click", startWorkoutTimer);
+  elements.wearableConnectButton?.addEventListener("click", connectWearable);
+  elements.wearableRefreshButton?.addEventListener("click", refreshWearable);
+  elements.wearableSettingsButton?.addEventListener("click", openWearableSettings);
+  elements.openBandViewButton?.addEventListener("click", () => window.showAppView?.("band"));
+  window.trainyOpenBandView = () => refreshWearable(true);
+  document.querySelectorAll("[data-widget-pin]").forEach((button) => {
+    button.addEventListener("click", () => pinNativeWidget(button.dataset.widgetPin));
+  });
+  elements.wearableApplyHint?.addEventListener("click", applyWearableReadiness);
   elements.dateInput.addEventListener("change", saveWorkoutDraft);
   elements.readinessInput.addEventListener("change", () => {
     renderCoach();
@@ -827,6 +947,7 @@ function bindEvents() {
   window.addEventListener("pagehide", saveWorkoutDraft);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") saveWorkoutDraft();
+    else refreshWearable(true);
   });
 
   elements.workoutForm.addEventListener("submit", async (event) => {
@@ -839,6 +960,8 @@ function bindEvents() {
       alert("Добавь хотя бы одно упражнение.");
       return;
     }
+    const band = await attachWearableMetrics(workout);
+    if (band) workout.wearable = band;
 
     isFinishingWorkout = true;
     setFinishButtonState("saving");
@@ -851,10 +974,9 @@ function bindEvents() {
         JSON.stringify({ workoutId: workout.id, workoutDate: workout.date, savedAt: Date.now() })
       );
       if (navigator.vibrate) navigator.vibrate(80);
-      showToast("Тренировка сохранена ✓");
 
       const pushedToCloud = await window.cloudSync?.pushWorkout(workout);
-      showToast(pushedToCloud ? "Сохранено в облаке ✓" : "Сохранено локально — облако догонит при синхронизации", pushedToCloud ? "success" : "warn");
+      showToast(pushedToCloud ? "Сохранено в облаке ✓" : "Сохранено ✓");
       try {
         await copyText(buildWorkoutReport(workout));
         elements.copyReportButton.textContent = "Отчет скопирован";
@@ -879,6 +1001,26 @@ function bindEvents() {
   });
 }
 
+async function nudgeBandWorkout(phase) {
+  const box = document.querySelector("#bandNudge");
+  const api = window.TrainyWearable;
+  if (phase === "stop") {
+    if (box) box.hidden = true;
+    await api?.stopBandWorkout?.();
+    return;
+  }
+  if (!api?.isNative?.()) {
+    if (box) box.hidden = true;
+    return;
+  }
+  try {
+    await api.startBandWorkout();
+    if (box) box.hidden = false;
+  } catch {
+    if (box) box.hidden = true;
+  }
+}
+
 function startWorkoutTimer() {
   if (workoutTimer.startedAt) return;
 
@@ -891,6 +1033,9 @@ function startWorkoutTimer() {
   };
   renderWorkoutTimer();
   saveWorkoutDraft();
+  updateNativeWidget();
+  nudgeBandWorkout("start");
+  startLiveBandHr();
   window.setTimeout(() => elements.selectedExercises.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
 }
 
@@ -904,6 +1049,8 @@ function stopWorkoutTimer() {
   }
   renderWorkoutTimer();
   saveWorkoutDraft();
+  nudgeBandWorkout("stop");
+  stopLiveBandHr();
 }
 
 function resetWorkoutTimer() {
@@ -917,6 +1064,14 @@ function resetWorkoutTimer() {
   elements.startWorkoutButton.disabled = false;
   elements.workoutTimerDisplay.textContent = "00:00";
   elements.workoutPanel.classList.remove("is-active");
+  const nudge = document.querySelector("#bandNudge");
+  if (nudge) nudge.hidden = true;
+  stopLiveBandHr();
+  if (elements.bandLiveHr) {
+    elements.bandLiveHr.hidden = true;
+    elements.bandLiveHr.textContent = "";
+  }
+  updateNativeWidget();
 }
 
 function saveWorkoutDraft() {
@@ -981,6 +1136,7 @@ function restoreWorkoutDraft() {
       };
       if (!workoutTimer.stoppedAt) {
         workoutTimer.intervalId = window.setInterval(renderWorkoutTimer, 1000);
+        startLiveBandHr();
       }
       renderWorkoutTimer();
       setSyncStatus("Восстановил незавершенную тренировку с этого устройства.");
@@ -1042,18 +1198,15 @@ function showFinishNotice(workout, pushedToCloud) {
   });
 
   elements.finishNotice.hidden = false;
-  elements.finishNotice.className = `finish-notice ${pushedToCloud ? "is-synced" : "is-local"}`;
+  elements.finishNotice.className = "finish-notice is-synced";
   elements.finishNotice.innerHTML = `
     <div class="finish-notice-header">
-      <span>${pushedToCloud ? "Готово, сильная работа" : "Тренировка сохранена локально"}</span>
+      <span>Готово, сильная работа</span>
       <strong>${doneSets}/${totalSets} подходов</strong>
     </div>
-    <p>
-      ${pushedToCloud
-        ? "Тренировка сохранена в защищённом облаке."
-        : "Тренировка сохранена на этом устройстве и отправится в облако при следующей синхронизации."}
-    </p>
+    <p>${pushedToCloud ? "Тренировка сохранена в облаке." : "Тренировка сохранена."}</p>
     ${workout.durationMs ? `<p>Длительность: <strong>${formatDuration(workout.durationMs)}</strong></p>` : ""}
+    ${wearableCardHtml(workout.wearable)}
     <ol class="finish-summary-list">${rows.join("")}</ol>
   `;
   elements.finishNotice.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1062,6 +1215,20 @@ function showFinishNotice(workout, pushedToCloud) {
 function hideFinishNotice() {
   elements.finishNotice.hidden = true;
   elements.finishNotice.innerHTML = "";
+}
+
+function deleteWorkoutAt(index) {
+  const workout = state.workouts[index];
+  if (!workout) return;
+  if (!confirm(`Удалить тренировку ${formatDate(workout.date)}?`)) return;
+
+  state.workouts.splice(index, 1);
+  saveState();
+  window.cloudSync?.deleteWorkout?.(workout);
+  if (!workoutsOnDate(workout.date).length) selectedDayIso = null;
+  render();
+  renderDayDetail();
+  showToast("Тренировка удалена");
 }
 
 function upsertWorkout(workout) {
@@ -1486,31 +1653,149 @@ function render() {
   renderCharts();
   renderHistory();
   renderScheduleCalendar();
+  renderBandAnalytics();
   updateNativeWidget();
 }
 
-// В iOS-приложении (Capacitor) передаём сводку виджету на домашнем экране.
+function currentPlanTitle() {
+  const groups = [...new Set(selected.map((item) => findExercise(item.exerciseId)?.group).filter(Boolean))];
+  if (!groups.length) return "Тренировка";
+  if (groups.length <= 2) return groups.join(" + ");
+  return `${groups.slice(0, 2).join(" + ")} +`;
+}
+
+function renderWorkoutHeading() {
+  const today = formatInputDate(new Date());
+  const nextIso = nextPlannedWorkoutDate();
+  const active = Boolean(workoutTimer.startedAt && !workoutTimer.stoppedAt);
+  if (elements.workoutEyebrow) {
+    elements.workoutEyebrow.textContent = active ? "Тренировка идёт" : nextIso === today ? "Сегодня" : "Ближайшая тренировка";
+  }
+  if (elements.workoutTitle) {
+    elements.workoutTitle.textContent = currentPlanTitle();
+  }
+}
+
+function weekWidgetDays() {
+  const today = formatInputDate(new Date());
+  const done = workoutDateSet();
+  const start = new Date(`${mondayOf(new Date())}T00:00:00`);
+  const labels = ["П", "В", "С", "Ч", "П", "С", "В"];
+  return labels.map((label, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    const iso = formatInputDate(date);
+    let state = "rest";
+    if (done.has(iso)) state = "done";
+    else if (iso === today) state = "today";
+    else if (isPlannedDate(iso)) state = "planned";
+    return { label, state, iso };
+  });
+}
+
+function widgetWhenLabel(iso) {
+  const today = formatInputDate(new Date());
+  if (!iso) return "План";
+  if (iso === today) return "Сегодня";
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (iso === formatInputDate(tomorrow)) return "Завтра";
+  return new Intl.DateTimeFormat("ru-RU", { weekday: "short", day: "numeric", month: "short" }).format(new Date(`${iso}T00:00:00`));
+}
+
+// Сводка для виджетов на домашнем экране Android.
 function updateNativeWidget() {
+  renderWorkoutHeading();
   const bridge = window.Capacitor?.Plugins?.WidgetBridge;
   if (!bridge || !window.Capacitor?.isNativePlatform?.()) return;
 
   const dates = workoutDateSet();
-  const weekStart = mondayOf(new Date());
-  const weekWorkouts = [...dates].filter((iso) => iso >= weekStart).length;
   const nextIso = nextPlannedWorkoutDate();
-  const nextDate = nextIso
-    ? new Intl.DateTimeFormat("ru-RU", { weekday: "short", day: "2-digit", month: "2-digit" }).format(new Date(nextIso))
-    : "";
+  const last = state.workouts.at(-1);
+  const active = Boolean(workoutTimer.startedAt && !workoutTimer.stoppedAt);
+  const snapshot = window.TrainyWearable?.loadSnapshot?.() || {};
+  const totalSets = selected.reduce((sum, item) => sum + item.sets.length, 0);
+  const lastMinutes = last?.durationMinutes || (last?.durationMs ? Math.round(last.durationMs / 60000) : null);
+  const sleepBits = [];
+  if (snapshot.sleepMinutes) sleepBits.push(`сон ${window.TrainyWearable.formatMinutes(snapshot.sleepMinutes)}`);
+  if (snapshot.restingHr) sleepBits.push(`пульс покоя ${snapshot.restingHr}`);
+  if (snapshot.todayCalories) sleepBits.push(`${snapshot.todayCalories} ккал`);
 
   const payload = {
-    streakWeeks: weeklyStreak(dates),
-    weekWorkouts,
-    nextDate,
-    nextFocus: (elements.notesInput?.value || "Следующая тренировка").split(/[.\n]/)[0].trim().slice(0, 60),
+    nextTitle: currentPlanTitle(),
+    nextWhen: widgetWhenLabel(nextIso),
+    nextMeta: selected.length ? `${selected.length} упр. · ${totalSets} подх.` : "План ещё не собран",
+    nextDate: nextIso || "",
+    isActive: active,
+    activeTimer: formatDuration(getWorkoutDurationMs()),
+    startLabel: active ? "Открыть" : "Начать",
+    lastMeta: last
+      ? `Последняя ${formatDate(last.date)}${lastMinutes ? ` · ${lastMinutes} мин` : ""}${averageWorkoutRpe(last) ? ` · RPE ${averageWorkoutRpe(last)}` : ""}`
+      : "Пока нет сохранённых сессий",
+    lastHr: last?.wearable?.hrAvg
+      ? `пульс ${last.wearable.hrAvg}${last.wearable.calories ? ` · ${last.wearable.calories} ккал` : ""}`
+      : last?.wearable?.calories ? `${last.wearable.calories} ккал` : "",
+    lastDate: last?.date || "",
+    streak: weeklyStreak(dates),
+    weekWorkouts: [...dates].filter((iso) => iso >= mondayOf(new Date())).length,
+    sleep: sleepBits.join(" · "),
+    week: weekWidgetDays(),
     updatedAt: new Date().toISOString(),
   };
 
   bridge.setWidgetData({ json: JSON.stringify(payload) }).catch(() => {});
+}
+
+function handleWidgetAction(action) {
+  if (!action) return;
+  if (action === "start" || action === "open") {
+    window.showAppView?.("workout");
+    if (action === "start" && !workoutTimer.startedAt) startWorkoutTimer();
+    return;
+  }
+  if (action === "last") {
+    const last = state.workouts.at(-1);
+    if (last) {
+      selectedDayIso = last.date;
+      calendarCursor = new Date(`${last.date}T00:00:00`);
+    }
+    window.showAppView?.("calendar");
+    renderScheduleCalendar();
+    renderDayDetail();
+  }
+}
+
+async function consumeWidgetLaunch() {
+  window.trainyHandleWidgetAction = handleWidgetAction;
+  const widgetSection = document.querySelector("#widgetPinSection");
+  const native = Boolean(window.Capacitor?.isNativePlatform?.());
+  if (widgetSection) widgetSection.hidden = !native;
+  const bridge = window.Capacitor?.Plugins?.WidgetBridge;
+  if (!bridge?.consumeAction) return;
+  try {
+    const result = await bridge.consumeAction();
+    handleWidgetAction(result?.action);
+  } catch {
+    // виджет недоступен в браузере
+  }
+}
+
+async function pinNativeWidget(id) {
+  const bridge = window.Capacitor?.Plugins?.WidgetBridge;
+  if (!bridge?.pinWidget || !window.Capacitor?.isNativePlatform?.()) {
+    showToast("Виджеты есть только в Android-приложении", "warn");
+    return;
+  }
+  try {
+    const result = await bridge.pinWidget({ id });
+    if (result?.requested) {
+      showToast("Подтверди добавление виджета на рабочий стол");
+      return;
+    }
+    showToast("Xiaomi прячет их: долгий тап по столу → Виджеты → Приложения с виджетами → Все → Android-виджеты", "warn");
+  } catch {
+    showToast("Не получилось открыть диалог виджета", "warn");
+  }
 }
 
 function bestWeeklyStreak(dates) {
@@ -1562,6 +1847,7 @@ function renderStats() {
     });
   });
 
+  const bandKcal = workouts.reduce((sum, workout) => sum + (Number(workout.wearable?.calories) || 0), 0);
   const favorite = [...favoriteCounts.entries()].sort((a, b) => b[1] - a[1])[0];
   const favoriteName = favorite ? findExercise(favorite[0]).name : null;
   const bestStreak = bestWeeklyStreak(dates);
@@ -1578,6 +1864,7 @@ function renderStats() {
     stat(bestStreak, `${plural(bestStreak, "неделя", "недели", "недель")} подряд — лучшая серия`),
     favorite ? stat(`${favorite[1]}×`, `любимое упражнение — ${favoriteName}`) : null,
     hours ? stat(hours, `${plural(hours, "час", "часа", "часов")} в зале суммарно`) : null,
+    bandKcal ? stat(`${formatNumber(bandKcal)}`, "ккал с браслета за все сессии") : null,
     stat(workouts.length, firstDate ? `${plural(workouts.length, "тренировка", "тренировки", "тренировок")} с ${firstDate}` : "тренировок сохранено"),
   ].filter(Boolean).join("");
 }
@@ -1654,6 +1941,7 @@ function renderSelectedExercises() {
   });
 
   renderPlanSummary();
+  renderWorkoutHeading();
 }
 
 function moveSelectedExercise(uid, direction) {
@@ -1893,6 +2181,8 @@ function buildWorkoutReport(workout) {
   ];
 
   if (workout.durationMs) lines.push(`Длительность: ${formatDuration(workout.durationMs)}`);
+  const bandLine = wearableReportLine(workout.wearable);
+  if (bandLine) lines.push(bandLine);
   if (workout.notes) lines.push(`План/заметки до: ${workout.notes}`);
   if (workout.afterNotes) lines.push(`Заметки после: ${workout.afterNotes}`);
   lines.push("");
@@ -1941,10 +2231,318 @@ function makeUid() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function wearableApi() {
+  return window.TrainyWearable;
+}
+
+function formatWearableLine(snapshot) {
+  return wearableApi()?.hintFromSnapshot?.(snapshot) || "";
+}
+
+function renderWearableCabinet(snapshot, statusText) {
+  if (elements.wearableStatus && statusText) {
+    elements.wearableStatus.textContent = statusText;
+  }
+  if (elements.bandPageMeta) {
+    elements.bandPageMeta.textContent = snapshot ? sourceWhen(snapshot) : "Сон, пульс, шаги и калории";
+  }
+  const cards = bandStatCards(snapshot);
+  if (elements.wearableStats) {
+    elements.wearableStats.hidden = !cards.length;
+    elements.wearableStats.innerHTML = cards
+      .map(([label, value]) => `<div class="wearable-stat"><span>${label}</span><strong>${value}</strong></div>`)
+      .join("");
+  }
+  renderBandSleep(snapshot);
+  renderBandLastSession();
+  renderBandAnalytics();
+}
+
+function bandStatCards(snapshot) {
+  if (!snapshot) return [];
+  return [
+    snapshot.sleepMinutes ? ["Сон", wearableApi().formatMinutes(snapshot.sleepMinutes)] : null,
+    snapshot.restingHr ? ["Пульс покоя", `${snapshot.restingHr}`] : snapshot.lastHr ? ["Пульс", `${snapshot.lastHr}`] : null,
+    snapshot.todayCalories ? ["Калории", `${snapshot.todayCalories} ккал`] : null,
+    snapshot.todaySteps != null ? ["Шаги", Number(snapshot.todaySteps).toLocaleString("ru-RU")] : null,
+    snapshot.todayDistanceKm ? ["Дистанция", `${snapshot.todayDistanceKm} км`] : null,
+  ].filter(Boolean);
+}
+
+function renderBandSleep(snapshot) {
+  const box = elements.bandSleepCard;
+  if (!box) return;
+  if (!snapshot?.sleepMinutes) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+  const fmt = wearableApi().formatMinutes;
+  const bits = [
+    snapshot.sleepDeepMinutes ? `глубокий ${fmt(snapshot.sleepDeepMinutes)}` : null,
+    snapshot.sleepLightMinutes ? `лёгкий ${fmt(snapshot.sleepLightMinutes)}` : null,
+    snapshot.sleepRemMinutes ? `REM ${fmt(snapshot.sleepRemMinutes)}` : null,
+  ].filter(Boolean);
+  box.hidden = false;
+  box.innerHTML = `
+    <strong>Сон за ночь</strong>
+    <span>${fmt(snapshot.sleepMinutes)}${bits.length ? ` · ${bits.join(" · ")}` : ""}</span>
+  `;
+}
+
+function renderBandLastSession() {
+  const box = elements.bandLastSession;
+  if (!box) return;
+  const last = [...state.workouts].reverse().find((workout) => workout.wearable?.hrAvg || workout.wearable?.calories);
+  if (!last) {
+    box.innerHTML = "";
+    return;
+  }
+  box.innerHTML = `
+    <div class="band-page-block">
+      <h3>Последняя сессия · ${formatDate(last.date)}</h3>
+      ${wearableCardHtml(last.wearable)}
+    </div>
+  `;
+}
+
+function hrSparklineSvg(series) {
+  const points = (series || []).map((sample) => Number(sample.bpm) || 0).filter((bpm) => bpm > 30);
+  if (points.length < 2) return "";
+  const width = 280;
+  const height = 72;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = Math.max(8, max - min);
+  const path = points.map((bpm, index) => {
+    const x = (index / (points.length - 1)) * width;
+    const y = height - 8 - ((bpm - min) / span) * (height - 16);
+    return `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return `<svg class="hr-spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
+}
+
+function zoneBarHtml(wearable) {
+  const shares = wearable?.zoneShares;
+  if (!shares) return "";
+  const labels = wearableApi()?.ZONE_LABELS || {};
+  const order = wearableApi()?.ZONE_ORDER || ["warmup", "fat", "aerobic", "anaerobic", "peak"];
+  return `<div class="band-zones">${order.map((key) => `
+    <div class="band-zone">
+      <i><em style="width:${Math.max(6, shares[key] || 0)}%"></em></i>
+      <span>${labels[key] || key} ${shares[key] || 0}%</span>
+    </div>
+  `).join("")}</div>`;
+}
+
+function wearableCardHtml(wearable) {
+  if (!wearable) return "";
+  const bits = [];
+  if (wearable.sessionTypeLabel) bits.push(wearable.sessionTypeLabel);
+  if (wearable.hrAvg) bits.push(`пульс ${wearable.hrAvg} (${wearable.hrMin}–${wearable.hrMax})`);
+  if (wearable.calories) {
+    bits.push(`${wearable.calories} ккал${wearable.caloriesSource === "estimate" ? " оценка" : ""}`);
+  }
+  if (wearable.steps != null) bits.push(`шаги ${Number(wearable.steps).toLocaleString("ru-RU")}`);
+  if (!bits.length && !wearable.hrSeries?.length) return "";
+  return `
+    <div class="wearable-session">
+      <div class="wearable-session-top">
+        <strong>${escapeHtml(bits[0] || "Браслет")}</strong>
+        ${bits.slice(1).map((bit) => `<span>${escapeHtml(bit)}</span>`).join("")}
+      </div>
+      ${hrSparklineSvg(wearable.hrSeries)}
+      ${zoneBarHtml(wearable)}
+    </div>
+  `;
+}
+
+function renderWearableHint() {
+  const button = elements.wearableApplyHint;
+  if (!button) return;
+  const snapshot = wearableApi()?.loadSnapshot?.();
+  const hint = formatWearableLine(snapshot);
+  const suggested = wearableApi()?.readinessFromSnapshot?.(snapshot);
+  if (!hint || !suggested || suggested === elements.readinessInput.value) {
+    button.hidden = true;
+    button.textContent = "";
+    return;
+  }
+  button.hidden = false;
+  button.textContent = `С браслета: ${hint}`;
+}
+
+async function initWearable() {
+  const api = wearableApi();
+  if (!api) return;
+  const snapshot = api.loadSnapshot();
+  renderWearableCabinet(snapshot, snapshot ? `Последние данные: ${sourceWhen(snapshot)}` : "Сон, пульс, калории и шаги через Health Connect");
+  renderWearableHint();
+  if (!api.isNative()) {
+    renderWearableCabinet(snapshot, "На телефоне открой Android-приложение: браузер до Mi Band не достучится.");
+    return;
+  }
+  try {
+    const availability = await api.availability();
+    if (!availability?.available) {
+      renderWearableCabinet(
+        snapshot,
+        availability?.reason === "update"
+          ? "Обнови Health Connect, затем подключи браслет."
+          : "Поставь Health Connect и включи обмен в Mi Fitness."
+      );
+      return;
+    }
+    if (snapshot) await refreshWearable(true);
+    else renderWearableCabinet(snapshot, "Нажми «Подключить» на этой вкладке");
+  } catch {
+    renderWearableHint();
+  }
+}
+
+function sourceWhen(snapshot) {
+  if (!snapshot?.updatedAt) return snapshot?.sourceLabel || "браслет";
+  const time = new Date(snapshot.updatedAt);
+  if (Number.isNaN(time.getTime())) return snapshot.sourceLabel || "браслет";
+  return `${snapshot.sourceLabel || "браслет"}, ${time.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+async function connectWearable() {
+  const api = wearableApi();
+  if (!api) return;
+  elements.wearableConnectButton.disabled = true;
+  try {
+    const snapshot = await api.connect();
+    renderWearableCabinet(snapshot, `Подключено: ${sourceWhen(snapshot)}`);
+    renderWearableHint();
+    renderCoach();
+    showToast("Mi Band подключён");
+  } catch (error) {
+    renderWearableCabinet(api.loadSnapshot(), error.message || "Не удалось подключить браслет");
+    showToast(error.message || "Не удалось подключить браслет", "warn");
+  } finally {
+    elements.wearableConnectButton.disabled = false;
+  }
+}
+
+async function refreshWearable(silent = false) {
+  const api = wearableApi();
+  if (!api?.isNative?.()) return;
+  try {
+    const snapshot = await api.refresh();
+    renderWearableCabinet(snapshot, `Обновил: ${sourceWhen(snapshot)}`);
+    renderWearableHint();
+    updateNativeWidget();
+    if (!silent) showToast("Данные браслета обновлены");
+  } catch (error) {
+    if (!silent) {
+      renderWearableCabinet(api.loadSnapshot(), error.message || "Нет свежих данных с браслета");
+      showToast(error.message || "Нет данных с браслета", "warn");
+    }
+  }
+}
+
+async function openWearableSettings() {
+  try {
+    await wearableApi()?.openSettings?.();
+  } catch (error) {
+    showToast(error.message || "Открой Health Connect вручную", "warn");
+  }
+}
+
+function applyWearableReadiness() {
+  const snapshot = wearableApi()?.loadSnapshot?.();
+  const suggested = wearableApi()?.readinessFromSnapshot?.(snapshot);
+  if (!suggested) return;
+  elements.readinessInput.value = suggested;
+  renderCoach();
+  saveWorkoutDraft();
+}
+
+async function attachWearableMetrics(workout) {
+  const api = wearableApi();
+  if (!api?.sessionMetrics) return null;
+  try {
+    if (api.isNative?.()) showToast("Снимаю пульс и калории с браслета…");
+    return await api.sessionMetrics(workoutTimer.startedAt, workoutTimer.stoppedAt || Date.now());
+  } catch {
+    return null;
+  }
+}
+
+function startLiveBandHr() {
+  stopLiveBandHr();
+  pollLiveBandHr();
+  liveBandHrTimer = window.setInterval(pollLiveBandHr, 40000);
+}
+
+function stopLiveBandHr() {
+  if (liveBandHrTimer) {
+    window.clearInterval(liveBandHrTimer);
+    liveBandHrTimer = null;
+  }
+}
+
+async function pollLiveBandHr() {
+  const node = elements.bandLiveHr;
+  const api = wearableApi();
+  if (!node || !api?.liveHeartRate || !api.isNative?.()) return;
+  try {
+    const live = await api.liveHeartRate();
+    if (!live?.bpm) return;
+    node.hidden = false;
+    node.textContent = `${live.bpm}`;
+  } catch {
+    // пульс во время сессии не обязателен
+  }
+}
+
+function wearableReportLine(wearable) {
+  if (!wearable) return "";
+  const bits = [];
+  if (wearable.sessionTypeLabel) bits.push(wearable.sessionTypeLabel);
+  if (wearable.calories) bits.push(`${wearable.calories} ккал${wearable.caloriesSource === "estimate" ? " оценка" : ""}`);
+  if (wearable.sleepMinutes) bits.push(`сон ${wearableApi().formatMinutes(wearable.sleepMinutes)}`);
+  if (wearable.restingHr) bits.push(`пульс покоя ${wearable.restingHr}`);
+  if (wearable.hrAvg) bits.push(`пульс сессии ${wearable.hrAvg} (${wearable.hrMin}–${wearable.hrMax})`);
+  if (wearable.steps != null) bits.push(`шаги ${Number(wearable.steps).toLocaleString("ru-RU")}`);
+  return bits.length ? `Браслет: ${bits.join(", ")}` : "";
+}
+
+function renderBandAnalytics() {
+  const box = elements.bandChart;
+  if (!box) return;
+  const rows = state.workouts
+    .filter((workout) => workout.wearable?.calories || workout.wearable?.hrAvg)
+    .slice(-8)
+    .reverse();
+  if (!rows.length) {
+    box.innerHTML = `<div class="empty">После тренировок здесь появятся зоны и калории с браслета.</div>`;
+    return;
+  }
+  const maxCalories = Math.max(...rows.map((workout) => Number(workout.wearable.calories) || 0), 1);
+  box.innerHTML = rows.map((workout) => {
+    const kcal = Number(workout.wearable.calories) || 0;
+    const type = workout.wearable.sessionTypeLabel || "Браслет";
+    const hr = workout.wearable.hrAvg ? ` · пульс ${workout.wearable.hrAvg}` : "";
+    return `
+      <div class="band-analytics-row">
+        <small>${formatDate(workout.date)}</small>
+        <div>
+          <div class="band-analytics-bar"><span style="width:${Math.max(8, Math.round((kcal / maxCalories) * 100))}%"></span></div>
+          <span>${escapeHtml(type)}${hr}</span>
+        </div>
+        <strong>${kcal ? `${kcal} ккал` : "—"}</strong>
+      </div>
+    `;
+  }).join("");
+}
+
 function renderCoach() {
   const readiness = elements.readinessInput.value;
   elements.readinessPill.textContent = readinessLabel(readiness);
   elements.readinessPill.className = `pill ${readiness === "good" ? "good" : readiness === "bad" ? "bad" : "warn"}`;
+  renderWearableHint();
 
   const scheduleCard = scheduleCoachCardHtml();
 
@@ -1995,9 +2593,54 @@ function isTouchDevice() {
   return window.matchMedia?.("(pointer: coarse)").matches;
 }
 
+function getAiApiKey() {
+  return (localStorage.getItem(AI_KEY_STORAGE) || "").trim();
+}
+
+function getAiBaseUrl() {
+  return (localStorage.getItem(AI_BASE_STORAGE) || AI_DEFAULT_BASE_URL).replace(/\/+$/, "");
+}
+
+function saveAiApiKey() {
+  const key = (elements.aiApiKeyInput?.value || "").trim();
+  if (!key) {
+    localStorage.removeItem(AI_KEY_STORAGE);
+    setAiStatus("AI key удалён с этого устройства.");
+    updateCabinetStatus();
+    return;
+  }
+
+  localStorage.setItem(AI_KEY_STORAGE, key);
+  elements.aiApiKeyInput.value = "";
+  setAiStatus("AI key сохранён. Он хранится только в этом браузере.");
+  updateCabinetStatus();
+}
+
+function saveAiBaseUrl() {
+  const value = (elements.aiBaseUrlInput?.value || "").trim().replace(/\/+$/, "");
+  if (!value) {
+    localStorage.removeItem(AI_BASE_STORAGE);
+    if (elements.aiBaseUrlInput) elements.aiBaseUrlInput.value = "";
+    setAiStatus("AI URL сброшен: снова использую api.openai.com.");
+    return;
+  }
+
+  if (!/^https:\/\/.+/i.test(value)) {
+    setAiStatus("AI URL должен начинаться с https://");
+    return;
+  }
+
+  localStorage.setItem(AI_BASE_STORAGE, value);
+  setAiStatus(`AI URL сохранён: ${value}`);
+}
+
 function initAiCoach() {
+  if (elements.aiBaseUrlInput) {
+    elements.aiBaseUrlInput.value = localStorage.getItem(AI_BASE_STORAGE) || "";
+  }
+  loadPendingAiPlan();
   renderAiChat();
-  setAiStatus("");
+  setAiStatus(getAiApiKey() ? "" : "Ключ AI — в Кабинете, без входа и лимитов.");
 }
 
 function setAiStatus(text) {
@@ -2022,12 +2665,109 @@ function clearAiChat() {
   aiChat = [];
   localStorage.removeItem(AI_CHAT_STORAGE);
   aiError = "";
+  dropPendingAiPlan();
   renderAiChat();
   setAiStatus("");
 }
 
 let aiThinking = false;
 let aiError = "";
+
+// План от AI сначала попадает сюда и ждёт кнопки «Принять»: сам он ничего не меняет.
+let pendingAiPlan = null;
+
+function loadPendingAiPlan() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AI_PENDING_PLAN_KEY));
+    pendingAiPlan = Array.isArray(saved?.exercises) && saved.exercises.length ? saved : null;
+  } catch {
+    pendingAiPlan = null;
+  }
+  if (!pendingAiPlan) localStorage.removeItem(AI_PENDING_PLAN_KEY);
+}
+
+function storePendingAiPlan(plan) {
+  pendingAiPlan = plan;
+  localStorage.setItem(AI_PENDING_PLAN_KEY, JSON.stringify(plan));
+}
+
+function dropPendingAiPlan() {
+  pendingAiPlan = null;
+  localStorage.removeItem(AI_PENDING_PLAN_KEY);
+}
+
+function pendingPlanLines(plan) {
+  return (plan?.exercises || []).map((item, index) => {
+    const exercise = findExercise(item.exerciseId);
+    const sets = (item.sets || [])
+      .map((set) => `${formatNumber(set.weight)}×${set.reps}${set.rpe ? ` @ RPE ${set.rpe}` : ""}`)
+      .join(", ");
+    return `${index + 1}. ${exercise?.name || item.exerciseId}: ${sets}`;
+  });
+}
+
+function describePendingPlanForChat() {
+  if (!pendingAiPlan) return "";
+  return ["Предлагаю такой план:", ...pendingPlanLines(pendingAiPlan)].join("\n");
+}
+
+function pendingPlanCard() {
+  if (!pendingAiPlan) return "";
+  const rows = pendingPlanLines(pendingAiPlan)
+    .map((line) => `<li>${escapeHtml(line)}</li>`)
+    .join("");
+  return `
+    <div class="ai-plan-offer">
+      <p class="ai-plan-offer-title">Новый план ждёт подтверждения</p>
+      ${pendingAiPlan.notes ? `<p class="ai-plan-offer-note">${escapeHtml(pendingAiPlan.notes)}</p>` : ""}
+      <ol class="ai-plan-offer-list">${rows}</ol>
+      <div class="ai-plan-offer-actions">
+        <button class="button" type="button" data-ai-plan="accept">Принять план</button>
+        <button class="button ghost" type="button" data-ai-plan="decline">Отклонить</button>
+      </div>
+    </div>
+  `;
+}
+
+function acceptPendingAiPlan() {
+  if (!pendingAiPlan) return;
+
+  const valid = pendingAiPlan.exercises.filter((item) => findExercise(item.exerciseId));
+  if (!valid.length) {
+    dropPendingAiPlan();
+    renderAiChat();
+    showToast("В плане нет знакомых упражнений", "warn");
+    return;
+  }
+
+  selected = valid.map((item) =>
+    planEntry(item.exerciseId, (item.sets || []).map((set) => [set.weight, set.reps, set.rpe ?? ""]))
+  );
+  if (pendingAiPlan.notes) elements.notesInput.value = pendingAiPlan.notes;
+
+  dropPendingAiPlan();
+  renderSelectedExercises();
+  persistAiPlan();
+  saveWorkoutDraft();
+  localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
+  render();
+  aiChat.push({ role: "assistant", content: "План принят — он уже на главной." });
+  persistAiChat();
+  renderAiChat();
+  setAiStatus("План принят — он на главной.");
+  showToast("План принят ✓");
+}
+
+function declinePendingAiPlan() {
+  if (!pendingAiPlan) return;
+  dropPendingAiPlan();
+  localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
+  aiChat.push({ role: "assistant", content: "План отклонён. Скажи, что поменять — предложу другой." });
+  persistAiChat();
+  renderAiChat();
+  setAiStatus("План отклонён. Скажи, что поменять.");
+  showToast("План отклонён");
+}
 
 function aiErrorBubble() {
   return `
@@ -2054,7 +2794,7 @@ function renderAiChat() {
         Примеры: «оцени последнюю тренировку», «дай фидбэк по неделе», «запланируй следующую»,
         «замени жим ногами», «добавь упражнение на спину», «сделай план полегче».
       </div>
-    `;
+    ` + pendingPlanCard();
     return;
   }
 
@@ -2065,7 +2805,7 @@ function renderAiChat() {
     })
     .join("");
   elements.aiChatLog.innerHTML =
-    bubbles + (aiThinking ? aiTypingBubble() : aiError ? aiErrorBubble() : "");
+    bubbles + (aiThinking ? aiTypingBubble() : aiError ? aiErrorBubble() : pendingPlanCard());
   elements.aiChatLog.scrollTop = elements.aiChatLog.scrollHeight;
 }
 
@@ -2073,9 +2813,9 @@ const AI_SYSTEM_PROMPT = `Ты — персональный AI-тренер вн
 
 МОЖНО ОТВЕЧАТЬ НА ЛЮБЫЕ ВОПРОСЫ ПОЛЬЗОВАТЕЛЯ. Для вопросов о тренировках, здоровье, питании, восстановлении и плане используй контекст приложения и инструменты, когда это уместно. Для прочих тем отвечай как обычный полезный AI-помощник; не вызывай тренировочные инструменты, если они не нужны.
 
-ПРОФИЛЬ АТЛЕТА: мужчина, тренируется в зале 2-3 раза в неделю на тренажёрах, гантелях и штанге. Цель — форма, самочувствие и сила без выгорания и без работы в отказ. Не любит farmer-carry. В зале есть гравитрон, жимы/тяги на тренажёрах, Belt Squat, Glute Drive, Hip&Glute, сгибания/разгибания ног, пресс/вращение корпуса, кардио (эллипс, вело, гребля, степпер, аэробайк), канаты, плюс свободные веса, перекладина, брусья, резинки и мячи — бери упражнения только из «Моего зала» / get_exercise_catalog. История знает случаи перегруза ЦНС, боли в левом плече и эпизод с правым коленом на жиме ногами — следи за этими сигналами.
+ПРОФИЛЬ АТЛЕТА: мужчина, тренируется в зале 2-3 раза в неделю на тренажёрах, гантелях и штанге. Цель — форма, самочувствие и сила без выгорания и без работы в отказ. Не любит farmer-carry. В зале есть гравитрон, жимы/тяги на тренажёрах, Belt Squat, Glute Drive, Hip&Glute, сгибания/разгибания ног, пресс/вращение корпуса, кардио (эллипс, вело, гребля, степпер, аэробайк), канаты, плюс свободные веса, перекладина, брусья, резинки и мячи — бери упражнения только из «Моего зала» / get_exercise_catalog. История знает случаи перегруза ЦНС, боли в левом плече и эпизод с правым коленом на жиме ногами — следи за этими сигналами. Если в контексте есть данные Mi Band (сон, пульс покоя, пульс сессии) — учитывай их в нагрузке: короткий сон или высокий пульс покоя = легче, без героизма.
 
-ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план и статус тренировки), get_exercise_catalog (доступные упражнения и их id). Для последней тренировки и ближайшего плана запрашивай подробные 3–12 сессий через count. Для вопросов о прогрессе, плато, рекордах, балансе нагрузки и долгосрочном планировании дополнительно вызывай get_recent_workouts с days: 365 — он вернёт компактную историю за год. Полную замену плана делай через set_planned_workout, точечное добавление одного упражнения — через add_exercise_to_plan. Всё это реально обновляет план в приложении; после вызова коротко подтверди, что именно поменял. Используй только exerciseId из каталога. На оффтоп-запросах инструменты не вызывай.
+ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план и статус тренировки), get_exercise_catalog (доступные упражнения и их id). Для последней тренировки и ближайшего плана запрашивай подробные 3–12 сессий через count. Для вопросов о прогрессе, плато, рекордах, балансе нагрузки и долгосрочном планировании дополнительно вызывай get_recent_workouts с days: 365 — он вернёт компактную историю за год. Полную замену плана делай через set_planned_workout, точечное добавление одного упражнения — через add_exercise_to_plan. ВАЖНО: set_planned_workout НЕ меняет план сразу — он показывает предложение с кнопкой «Принять план», и пользователь решает сам. Поэтому после вызова не пиши «план сохранён/обновлён»; скажи, что предложил план и ждёшь подтверждения. add_exercise_to_plan применяется сразу, потому что о нём просят явно. Используй только exerciseId из каталога. На оффтоп-запросах инструменты не вызывай.
 
 НОВЫЕ УПРАЖНЕНИЯ: если пользователь встретил в зале тренажёр или упражнение, которого нет в каталоге («тут стоит хаммер», «добавь тягу Т-грифа», «есть новый тренажёр на икры»), — добавь его через add_new_exercise (подбери группу, единицу и шаг веса), а затем, если уместно, сразу поставь в текущую тренировку через add_exercise_to_plan с консервативными весами для первого знакомства (RPE 6-7, «прощупать» вес).
 
@@ -2270,6 +3010,7 @@ function describeWorkoutForAi(workout) {
     header,
     workout.notes ? `  заметки до: ${workout.notes}` : null,
     workout.afterNotes ? `  заметки после: ${workout.afterNotes}` : null,
+    wearableReportLine(workout.wearable) ? `  ${wearableReportLine(workout.wearable)}` : null,
     ...lines,
   ].filter(Boolean).join("\n");
 }
@@ -2421,6 +3162,7 @@ function executeAiTool(name, args) {
       `Дата: ${elements.dateInput.value || "не выбрана"}`,
       `Календарь пользователя (ближайшие запланированные дни): ${upcoming.length ? upcoming.join(", ") : "пусто — дни не отмечены"}`,
       `Заметка: ${elements.notesInput.value || "нет"}`,
+      `Mi Band: ${formatWearableLine(wearableApi()?.loadSnapshot?.()) || "нет свежих данных"}`,
       "Упражнения:",
       plan.join("\n") || "план пуст",
     ].join("\n");
@@ -2478,27 +3220,33 @@ function executeAiTool(name, args) {
       return `Ошибка: неизвестные exerciseId: ${unknown.join(", ")}. Возьми точные id из get_exercise_catalog и повтори вызов.`;
     }
 
-    selected = items.map((item) =>
-      planEntry(
-        item.exerciseId,
-        (item.sets || []).map((set) => [Number(set.weight) || 0, Number(set.reps) || 0, set.rpe ? Number(set.rpe) : ""])
-      )
-    );
-    if (typeof args.notes === "string" && args.notes.trim()) {
-      elements.notesInput.value = args.notes.trim();
-    }
-    renderSelectedExercises();
-    persistAiPlan();
-    saveWorkoutDraft();
-    localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
+    // План не применяется сам: пользователь подтверждает его кнопкой в чате.
+    storePendingAiPlan({
+      version: 1,
+      createdAt: Date.now(),
+      notes: typeof args.notes === "string" ? args.notes.trim() : "",
+      exercises: items.map((item) => ({
+        exerciseId: item.exerciseId,
+        sets: (item.sets || []).map((set) => ({
+          weight: Number(set.weight) || 0,
+          reps: Number(set.reps) || 0,
+          rpe: set.rpe ? Number(set.rpe) : "",
+        })),
+      })),
+    });
+    renderAiChat();
 
-    const summary = selected
+    const summary = pendingAiPlan.exercises
       .map((item) => `${findExercise(item.exerciseId).name}: ${item.sets.length} подх.`)
       .join("; ");
-    return `План в приложении обновлён (${selected.length} упражнений): ${summary}`;
+    return `План показан пользователю на подтверждение (${pendingAiPlan.exercises.length} упражнений): ${summary}. В приложении он ПОКА НЕ применён — не пиши, что план сохранён. Скажи, что ждёшь кнопку «Принять план».`;
   }
 
   return `Ошибка: неизвестный инструмент ${name}.`;
+}
+
+function proposedOrCurrentPlanText() {
+  return describePendingPlanForChat() || describePlannedWorkoutForChat();
 }
 
 function describePlannedWorkoutForChat() {
@@ -2521,29 +3269,78 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callOpenAi(messages, toolChoice, deferredTool = "") {
+async function callOpenAiDirect(key, messages, tools, toolChoice) {
   const maxAttempts = 3;
-  const tools = toolChoice
-    ? AI_TOOL_DEFS.filter((tool) => tool.function.name === toolChoice.function.name)
-    : AI_TOOL_DEFS.filter((tool) => tool.function.name !== deferredTool);
+  const payload = {
+    model: AI_MODEL,
+    temperature: 0.4,
+    max_completion_tokens: 900,
+    reasoning_effort: "none",
+    messages: [
+      { role: "system", content: `${AI_SYSTEM_PROMPT}\n\nСегодня ${formatInputDate(new Date())}.` },
+      ...messages,
+    ],
+    tools,
+    ...(toolChoice ? { tool_choice: toolChoice } : {}),
+  };
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let response;
     try {
-      if (!window.cloudSync?.callAi) throw new Error("сервер AI ещё не готов");
-      return await window.cloudSync.callAi(messages, tools, toolChoice);
-    } catch (error) {
-      if (error?.status === 401) throw new Error("сессия истекла — войди в аккаунт заново");
-      if (error?.status === 429) throw new Error("AI временно перегружен, попробуй ещё раз чуть позже");
+      response = await fetch(`${getAiBaseUrl()}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch {
       if (attempt < maxAttempts) {
         setAiStatus(`Связь прервалась, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
         await sleep(1200 * attempt);
         continue;
       }
-      throw new Error(error?.message || "нет связи с AI-сервером");
+      const usingDefault = getAiBaseUrl() === AI_DEFAULT_BASE_URL;
+      throw new Error(
+        usingDefault
+          ? "нет доступа к OpenAI. Из России нужен VPN или прокси-URL в Кабинете"
+          : "нет связи с AI-сервером. Проверь интернет и адрес прокси в Кабинете"
+      );
+    }
+
+    if (response.status === 401) throw new Error("неверный API key");
+    if (response.status === 403) {
+      throw new Error("доступ запрещён (403): включи VPN или укажи прокси-URL в Кабинете");
+    }
+    if ((response.status === 429 || response.status >= 500) && attempt < maxAttempts) {
+      setAiStatus(`OpenAI занят, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
+      await sleep(1500 * attempt);
+      continue;
+    }
+    if (!response.ok) throw new Error(`API вернул ${response.status}`);
+    return response.json();
+  }
+
+  throw new Error("OpenAI не отвечает, попробуй чуть позже");
+}
+
+async function callOpenAi(messages, toolChoice, deferredTool = "") {
+  const tools = toolChoice
+    ? AI_TOOL_DEFS.filter((tool) => tool.function.name === toolChoice.function.name)
+    : AI_TOOL_DEFS.filter((tool) => tool.function.name !== deferredTool);
+  const key = getAiApiKey();
+  if (key) return callOpenAiDirect(key, messages, tools, toolChoice);
+
+  if (window.cloudSync?.callAi) {
+    try {
+      return await window.cloudSync.callAi(messages, tools, toolChoice);
+    } catch (error) {
+      if (error?.status === 429) throw new Error("AI временно перегружен, попробуй ещё раз чуть позже");
     }
   }
 
-  throw new Error("AI-сервер не отвечает, попробуй чуть позже");
+  throw new Error("Сначала сохрани OpenAI API key в Кабинете. Вход не нужен.");
 }
 
 async function runAiConversation({ requiredTool = "", onIntermediateText } = {}) {
@@ -2592,7 +3389,7 @@ async function runAiConversation({ requiredTool = "", onIntermediateText } = {})
         messages.push({ role: "tool", tool_call_id: call.id, content: result });
       }
       if (requiredToolApplied && pendingText) {
-        const planText = describePlannedWorkoutForChat();
+        const planText = proposedOrCurrentPlanText();
         return intermediateTextShown ? planText : `${pendingText}\n\n${planText}`;
       }
       continue;
@@ -2619,25 +3416,20 @@ async function runAiConversation({ requiredTool = "", onIntermediateText } = {})
     }
     if (text) {
       return requiredToolApplied
-        ? `${text}\n\n${describePlannedWorkoutForChat()}`
+        ? `${text}\n\n${proposedOrCurrentPlanText()}`
         : text;
     }
     throw new Error("пустой ответ модели");
   }
 
   if (requiredToolApplied) {
-    const planText = describePlannedWorkoutForChat() || requiredToolResult;
+    const planText = proposedOrCurrentPlanText() || requiredToolResult;
     return intermediateTextShown ? planText : [pendingText, planText].filter(Boolean).join("\n\n");
   }
   throw new Error("слишком много шагов, сформулируй запрос проще");
 }
 
 async function sendAiChatMessage() {
-  if (!window.cloudSync?.isAuthenticated?.()) {
-    setAiStatus("Войди в аккаунт, чтобы использовать AI-тренера.");
-    return;
-  }
-
   const text = elements.aiChatInput.value.trim();
   if (!text) return;
 
@@ -2649,7 +3441,7 @@ async function sendAiChatMessage() {
 }
 
 async function retryAiChat() {
-  if (!window.cloudSync?.isAuthenticated?.() || !aiChat.length || aiChat.at(-1).role !== "user") return;
+  if (!aiChat.length || aiChat.at(-1).role !== "user") return;
   await runAiChatCycle();
 }
 
@@ -2657,22 +3449,25 @@ function createFallbackNextWorkoutPlan() {
   const result = buildWorkoutFromGoal("fullbody", 45);
   if (!result?.plan?.length) return "";
 
-  selected = result.plan;
-  elements.notesInput.value =
-    "Автоплан после последней тренировки: фулбади ~45 мин, RPE 6–8, без отказа. Вес и ротация подобраны по истории.";
-  renderSelectedExercises();
-  persistAiPlan();
-  saveWorkoutDraft();
+  storePendingAiPlan({
+    version: 1,
+    createdAt: Date.now(),
+    notes: "Резервный план: фулбади ~45 мин, RPE 6–8, без отказа. Вес и ротация подобраны по истории.",
+    exercises: result.plan.map((item) => ({
+      exerciseId: item.exerciseId,
+      sets: item.sets.map((set) => ({ weight: set.weight, reps: set.reps, rpe: set.rpe ?? "" })),
+    })),
+  });
+  renderAiChat();
   return [
-    `AI не смог записать план инструментом, поэтому приложение собрало резервный план по твоей истории, нагрузке и упражнениям «Моего зала».`,
-    describePlannedWorkoutForChat(),
+    `AI не смог записать план инструментом, поэтому приложение собрало резервный вариант по твоей истории, нагрузке и упражнениям «Моего зала». Посмотри и нажми «Принять план», если подходит.`,
+    describePendingPlanForChat(),
   ].join("\n\n");
 }
 
 // После завершения тренировки остаёмся в AI-чате: там видны фидбэк и описание
 // сохранённого плана, а сам план уже доступен на главной.
 async function autoAiAfterWorkout() {
-  if (!window.cloudSync?.isAuthenticated?.()) return;
   window.showAppView?.("ai");
   aiChat.push({
     role: "user",
@@ -2689,7 +3484,7 @@ async function autoAiAfterWorkout() {
     },
   });
 
-  if (!selected.length) {
+  if (!pendingAiPlan && !selected.length) {
     const fallbackMessage = createFallbackNextWorkoutPlan();
     if (fallbackMessage) {
       aiChat.push({ role: "assistant", content: fallbackMessage });
@@ -2698,17 +3493,16 @@ async function autoAiAfterWorkout() {
     }
   }
 
-  if (selected.length) {
-    localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
-    setAiStatus("План сохранён — он уже доступен на главной.");
-    showToast("Следующая тренировка сохранена на главной ✓");
+  if (pendingAiPlan) {
+    setAiStatus("Посмотри план и нажми «Принять», если подходит.");
+    showToast("Новый план ждёт подтверждения");
   }
 }
 
 let aiPlanningRecoveryRunning = false;
 
 function pendingWorkoutForAiPlanning() {
-  if (selected.length || !state.workouts.length) return null;
+  if (pendingAiPlan || selected.length || !state.workouts.length) return null;
 
   try {
     const pending = JSON.parse(localStorage.getItem(AI_POST_WORKOUT_PENDING_KEY));
@@ -2732,10 +3526,12 @@ function pendingWorkoutForAiPlanning() {
     }
   }
   if (autoRequestIndex < 0) return null;
-  const planWasSaved = aiChat.slice(autoRequestIndex + 1).some((message) =>
-    message.role === "assistant" && /план на .+ сохран[её]н на главной/i.test(message.content)
+  // Сценарий закрыт, если план уже сохранён (старые версии) или по нему принято решение.
+  const planWasHandled = aiChat.slice(autoRequestIndex + 1).some((message) =>
+    message.role === "assistant" &&
+    /план на .+ сохран[её]н на главной|план принят|план отклон[её]н/i.test(message.content)
   );
-  if (planWasSaved) return null;
+  if (planWasHandled) return null;
 
   const latest = state.workouts.at(-1);
   const cutoff = new Date();
@@ -2746,7 +3542,6 @@ function pendingWorkoutForAiPlanning() {
 async function resumeAiPlanningIfNeeded() {
   if (
     aiPlanningRecoveryRunning ||
-    !window.cloudSync?.isAuthenticated?.() ||
     !pendingWorkoutForAiPlanning()
   ) {
     return;
@@ -2754,9 +3549,6 @@ async function resumeAiPlanningIfNeeded() {
 
   aiPlanningRecoveryRunning = true;
   try {
-    // План появляется сразу, даже если сеть снова оборвётся. AI затем заменит
-    // его более точным вариантом после анализа полной истории.
-    if (!selected.length) createFallbackNextWorkoutPlan();
     await autoAiAfterWorkout();
   } finally {
     aiPlanningRecoveryRunning = false;
@@ -2941,6 +3733,8 @@ function renderHistory() {
             <span>${doneSetCount(workout)}/${workoutSetCount(workout)} подходов</span>
             <span>RPE ${averageWorkoutRpe(workout) || "n/a"}</span>
             ${workout.sessionEffort ? `<span>${sessionEffortLabel(workout.sessionEffort)}</span>` : ""}
+            ${workout.wearable?.sessionTypeLabel ? `<span>${workout.wearable.sessionTypeLabel}</span>` : ""}
+            ${workout.wearable?.calories ? `<span>${workout.wearable.calories} ккал</span>` : ""}
           </div>
         </div>
         ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}

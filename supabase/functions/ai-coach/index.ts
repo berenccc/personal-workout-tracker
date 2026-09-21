@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-trainy-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -22,6 +22,7 @@ const SYSTEM_PROMPT = `Ты — AI-помощник внутри приложе�
 - Для разбора последней тренировки используй get_recent_workouts с count от 3 до 12. Для вопросов о прогрессе, плато, рекордах, балансе нагрузки и долгосрочном планировании дополнительно запроси get_recent_workouts с days: 365 — это компактная история за год.
 - Полную замену плана делай через set_planned_workout. Во время активной тренировки используй add_exercise_to_plan, чтобы не стереть выполненные подходы.
 - Если пользователь просит запланировать следующую тренировку, обязательно вызови set_planned_workout до финального ответа. Описание плана только текстом не выполняет запрос.
+- set_planned_workout только ПРЕДЛАГАЕТ план: приложение показывает его с кнопкой «Принять план», и пользователь подтверждает сам. Не пиши «план сохранён» — пиши, что предложил план и ждёшь подтверждения.
 - Используй только exerciseId из каталога. Новое упражнение сначала добавляй через add_new_exercise.
 
 МЕТОДИКА:
@@ -83,12 +84,15 @@ function sanitizeToolChoice(input: unknown, tools: unknown[]) {
   return { type: "function", function: { name } };
 }
 
+function hasPersonalAccess(request: Request) {
+  const expected = Deno.env.get("TRAINY_PERSONAL_TOKEN") || "trn-psn-k7m2q9w4x8h1c5n3";
+  const provided = request.headers.get("x-trainy-token") || "";
+  return Boolean(expected) && provided === expected;
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
-
-  const authorization = request.headers.get("Authorization");
-  if (!authorization) return json({ error: "Нужно войти в аккаунт" }, 401);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -97,11 +101,22 @@ Deno.serve(async (request) => {
     return json({ error: "AI-сервер ещё не настроен" }, 503);
   }
 
-  const supabase = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authorization } },
-  });
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) return json({ error: "Сессия истекла" }, 401);
+  const authorization = request.headers.get("Authorization");
+  let signedIn = false;
+  if (authorization) {
+    try {
+      const supabase = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authorization } },
+      });
+      const { data: userData } = await supabase.auth.getUser();
+      signedIn = Boolean(userData?.user);
+    } catch {
+      signedIn = false;
+    }
+  }
+  if (!signedIn && !hasPersonalAccess(request)) {
+    return json({ error: "AI временно недоступен" }, 401);
+  }
 
   let body: Record<string, unknown>;
   try {
