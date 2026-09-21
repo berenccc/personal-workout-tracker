@@ -647,6 +647,7 @@ const elements = {
 };
 
 const ACCENT_KEY = "training-tracker-accent";
+const WIDGET_STYLE_KEY = "training-tracker-widget-style";
 const ACCENT_COLORS = [
   { id: "lime", color: "#c8f135", label: "Лайм" },
   { id: "cyan", color: "#2fd3f0", label: "Циан" },
@@ -693,6 +694,7 @@ function syncKeyboardInset() {
 function boot() {
   requestPersistentStorage();
   renderAccentPicker();
+  renderWidgetStylePicker();
   fillExerciseSelects();
   fillBuilderGoals();
   renderMyGym();
@@ -725,6 +727,27 @@ function applyAccent(accentId) {
   localStorage.setItem(ACCENT_KEY, accentId);
   renderAccentPicker();
   updateNativeWidget();
+}
+
+function currentWidgetStyle() {
+  return localStorage.getItem(WIDGET_STYLE_KEY) === "glass" ? "glass" : "solid";
+}
+
+function setWidgetStyle(style) {
+  localStorage.setItem(WIDGET_STYLE_KEY, style === "glass" ? "glass" : "solid");
+  renderWidgetStylePicker();
+  updateNativeWidget();
+  showToast(style === "glass" ? "Виджеты стали прозрачными" : "Виджеты с плотным фоном");
+}
+
+function renderWidgetStylePicker() {
+  const active = currentWidgetStyle();
+  document.querySelectorAll("[data-widget-style]").forEach((button) => {
+    const isActive = button.dataset.widgetStyle === active;
+    button.classList.toggle("secondary", isActive);
+    button.classList.toggle("ghost", !isActive);
+    button.setAttribute("aria-checked", String(isActive));
+  });
 }
 
 function renderAccentPicker() {
@@ -935,6 +958,9 @@ function bindEvents() {
   window.trainyOpenBandView = () => refreshWearable(true);
   document.querySelectorAll("[data-widget-pin]").forEach((button) => {
     button.addEventListener("click", () => pinNativeWidget(button.dataset.widgetPin));
+  });
+  document.querySelectorAll("[data-widget-style]").forEach((button) => {
+    button.addEventListener("click", () => setWidgetStyle(button.dataset.widgetStyle));
   });
   elements.wearableApplyHint?.addEventListener("click", applyWearableReadiness);
   elements.dateInput.addEventListener("change", saveWorkoutDraft);
@@ -1724,6 +1750,7 @@ function updateNativeWidget() {
 
   const payload = {
     accent: currentAccent(),
+    widgetStyle: currentWidgetStyle(),
     nextTitle: currentPlanTitle(),
     nextWhen: widgetWhenLabel(nextIso),
     nextMeta: selected.length ? `${selected.length} упр. · ${totalSets} подх.` : "План ещё не собран",
