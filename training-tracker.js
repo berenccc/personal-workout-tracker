@@ -724,6 +724,7 @@ function applyAccent(accentId) {
   }
   localStorage.setItem(ACCENT_KEY, accentId);
   renderAccentPicker();
+  updateNativeWidget();
 }
 
 function renderAccentPicker() {
@@ -1661,7 +1662,7 @@ function currentPlanTitle() {
   const groups = [...new Set(selected.map((item) => findExercise(item.exerciseId)?.group).filter(Boolean))];
   if (!groups.length) return "Тренировка";
   if (groups.length <= 2) return groups.join(" + ");
-  return `${groups.slice(0, 2).join(" + ")} +`;
+  return `${groups.slice(0, 2).join(" + ")} +${groups.length - 2}`;
 }
 
 function renderWorkoutHeading() {
@@ -1722,6 +1723,7 @@ function updateNativeWidget() {
   if (snapshot.todayCalories) sleepBits.push(`${snapshot.todayCalories} ккал`);
 
   const payload = {
+    accent: currentAccent(),
     nextTitle: currentPlanTitle(),
     nextWhen: widgetWhenLabel(nextIso),
     nextMeta: selected.length ? `${selected.length} упр. · ${totalSets} подх.` : "План ещё не собран",
