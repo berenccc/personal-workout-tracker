@@ -1654,6 +1654,91 @@ select {
   justify-self: start;
 }
 
+.hr-chart {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.hr-chart svg {
+  width: 100%;
+  height: 132px;
+  border-radius: 12px;
+  background: var(--panel-2);
+}
+
+.hr-chart-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.band-exercise-hr,
+.band-recovery {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.band-recovery span {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.band-exercise-hr-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.band-exercise-hr-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.band-exercise-hr-row i {
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.band-exercise-hr-row i em {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.band-exercise-hr-row b {
+  font-variant-numeric: tabular-nums;
+}
+
+.band-exercise-hr-row small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.band-diag-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.band-diag-row small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .ai-plan-offer {
   display: grid;
   gap: 8px;

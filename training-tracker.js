@@ -688,7 +688,7 @@ function syncKeyboardInset() {
     document.documentElement.style.setProperty("--vv-height", `${Math.round(visible)}px`);
   }
   document.documentElement.classList.toggle("keyboard-open", open);
-  if (open && elements.aiChatLog) elements.aiChatLog.scrollTop = elements.aiChatLog.scrollHeight;
+  if (elements.aiChatLog?.childElementCount) scrollAiChatToBottom();
 }
 
 function boot() {
@@ -956,6 +956,14 @@ function bindEvents() {
   elements.wearableSettingsButton?.addEventListener("click", openWearableSettings);
   elements.openBandViewButton?.addEventListener("click", () => window.showAppView?.("band"));
   window.trainyOpenBandView = () => refreshWearable(true);
+  document.querySelector("#bandDiagnosticsButton")?.addEventListener("click", renderBandDiagnostics);
+  document.querySelector("#bandDiagnosticsButton")?.closest("details")?.addEventListener("toggle", (event) => {
+    if (event.target.open) renderBandDiagnostics();
+  });
+  elements.bandLastSession?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-band-resync]");
+    if (button) resyncWorkoutBand(Number(button.dataset.bandResync));
+  });
   document.querySelectorAll("[data-widget-pin]").forEach((button) => {
     button.addEventListener("click", () => pinNativeWidget(button.dataset.widgetPin));
   });
@@ -1741,38 +1749,106 @@ function updateNativeWidget() {
   const last = state.workouts.at(-1);
   const active = Boolean(workoutTimer.startedAt && !workoutTimer.stoppedAt);
   const snapshot = window.TrainyWearable?.loadSnapshot?.() || {};
-  const totalSets = selected.reduce((sum, item) => sum + item.sets.length, 0);
-  const lastMinutes = last?.durationMinutes || (last?.durationMs ? Math.round(last.durationMs / 60000) : null);
-  const sleepBits = [];
-  if (snapshot.sleepMinutes) sleepBits.push(`сон ${window.TrainyWearable.formatMinutes(snapshot.sleepMinutes)}`);
-  if (snapshot.restingHr) sleepBits.push(`пульс покоя ${snapshot.restingHr}`);
-  if (snapshot.todayCalories) sleepBits.push(`${snapshot.todayCalories} ккал`);
 
   const payload = {
     accent: currentAccent(),
     widgetStyle: currentWidgetStyle(),
     nextTitle: currentPlanTitle(),
-    nextWhen: widgetWhenLabel(nextIso),
-    nextMeta: selected.length ? `${selected.length} упр. · ${totalSets} подх.` : "План ещё не собран",
+    nextWhen: active ? "Идёт тренировка" : widgetWhenLabel(nextIso),
+    nextMeta: active ? widgetProgressLine() : widgetPlanLine(),
     nextDate: nextIso || "",
     isActive: active,
     activeTimer: formatDuration(getWorkoutDurationMs()),
+    // Виджет тикает сам через Chronometer, поэтому ему нужна точка старта, а не текст.
+    startedAtMs: active ? workoutTimer.startedAt : 0,
     startLabel: active ? "Открыть" : "Начать",
-    lastMeta: last
-      ? `Последняя ${formatDate(last.date)}${lastMinutes ? ` · ${lastMinutes} мин` : ""}${averageWorkoutRpe(last) ? ` · RPE ${averageWorkoutRpe(last)}` : ""}`
-      : "Пока нет сохранённых сессий",
-    lastHr: last?.wearable?.hrAvg
-      ? `пульс ${last.wearable.hrAvg}${last.wearable.calories ? ` · ${last.wearable.calories} ккал` : ""}`
-      : last?.wearable?.calories ? `${last.wearable.calories} ккал` : "",
+    lastMeta: widgetLastLine(last),
+    lastHr: active ? "" : widgetBandLine(last),
     lastDate: last?.date || "",
     streak: weeklyStreak(dates),
     weekWorkouts: [...dates].filter((iso) => iso >= mondayOf(new Date())).length,
-    sleep: sleepBits.join(" · "),
+    sleep: widgetReadinessLine(snapshot),
     week: weekWidgetDays(),
     updatedAt: new Date().toISOString(),
   };
 
   bridge.setWidgetData({ json: JSON.stringify(payload) }).catch(() => {});
+}
+
+// Что именно предстоит: упражнения, объём и прикидка времени.
+function widgetPlanLine() {
+  if (!selected.length) return "План ещё не собран — собери в приложении";
+  const sets = selected.reduce((sum, item) => sum + item.sets.length, 0);
+  const minutes = Math.round((sets * 2.6 + selected.length * 1.5) / 5) * 5;
+  const names = selected
+    .slice(0, 3)
+    .map((item) => findExercise(item.exerciseId)?.name)
+    .filter(Boolean)
+    .join(", ");
+  return `${selected.length} упр. · ${sets} подх. · ~${minutes} мин${names ? `\n${names}` : ""}`;
+}
+
+// Во время тренировки виджет показывает реальный прогресс, а не просто план.
+function widgetProgressLine() {
+  const sets = selected.flatMap((item) => item.sets);
+  const doneSets = sets.filter((set) => set.done).length;
+  const doneExercises = selected.filter((item) => item.sets.every((set) => set.done)).length;
+  const current = selected.find((item) => item.sets.some((set) => !set.done));
+  const currentName = current ? findExercise(current.exerciseId)?.name : null;
+  return [
+    `${doneSets}/${sets.length} подх. · ${doneExercises}/${selected.length} упр.`,
+    currentName ? `Сейчас: ${currentName}` : "Все подходы закрыты",
+  ].join("\n");
+}
+
+function widgetLastLine(last) {
+  if (!last) return "Пока нет сохранённых сессий";
+  const minutes = last.durationMinutes || (last.durationMs ? Math.round(last.durationMs / 60000) : null);
+  const sets = (last.exercises || []).reduce(
+    (sum, item) => sum + (item.sets || []).filter((set) => set.done !== false && set.mark !== "skip").length,
+    0
+  );
+  const tonnage = workoutTonnage(last);
+  const rpe = averageWorkoutRpe(last);
+  const bits = [
+    `Прошлая ${formatDate(last.date)}`,
+    minutes ? `${minutes} мин` : null,
+    sets ? `${sets} подх.` : null,
+    tonnage ? `${formatNumber(Math.round(tonnage / 100) / 10)} т` : null,
+    rpe ? `RPE ${rpe}` : null,
+  ].filter(Boolean);
+  return bits.join(" · ");
+}
+
+function widgetBandLine(last) {
+  const band = last?.wearable;
+  if (!band) return "";
+  const bits = [
+    band.hrAvg ? `пульс ${band.hrAvg}${band.hrMax ? `/${band.hrMax}` : ""}` : null,
+    band.calories ? `${band.calories} ккал` : null,
+    band.sessionTypeLabel || null,
+  ].filter(Boolean);
+  return bits.join(" · ");
+}
+
+function widgetReadinessLine(snapshot) {
+  const api = window.TrainyWearable;
+  const bits = [];
+  if (snapshot.sleepMinutes) bits.push(`сон ${api.formatMinutes(snapshot.sleepMinutes)}`);
+  if (snapshot.restingHr) bits.push(`пульс покоя ${snapshot.restingHr}`);
+  if (!bits.length) return "";
+  const readiness = api?.readinessFromSnapshot?.(snapshot);
+  const tone = readiness === "bad" ? "лучше лайт" : readiness === "good" ? "готов" : "средне";
+  return `${bits.join(" · ")} → ${tone}`;
+}
+
+function workoutTonnage(workout) {
+  return (workout.exercises || []).reduce((sum, item) => {
+    if (findExercise(item.exerciseId)?.cardio) return sum;
+    return sum + (item.sets || [])
+      .filter((set) => set.done !== false && set.mark !== "skip")
+      .reduce((setSum, set) => setSum + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0);
+  }, 0);
 }
 
 function handleWidgetAction(action) {
@@ -2120,7 +2196,12 @@ function renderSetRow(uid, index, set, exercise) {
     const updateSet = () => {
       const item = selected.find((selectedItem) => selectedItem.uid === uid);
       item.sets[index][input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
-      if (input.dataset.field === "done") renderSelectedExercises();
+      if (input.dataset.field === "done") {
+        // Метка времени подхода — основа для разбора пульса по упражнениям и отдыху.
+        item.sets[index].doneAt = input.checked ? Date.now() : null;
+        renderSelectedExercises();
+        updateNativeWidget();
+      }
       saveWorkoutDraft();
     };
     input.addEventListener("input", updateSet);
@@ -2161,6 +2242,11 @@ function collectWorkout() {
     afterNotes: elements.afterNotesInput.value.trim(),
     durationMs: durationMs || null,
     durationMinutes: durationMs ? Math.round(durationMs / 60000) : null,
+    // Границы сессии нужны, чтобы позже перечитать пульс с браслета.
+    startedAt: workoutTimer.startedAt ? new Date(workoutTimer.startedAt).toISOString() : null,
+    endedAt: workoutTimer.startedAt
+      ? new Date(workoutTimer.stoppedAt || Date.now()).toISOString()
+      : null,
     exercises: selected
       .map((item) => ({
         exerciseId: item.exerciseId,
@@ -2170,6 +2256,7 @@ function collectWorkout() {
             reps: Number(set.reps),
             rpe: Number(set.rpe) || null,
             done: Boolean(set.done),
+            doneAt: set.doneAt || null,
             mark: set.mark || "normal",
           }))
           .filter((set) => set.reps > 0),
@@ -2292,7 +2379,8 @@ function bandStatCards(snapshot) {
   return [
     snapshot.sleepMinutes ? ["Сон", wearableApi().formatMinutes(snapshot.sleepMinutes)] : null,
     snapshot.restingHr ? ["Пульс покоя", `${snapshot.restingHr}`] : snapshot.lastHr ? ["Пульс", `${snapshot.lastHr}`] : null,
-    snapshot.todayCalories ? ["Калории", `${snapshot.todayCalories} ккал`] : null,
+    snapshot.todayCalories ? ["Активные ккал", `${snapshot.todayCalories}`] : null,
+    snapshot.todayTotalCalories ? ["Всего ккал", `${snapshot.todayTotalCalories}`] : null,
     snapshot.todaySteps != null ? ["Шаги", Number(snapshot.todaySteps).toLocaleString("ru-RU")] : null,
     snapshot.todayDistanceKm ? ["Дистанция", `${snapshot.todayDistanceKm} км`] : null,
   ].filter(Boolean);
@@ -2322,15 +2410,205 @@ function renderBandSleep(snapshot) {
 function renderBandLastSession() {
   const box = elements.bandLastSession;
   if (!box) return;
-  const last = [...state.workouts].reverse().find((workout) => workout.wearable?.hrAvg || workout.wearable?.calories);
+  const last = state.workouts.at(-1);
   if (!last) {
     box.innerHTML = "";
     return;
   }
+
+  const band = last.wearable;
+  const index = state.workouts.indexOf(last);
+  if (!band?.hrAvg && !band?.calories) {
+    box.innerHTML = `
+      <div class="band-page-block">
+        <h3>Последняя сессия · ${formatDate(last.date)}</h3>
+        <p class="wearable-help">Пульса за эту тренировку в Health Connect пока нет. Браслет отдаёт данные с задержкой — открой Mi Fitness, дождись синхронизации и нажми «Подтянуть с браслета».</p>
+        <button class="button secondary" type="button" data-band-resync="${index}">Подтянуть с браслета</button>
+      </div>
+    `;
+    return;
+  }
+
   box.innerHTML = `
     <div class="band-page-block">
       <h3>Последняя сессия · ${formatDate(last.date)}</h3>
-      ${wearableCardHtml(last.wearable)}
+      ${bandSessionSummaryHtml(band)}
+      ${hrChartHtml(band)}
+      ${zoneBarHtml(band)}
+      ${exerciseHeartHtml(last)}
+      ${restRecoveryHtml(last)}
+      <button class="button ghost" type="button" data-band-resync="${index}">Подтянуть с браслета</button>
+    </div>
+  `;
+}
+
+function bandSessionSummaryHtml(band) {
+  const cards = [
+    band.hrAvg ? ["Средний пульс", `${band.hrAvg}`] : null,
+    band.hrMax ? ["Максимум", `${band.hrMax}`] : null,
+    band.calories ? ["Калории", `${band.calories}`] : null,
+    band.sessionTypeLabel ? ["Характер", band.sessionTypeLabel] : null,
+  ].filter(Boolean);
+  const note = band.caloriesSource === "estimate"
+    ? `Калории посчитаны по пульсу и весу: браслет отдал ${band.caloriesActive || 0} ккал активных, это явно мало для такой сессии.`
+    : `Калории с браслета${band.caloriesEstimate ? ` (расчёт по пульсу дал бы ${band.caloriesEstimate})` : ""}.`;
+  return `
+    <div class="wearable-stats">
+      ${cards.map(([label, value]) => `<div class="wearable-stat"><span>${label}</span><strong>${value}</strong></div>`).join("")}
+    </div>
+    <p class="wearable-help">${escapeHtml(note)}</p>
+  `;
+}
+
+// График пульса с подложкой зон: видно, где сердце уходило в анаэроб.
+function hrChartHtml(band) {
+  const series = (band.hrSeries || [])
+    .map((point) => ({ bpm: Number(point.bpm) || 0, t: Date.parse(point.t) }))
+    .filter((point) => point.bpm > 30 && Number.isFinite(point.t));
+  if (series.length < 3) return "";
+
+  const width = 320;
+  const height = 132;
+  const values = series.map((point) => point.bpm);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const lo = Math.max(40, Math.floor((min - 6) / 5) * 5);
+  const hi = Math.ceil((max + 6) / 5) * 5;
+  const y = (bpm) => height - ((bpm - lo) / Math.max(1, hi - lo)) * height;
+  const x = (index) => (index / (series.length - 1)) * width;
+  const path = series.map((point, index) => `${index ? "L" : "M"}${x(index).toFixed(1)},${y(point.bpm).toFixed(1)}`).join(" ");
+  const hrMax = band.hrMaxUsed || 190;
+  const bands = [
+    ["#3d4451", 0, 0.6],
+    ["#2f6f4f", 0.6, 0.7],
+    ["#3f7f3a", 0.7, 0.8],
+    ["#9a7b28", 0.8, 0.9],
+    ["#96402f", 0.9, 1.3],
+  ].map(([color, from, to]) => {
+    const top = y(Math.min(hi, hrMax * to));
+    const bottom = y(Math.max(lo, hrMax * from));
+    if (bottom - top <= 0.5) return "";
+    return `<rect x="0" y="${top.toFixed(1)}" width="${width}" height="${(bottom - top).toFixed(1)}" fill="${color}" opacity="0.28" />`;
+  }).join("");
+
+  const minutes = Math.max(1, Math.round((series.at(-1).t - series[0].t) / 60000));
+  return `
+    <div class="hr-chart">
+      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Пульс за тренировку">
+        ${bands}
+        <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" />
+      </svg>
+      <div class="hr-chart-axis"><span>${lo}</span><span>${minutes} мин · ${series.length} точек</span><span>${hi}</span></div>
+    </div>
+  `;
+}
+
+// Пульс по упражнениям: окно подхода — это время от прошлой отметки до текущей.
+function exerciseSetWindows(workout) {
+  const marks = [];
+  (workout.exercises || []).forEach((item) => {
+    (item.sets || []).forEach((set, setIndex) => {
+      const doneAt = Number(set.doneAt) || 0;
+      if (doneAt) marks.push({ exerciseId: item.exerciseId, setIndex, doneAt });
+    });
+  });
+  marks.sort((a, b) => a.doneAt - b.doneAt);
+  return marks.map((mark, index) => {
+    const previous = marks[index - 1];
+    const from = previous ? previous.doneAt : mark.doneAt - 60000;
+    return { ...mark, from, to: mark.doneAt };
+  });
+}
+
+function hrSeriesPoints(workout) {
+  return (workout.wearable?.hrSeries || [])
+    .map((point) => ({ bpm: Number(point.bpm) || 0, t: Date.parse(point.t) }))
+    .filter((point) => point.bpm > 30 && Number.isFinite(point.t));
+}
+
+function exerciseHeartHtml(workout) {
+  const points = hrSeriesPoints(workout);
+  const windows = exerciseSetWindows(workout);
+  if (points.length < 3 || !windows.length) {
+    return windows.length
+      ? ""
+      : `<p class="wearable-help">Отмечай подходы галочкой во время тренировки — тогда приложение разложит пульс по упражнениям и паузам.</p>`;
+  }
+
+  const byExercise = new Map();
+  windows.forEach((window) => {
+    const inside = points.filter((point) => point.t >= window.from && point.t <= window.to);
+    if (!inside.length) return;
+    const stats = byExercise.get(window.exerciseId) || { sum: 0, count: 0, max: 0, sets: 0 };
+    inside.forEach((point) => {
+      stats.sum += point.bpm;
+      stats.count += 1;
+      stats.max = Math.max(stats.max, point.bpm);
+    });
+    stats.sets += 1;
+    byExercise.set(window.exerciseId, stats);
+  });
+  if (!byExercise.size) return "";
+
+  const rows = [...byExercise.entries()]
+    .map(([exerciseId, stats]) => ({
+      name: findExercise(exerciseId)?.name || exerciseId,
+      avg: Math.round(stats.sum / stats.count),
+      max: stats.max,
+      sets: stats.sets,
+    }))
+    .sort((a, b) => b.avg - a.avg);
+  const peak = Math.max(...rows.map((row) => row.max), 1);
+
+  return `
+    <div class="band-exercise-hr">
+      <strong>Пульс по упражнениям</strong>
+      ${rows.map((row) => `
+        <div class="band-exercise-hr-row">
+          <span>${escapeHtml(row.name)}</span>
+          <i><em style="width:${Math.max(8, Math.round((row.avg / peak) * 100))}%"></em></i>
+          <b>${row.avg}<small>/${row.max}</small></b>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+// Насколько быстро пульс падает после подхода — прямая оценка качества отдыха.
+function restRecoveryHtml(workout) {
+  const points = hrSeriesPoints(workout);
+  const windows = exerciseSetWindows(workout);
+  if (points.length < 5 || windows.length < 2) return "";
+
+  const drops = [];
+  windows.forEach((window) => {
+    const at = points.filter((point) => point.t <= window.to).at(-1);
+    if (!at) return;
+    const after = points.filter((point) => point.t > window.to && point.t <= window.to + 90000);
+    if (!after.length) return;
+    drops.push(at.bpm - Math.min(...after.map((point) => point.bpm)));
+  });
+  if (drops.length < 2) return "";
+
+  const avgDrop = Math.round(drops.reduce((sum, value) => sum + value, 0) / drops.length);
+  const restGaps = windows
+    .slice(1)
+    .map((window, index) => (window.to - windows[index].to) / 1000)
+    .filter((seconds) => seconds > 20 && seconds < 900);
+  const avgRest = restGaps.length
+    ? Math.round(restGaps.reduce((sum, value) => sum + value, 0) / restGaps.length)
+    : null;
+  const verdict = avgDrop >= 20
+    ? "Пульс падает хорошо — восстановление в норме."
+    : avgDrop >= 10
+      ? "Восстановление среднее: паузы можно чуть удлинить."
+      : "Пульс почти не падает между подходами — отдыхай дольше или снизь вес.";
+
+  return `
+    <div class="band-recovery">
+      <strong>Отдых между подходами</strong>
+      <span>Падение пульса за 90 сек: −${avgDrop} уд.${avgRest ? ` · средняя пауза ${Math.round(avgRest)} сек` : ""}</span>
+      <span>${verdict}</span>
     </div>
   `;
 }
@@ -2424,6 +2702,7 @@ async function initWearable() {
     }
     if (snapshot) await refreshWearable(true);
     else renderWearableCabinet(snapshot, "Нажми «Подключить» на этой вкладке");
+    await autoResyncRecentBand();
   } catch {
     renderWearableHint();
   }
@@ -2469,6 +2748,84 @@ async function refreshWearable(silent = false) {
       showToast(error.message || "Нет данных с браслета", "warn");
     }
   }
+}
+
+// Данные с браслета приезжают позже конца тренировки, поэтому сессию можно перечитать.
+async function resyncWorkoutBand(index, { silent = false } = {}) {
+  const workout = state.workouts[index];
+  const api = wearableApi();
+  if (!workout || !api?.resyncWorkout || !api.isNative?.()) {
+    if (!silent) showToast("Доступно только в Android-приложении", "warn");
+    return false;
+  }
+
+  if (!silent) showToast("Читаю данные с браслета…");
+  let metrics = null;
+  try {
+    metrics = await api.resyncWorkout({
+      startIso: workout.startedAt || workout.wearable?.windowStart,
+      endIso: workout.endedAt || workout.wearable?.windowEnd,
+      dateIso: workout.date,
+    });
+  } catch {
+    metrics = null;
+  }
+
+  if (!metrics?.hrAvg && !metrics?.calories) {
+    if (!silent) showToast("Health Connect пока не отдал эту сессию", "warn");
+    return false;
+  }
+
+  workout.wearable = { ...(workout.wearable || {}), ...metrics };
+  saveState();
+  window.cloudSync?.pushWorkout?.(workout);
+  renderWearableCabinet(api.loadSnapshot(), "Данные сессии обновлены");
+  updateNativeWidget();
+  if (!silent) showToast(`Подтянул: пульс ${metrics.hrAvg || "—"}, ${metrics.calories || "—"} ккал`);
+  return true;
+}
+
+// Тихо дочитываем свежую тренировку, если браслет не успел синхронизироваться к сохранению.
+async function autoResyncRecentBand() {
+  const api = wearableApi();
+  if (!api?.isNative?.()) return;
+  const index = state.workouts.length - 1;
+  const workout = state.workouts[index];
+  if (!workout || workout.wearable?.hrAvg) return;
+  const finished = Date.parse(workout.endedAt || `${workout.date}T23:59:59`);
+  if (!Number.isFinite(finished) || Date.now() - finished > 48 * 3600 * 1000) return;
+  await resyncWorkoutBand(index, { silent: true });
+}
+
+async function renderBandDiagnostics() {
+  const box = document.querySelector("#bandDiagnostics");
+  const api = wearableApi();
+  if (!box) return;
+  if (!api?.diagnostics || !api.isNative?.()) {
+    box.innerHTML = `<p class="wearable-help">Диагностика доступна в Android-приложении.</p>`;
+    return;
+  }
+  box.innerHTML = `<p class="wearable-help">Читаю Health Connect…</p>`;
+  let report = null;
+  try {
+    report = await api.diagnostics();
+  } catch {
+    report = null;
+  }
+  if (!report?.rows?.length) {
+    box.innerHTML = `<p class="wearable-help">Health Connect не вернул записи за сутки. Открой Mi Fitness → Health Connect и разреши обмен.</p>`;
+    return;
+  }
+  box.innerHTML = `
+    <p class="wearable-help">За последние 24 часа Health Connect отдал:</p>
+    ${report.rows.map((row) => `
+      <div class="band-diag-row">
+        <span>${escapeHtml(row.label)}</span>
+        <b>${formatNumber(row.sum)}</b>
+        <small>${row.records} записей${(row.sources || []).length ? ` · ${escapeHtml((row.sources || []).join(", "))}` : " · нет источника"}</small>
+      </div>
+    `).join("")}
+  `;
 }
 
 async function openWearableSettings() {
@@ -2835,7 +3192,24 @@ function renderAiChat() {
     .join("");
   elements.aiChatLog.innerHTML =
     bubbles + (aiThinking ? aiTypingBubble() : aiError ? aiErrorBubble() : pendingPlanCard());
-  elements.aiChatLog.scrollTop = elements.aiChatLog.scrollHeight;
+  scrollAiChatToBottom();
+}
+
+// Лента не всегда прокручивается сама (страница может скроллиться целиком),
+// поэтому двигаем последний пузырь и оставляем место под липким полем ввода.
+function scrollAiChatToBottom() {
+  const log = elements.aiChatLog;
+  const last = log?.lastElementChild;
+  if (!last) return;
+  const composer = document.querySelector(".ai-chat-composer");
+  const run = () => {
+    last.style.scrollMarginBottom = `${(composer?.offsetHeight || 120) + 24}px`;
+    log.scrollTop = log.scrollHeight;
+    last.scrollIntoView({ block: "end" });
+  };
+  run();
+  window.requestAnimationFrame(run);
+  window.setTimeout(run, 220);
 }
 
 const AI_SYSTEM_PROMPT = `Ты — персональный AI-тренер внутри приложения-трекера тренировок. Ты общаешься на русском, понимаешь разговорные и синонимичные формулировки: «оцени тренировку» = «дай фидбэк» = «разбери сессию» = «как я отработал»; «запланируй» = «составь план» = «накидай тренировку» = «что делать в следующий раз»; «замени/поменяй/убери/добавь упражнение», «сделай легче/тяжелее/короче». Если просьба неоднозначна, задай один короткий уточняющий вопрос, иначе действуй сразу. Выполняй именно то, о чём попросили: если просят добавить упражнение на конкретную группу мышц — добавь упражнение именно этой группы, даже если она уже есть в плане. Синонимы групп: «пресс/живот/кор» → Кор (dead-bug, ab-wheel, plank, side-plank, bird-dog, overhead-plate); «спина» → тяги и гравитрон; «ноги» → жим ногами, сгибание/разгибание ног, выпады; «грудь» → жимы и баттерфляй; «плечи» → жим вверх, дельта-машина; «руки» → бицепс, трицепс.
