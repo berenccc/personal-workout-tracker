@@ -2452,11 +2452,14 @@ function bandSessionSummaryHtml(band) {
   const note = band.caloriesSource === "estimate"
     ? `Калории посчитаны по пульсу и весу: браслет отдал ${band.caloriesActive || 0} ккал активных, это явно мало для такой сессии.`
     : `Калории с браслета${band.caloriesEstimate ? ` (расчёт по пульсу дал бы ${band.caloriesEstimate})` : ""}.`;
+  const sources = (band.caloriesBySource || [])
+    .map((row) => `${row.source}: ${row.kcal} ккал`)
+    .join(" · ");
   return `
     <div class="wearable-stats">
       ${cards.map(([label, value]) => `<div class="wearable-stat"><span>${label}</span><strong>${value}</strong></div>`).join("")}
     </div>
-    <p class="wearable-help">${escapeHtml(note)}</p>
+    <p class="wearable-help">${escapeHtml(note)}${sources ? `<br>Кто записал калории за это окно: ${escapeHtml(sources)}` : ""}</p>
   `;
 }
 
