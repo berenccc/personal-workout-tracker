@@ -1878,6 +1878,10 @@ select {
   padding-top: 4px;
 }
 
+.ai-chat-composer .button[hidden] {
+  display: none;
+}
+
 .ai-chat-composer textarea {
   width: 100%;
   max-width: 100%;

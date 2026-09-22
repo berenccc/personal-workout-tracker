@@ -6,7 +6,18 @@ from playwright.sync_api import Page, expect
 PROD_URL = "https://berenccc.github.io/personal-workout-tracker/training-tracker.html"
 
 
-def prepare_local_stub(page: Page) -> None:
+AI_REPLY = (
+    "Разбор готов: тренировка ровная, держи RPE 7-8 и добавь 1 подход на тягу в следующей сессии."
+)
+
+
+def prepare_local_stub(page: Page, ai_hangs: bool = False) -> None:
+    """Локальная заглушка облака. ai_hangs=True — запрос к тренеру не отвечает никогда."""
+    call_ai = (
+        "callAi: () => new Promise(() => {}),"
+        if ai_hangs
+        else f'callAi: async () => ({{ choices: [{{ message: {{ content: "{AI_REPLY}" }} }}] }}),'
+    )
     page.route(
         "**/cloud.js*",
         lambda route: route.fulfill(
@@ -17,19 +28,11 @@ def prepare_local_stub(page: Page) -> None:
               pushWorkout: async () => false,
               deleteWorkout: async () => true,
               fullSync: async () => true,
-              callAi: async () => ({
-                choices: [
-                  {
-                    message: {
-                      content: "Разбор готов: тренировка ровная, держи RPE 7-8 и добавь 1 подход на тягу в следующей сессии.",
-                    },
-                  },
-                ],
-              }),
+              __CALL_AI__
               isAuthenticated: () => false,
               isReady: () => true,
             };
-            """,
+            """.replace("__CALL_AI__", call_ai),
         ),
     )
 
@@ -164,6 +167,51 @@ def pending_plan(page: Page):
 
 def plan_rows(page: Page):
     return page.locator("#planSummary .plan-summary-list li")
+
+
+def test_thinking_ai_can_be_stopped(local_server, browser_context):
+    page = browser_context.new_page()
+    prepare_local_stub(page, ai_hangs=True)
+    page.goto(local_server, wait_until="domcontentloaded")
+
+    page.click('.bottom-nav-btn[data-target="ai"]')
+    page.fill("#aiChatInput", "Оцени мою тренировку")
+    page.click("#aiChatSendButton")
+
+    # Пока тренер думает, «Отправить» уступает место «Стоп».
+    stop = page.locator("#aiChatStopButton")
+    expect(stop).to_be_visible()
+    expect(page.locator("#aiChatSendButton")).to_be_hidden()
+    expect(page.locator(".ai-msg-typing")).to_be_visible()
+
+    stop.click()
+
+    expect(page.locator(".ai-msg-typing")).to_have_count(0)
+    expect(stop).to_be_hidden()
+    expect(page.locator("#aiChatSendButton")).to_be_visible()
+    expect(page.locator("#aiStatus")).to_contain_text("Остановил")
+
+    # После остановки чат снова принимает запросы.
+    page.fill("#aiChatInput", "Тогда просто скажи привет")
+    page.click("#aiChatSendButton")
+    expect(page.locator("#aiChatStopButton")).to_be_visible()
+
+
+def test_new_message_is_refused_while_ai_thinks(local_server, browser_context):
+    page = browser_context.new_page()
+    prepare_local_stub(page, ai_hangs=True)
+    page.goto(local_server, wait_until="domcontentloaded")
+
+    page.click('.bottom-nav-btn[data-target="ai"]')
+    page.fill("#aiChatInput", "Оцени мою тренировку")
+    page.click("#aiChatSendButton")
+    expect(page.locator("#aiChatStopButton")).to_be_visible()
+
+    # Быстрая подсказка тоже отправляет сообщение — и тоже должна получить отказ.
+    page.click('.ai-quick-chip[data-question="Сделай план следующей тренировки полегче"]')
+
+    expect(page.locator("#aiStatus")).to_contain_text("Нажми «Стоп»")
+    expect(page.locator(".ai-msg-user")).to_have_count(1)
 
 
 def test_tabs_calendar_and_analytics_render(local_server, browser_context):

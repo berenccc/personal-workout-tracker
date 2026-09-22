@@ -16,6 +16,9 @@ const AI_MODEL = "gpt-5.6-terra";
 // и не зациклить вызовы инструментов.
 const AI_MAX_TOOL_ROUNDS = 12;
 const AI_CHAT_HISTORY_LIMIT = 60;
+// Один запрос не должен висеть вечно, а весь цикл с инструментами — дольше пары минут.
+const AI_REQUEST_TIMEOUT_MS = 75000;
+const AI_RUN_TIMEOUT_MS = 3 * 60 * 1000;
 
 // Каталог упражнений загружается из exercise-catalog.js (генерируется скриптом tools/build-exercise-catalog.py из data/exercise-catalog.json).
 const exercises = (window.exerciseCatalog?.exercises || []).map((exercise) => ({ ...exercise }));
@@ -602,6 +605,7 @@ const elements = {
   aiChatLog: document.querySelector("#aiChatLog"),
   aiChatInput: document.querySelector("#aiChatInput"),
   aiChatSendButton: document.querySelector("#aiChatSendButton"),
+  aiChatStopButton: document.querySelector("#aiChatStopButton"),
   aiChatClearButton: document.querySelector("#aiChatClearButton"),
   aiStatus: document.querySelector("#aiStatus"),
   aiApiKeyInput: document.querySelector("#aiApiKeyInput"),
@@ -870,6 +874,7 @@ function bindEvents() {
   elements.buildWorkoutButton?.addEventListener("click", runWorkoutBuilder);
 
   elements.aiChatSendButton.addEventListener("click", sendAiChatMessage);
+  elements.aiChatStopButton?.addEventListener("click", stopAiRun);
   elements.saveAiApiKeyButton?.addEventListener("click", saveAiApiKey);
   elements.saveAiBaseUrlButton?.addEventListener("click", saveAiBaseUrl);
   elements.aiChatClearButton.addEventListener("click", clearAiChat);
@@ -3878,6 +3883,65 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Кнопка «Стоп» и предохранители от бесконечного «думанья».
+let aiRunController = null;
+let aiRunCancelled = false;
+let aiRunDeadline = 0;
+
+const AI_CANCELLED = "остановлено";
+
+function stopAiRun() {
+  if (!aiRunController) return;
+  aiRunCancelled = true;
+  aiRunController.abort();
+  setAiStatus("Остановил. Можешь переформулировать и отправить снова.");
+  showToast("Тренер остановлен");
+}
+
+function assertAiRunAlive() {
+  if (aiRunCancelled) throw new Error(AI_CANCELLED);
+  if (aiRunDeadline && Date.now() > aiRunDeadline) {
+    throw new Error("тренер думает слишком долго — попробуй запрос попроще");
+  }
+}
+
+// Сигнал одного запроса: рвётся и по кнопке «Стоп», и по своему таймауту.
+function aiRequestSignal() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_REQUEST_TIMEOUT_MS);
+  const runSignal = aiRunController?.signal;
+  const onRunAbort = () => controller.abort();
+  if (runSignal) {
+    if (runSignal.aborted) controller.abort();
+    else runSignal.addEventListener("abort", onRunAbort, { once: true });
+  }
+  return {
+    signal: controller.signal,
+    release() {
+      clearTimeout(timer);
+      runSignal?.removeEventListener("abort", onRunAbort);
+    },
+  };
+}
+
+// Supabase-функция не умеет обрываться по сигналу, поэтому просто перестаём её ждать.
+function withAiTimeout(promise) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error("AI-сервер не ответил, попробуй ещё раз")),
+      AI_REQUEST_TIMEOUT_MS
+    );
+    const runSignal = aiRunController?.signal;
+    const onAbort = () => reject(new Error(AI_CANCELLED));
+    if (runSignal?.aborted) onAbort();
+    else runSignal?.addEventListener("abort", onAbort, { once: true });
+    promise.then(resolve, reject).finally(() => {
+      clearTimeout(timer);
+      runSignal?.removeEventListener("abort", onAbort);
+    });
+  });
+}
+
 async function callOpenAiDirect(key, messages, tools, toolChoice) {
   const maxAttempts = 3;
   const payload = {
@@ -3894,41 +3958,52 @@ async function callOpenAiDirect(key, messages, tools, toolChoice) {
   };
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    let response;
+    const request = aiRequestSignal();
     try {
-      response = await fetch(`${getAiBaseUrl()}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-        },
-        body: JSON.stringify(payload),
-      });
-    } catch {
-      if (attempt < maxAttempts) {
-        setAiStatus(`Связь прервалась, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
-        await sleep(1200 * attempt);
+      let response;
+      try {
+        response = await fetch(`${getAiBaseUrl()}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${key}`,
+          },
+          body: JSON.stringify(payload),
+          signal: request.signal,
+        });
+      } catch {
+        // Отмену и таймаут не ретраим: иначе «Стоп» ничего не останавливает.
+        assertAiRunAlive();
+        if (request.signal.aborted) throw new Error("ответ не пришёл за 75 секунд");
+        if (attempt < maxAttempts) {
+          setAiStatus(`Связь прервалась, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
+          await sleep(1200 * attempt);
+          assertAiRunAlive();
+          continue;
+        }
+        const usingDefault = getAiBaseUrl() === AI_DEFAULT_BASE_URL;
+        throw new Error(
+          usingDefault
+            ? "нет доступа к OpenAI. Из России нужен VPN или прокси-URL в Кабинете"
+            : "нет связи с AI-сервером. Проверь интернет и адрес прокси в Кабинете"
+        );
+      }
+
+      if (response.status === 401) throw new Error("неверный API key");
+      if (response.status === 403) {
+        throw new Error("доступ запрещён (403): включи VPN или укажи прокси-URL в Кабинете");
+      }
+      if ((response.status === 429 || response.status >= 500) && attempt < maxAttempts) {
+        setAiStatus(`OpenAI занят, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
+        await sleep(1500 * attempt);
+        assertAiRunAlive();
         continue;
       }
-      const usingDefault = getAiBaseUrl() === AI_DEFAULT_BASE_URL;
-      throw new Error(
-        usingDefault
-          ? "нет доступа к OpenAI. Из России нужен VPN или прокси-URL в Кабинете"
-          : "нет связи с AI-сервером. Проверь интернет и адрес прокси в Кабинете"
-      );
+      if (!response.ok) throw new Error(`API вернул ${response.status}`);
+      return await response.json();
+    } finally {
+      request.release();
     }
-
-    if (response.status === 401) throw new Error("неверный API key");
-    if (response.status === 403) {
-      throw new Error("доступ запрещён (403): включи VPN или укажи прокси-URL в Кабинете");
-    }
-    if ((response.status === 429 || response.status >= 500) && attempt < maxAttempts) {
-      setAiStatus(`OpenAI занят, пробую ещё раз (${attempt + 1}/${maxAttempts})…`);
-      await sleep(1500 * attempt);
-      continue;
-    }
-    if (!response.ok) throw new Error(`API вернул ${response.status}`);
-    return response.json();
   }
 
   throw new Error("OpenAI не отвечает, попробуй чуть позже");
@@ -3943,9 +4018,12 @@ async function callOpenAi(messages, toolChoice, deferredTool = "") {
 
   if (window.cloudSync?.callAi) {
     try {
-      return await window.cloudSync.callAi(messages, tools, toolChoice);
+      return await withAiTimeout(window.cloudSync.callAi(messages, tools, toolChoice));
     } catch (error) {
+      assertAiRunAlive();
+      if (error?.message === AI_CANCELLED) throw error;
       if (error?.status === 429) throw new Error("AI временно перегружен, попробуй ещё раз чуть позже");
+      if (/не ответил/.test(error?.message || "")) throw error;
     }
   }
 
@@ -3964,6 +4042,7 @@ async function runAiConversation({ requiredTool = "", onIntermediateText } = {})
   let intermediateTextShown = false;
 
   for (let round = 0; round < AI_MAX_TOOL_ROUNDS; round++) {
+    assertAiRunAlive();
     const canForceRequiredTool =
       requiredTool &&
       !requiredToolApplied &&
@@ -4041,6 +4120,10 @@ async function runAiConversation({ requiredTool = "", onIntermediateText } = {})
 async function sendAiChatMessage() {
   const text = elements.aiChatInput.value.trim();
   if (!text) return;
+  if (aiThinking) {
+    setAiStatus("Тренер ещё отвечает. Нажми «Стоп», если нужно прервать.");
+    return;
+  }
 
   aiChat.push({ role: "user", content: text });
   persistAiChat();
@@ -4092,6 +4175,9 @@ async function autoAiAfterWorkout() {
       renderAiChat();
     },
   });
+
+  // Если разбор остановили вручную, не подсовываем резервный план.
+  if (aiRunCancelled) return;
 
   if (!pendingAiPlan && !selected.length) {
     const fallbackMessage = createFallbackNextWorkoutPlan();
@@ -4165,11 +4251,21 @@ async function resumeAiPlanningIfNeeded() {
 }
 
 async function runAiChatCycle(options = {}) {
+  if (aiThinking) return false;
+
+  // Пока тренер думает, «Отправить» уступает место «Стоп».
   elements.aiChatSendButton.disabled = true;
+  if (elements.aiChatStopButton) {
+    elements.aiChatSendButton.hidden = true;
+    elements.aiChatStopButton.hidden = false;
+  }
   aiThinking = true;
   aiError = "";
+  aiRunCancelled = false;
+  aiRunController = new AbortController();
+  aiRunDeadline = Date.now() + AI_RUN_TIMEOUT_MS;
   renderAiChat();
-  setAiStatus("Тренер смотрит твои данные…");
+  setAiStatus("Тренер смотрит твои данные… можно остановить кнопкой «Стоп».");
 
   try {
     const reply = await runAiConversation(options);
@@ -4178,12 +4274,17 @@ async function runAiChatCycle(options = {}) {
     setAiStatus("");
     return true;
   } catch (error) {
+    if (aiRunCancelled) return false;
     aiError = error.message || "нет связи с сервером";
     setAiStatus("");
     return false;
   } finally {
     aiThinking = false;
+    aiRunController = null;
+    aiRunDeadline = 0;
     elements.aiChatSendButton.disabled = false;
+    elements.aiChatSendButton.hidden = false;
+    if (elements.aiChatStopButton) elements.aiChatStopButton.hidden = true;
     renderAiChat();
   }
 }
