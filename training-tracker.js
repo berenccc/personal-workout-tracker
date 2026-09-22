@@ -2433,13 +2433,13 @@ function renderBandLastSession() {
     <div class="band-page-block">
       <h3>Последняя сессия · ${formatDate(last.date)}</h3>
       ${bandSessionSummaryHtml(band)}
-      ${hrChartHtml(band)}
+      ${hrTimelineHtml(last)}
       ${zoneBarHtml(band)}
-      ${exerciseHeartHtml(last)}
       ${restRecoveryHtml(last)}
       <button class="button ghost" type="button" data-band-resync="${index}">Подтянуть с браслета</button>
     </div>
   `;
+  bindHrTimeline(box);
 }
 
 function bandSessionSummaryHtml(band) {
@@ -2463,47 +2463,226 @@ function bandSessionSummaryHtml(band) {
   `;
 }
 
-// График пульса с подложкой зон: видно, где сердце уходило в анаэроб.
-function hrChartHtml(band) {
-  const series = (band.hrSeries || [])
-    .map((point) => ({ bpm: Number(point.bpm) || 0, t: Date.parse(point.t) }))
-    .filter((point) => point.bpm > 30 && Number.isFinite(point.t));
-  if (series.length < 3) return "";
+// Геометрия последнего нарисованного графика — нужна обработчикам касаний.
+let hrTimelineView = null;
+
+// Собираем таймлайн: точки пульса + блоки упражнений на той же временной шкале.
+function buildHrTimeline(workout) {
+  const points = hrSeriesPoints(workout).sort((a, b) => a.t - b.t);
+  if (points.length < 3) return null;
+
+  const marked = exerciseSetWindows(workout);
+  let blocks = [];
+  if (marked.length) {
+    marked.forEach((window) => {
+      const previous = blocks.at(-1);
+      if (previous && previous.exerciseId === window.exerciseId) {
+        previous.to = window.to;
+        previous.sets += 1;
+      } else {
+        blocks.push({ exerciseId: window.exerciseId, from: window.from, to: window.to, sets: 1 });
+      }
+    });
+  } else {
+    blocks = estimatedExerciseWindows(workout, points);
+  }
+
+  const segments = blocks
+    .filter((block) => block.to > block.from)
+    .map((block, index) => {
+      const inside = points.filter((point) => point.t >= block.from && point.t <= block.to);
+      const values = inside.map((point) => point.bpm);
+      return {
+        ...block,
+        index,
+        name: findExercise(block.exerciseId)?.name || block.exerciseId,
+        avg: values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null,
+        max: values.length ? Math.max(...values) : null,
+      };
+    });
+
+  return {
+    points,
+    segments,
+    approx: !marked.length && segments.length > 0,
+    start: points[0].t,
+    end: points.at(-1).t,
+    hrMax: workout.wearable?.hrMaxUsed || 190,
+  };
+}
+
+// Интерактивный график: ведёшь пальцем — видно время, пульс, зону и упражнение.
+function hrTimelineHtml(workout) {
+  const timeline = buildHrTimeline(workout);
+  hrTimelineView = null;
+  if (!timeline) return "";
 
   const width = 320;
-  const height = 132;
-  const values = series.map((point) => point.bpm);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const lo = Math.max(40, Math.floor((min - 6) / 5) * 5);
-  const hi = Math.ceil((max + 6) / 5) * 5;
+  const height = 140;
+  const { points, segments, start, end } = timeline;
+  const span = Math.max(1, end - start);
+  const values = points.map((point) => point.bpm);
+  const lo = Math.max(40, Math.floor((Math.min(...values) - 6) / 5) * 5);
+  const hi = Math.ceil((Math.max(...values) + 6) / 5) * 5;
+  const x = (t) => ((t - start) / span) * width;
   const y = (bpm) => height - ((bpm - lo) / Math.max(1, hi - lo)) * height;
-  const x = (index) => (index / (series.length - 1)) * width;
-  const path = series.map((point, index) => `${index ? "L" : "M"}${x(index).toFixed(1)},${y(point.bpm).toFixed(1)}`).join(" ");
-  const hrMax = band.hrMaxUsed || 190;
-  const bands = [
+  hrTimelineView = { ...timeline, width, height, lo, hi, span };
+
+  const zoneBands = [
     ["#3d4451", 0, 0.6],
     ["#2f6f4f", 0.6, 0.7],
     ["#3f7f3a", 0.7, 0.8],
     ["#9a7b28", 0.8, 0.9],
     ["#96402f", 0.9, 1.3],
   ].map(([color, from, to]) => {
-    const top = y(Math.min(hi, hrMax * to));
-    const bottom = y(Math.max(lo, hrMax * from));
+    const top = y(Math.min(hi, timeline.hrMax * to));
+    const bottom = y(Math.max(lo, timeline.hrMax * from));
     if (bottom - top <= 0.5) return "";
     return `<rect x="0" y="${top.toFixed(1)}" width="${width}" height="${(bottom - top).toFixed(1)}" fill="${color}" opacity="0.28" />`;
   }).join("");
 
-  const minutes = Math.max(1, Math.round((series.at(-1).t - series[0].t) / 60000));
+  const segmentShapes = segments.map((segment) => {
+    const from = Math.max(0, x(segment.from));
+    const to = Math.min(width, x(segment.to));
+    return `
+      <rect class="hr-seg" data-hr-seg="${segment.index}" x="${from.toFixed(1)}" y="0" width="${Math.max(0.5, to - from).toFixed(1)}" height="${height}" />
+      <line class="hr-seg-edge" x1="${from.toFixed(1)}" y1="0" x2="${from.toFixed(1)}" y2="${height}" />
+    `;
+  }).join("");
+
+  const path = points
+    .map((point, index) => `${index ? "L" : "M"}${x(point.t).toFixed(1)},${y(point.bpm).toFixed(1)}`)
+    .join(" ");
+  const strip = segments.map((segment) => `
+    <button type="button" class="hr-strip-block" data-hr-block="${segment.index}"
+      style="flex:${Math.max(1, Math.round(segment.to - segment.from))}"
+      title="${escapeHtml(segment.name)}">
+      <b>${segment.index + 1}</b><span>${escapeHtml(segment.name)}</span>
+    </button>
+  `).join("");
+
+  const minutes = Math.max(1, Math.round(span / 60000));
   return `
-    <div class="hr-chart">
-      <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Пульс за тренировку">
-        ${bands}
-        <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" />
-      </svg>
-      <div class="hr-chart-axis"><span>${lo}</span><span>${minutes} мин · ${series.length} точек</span><span>${hi}</span></div>
+    <div class="hr-chart" data-hr-chart>
+      <div class="hr-chart-readout" data-hr-readout>${escapeHtml(hrTimelineSummary(workout, timeline, minutes))}</div>
+      <div class="hr-chart-plot" data-hr-plot>
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Пульс за тренировку">
+          ${zoneBands}
+          ${segmentShapes}
+          <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" />
+          <line class="hr-cursor" data-hr-cursor x1="0" y1="0" x2="0" y2="${height}" />
+          <circle class="hr-cursor-dot" data-hr-dot cx="0" cy="0" r="4" />
+        </svg>
+      </div>
+      <div class="hr-chart-axis"><span>${lo}</span><span>${points.length} точек</span><span>${hi}</span></div>
+      ${segments.length ? `<div class="hr-strip">${strip}</div>` : ""}
+      ${timeline.approx ? `<small class="band-hint">Границы упражнений приблизительные: подходы не отмечались по ходу тренировки, поэтому время поделено по порядку плана.</small>` : ""}
     </div>
   `;
+}
+
+function hrTimelineSummary(workout, timeline, minutes) {
+  const band = workout.wearable || {};
+  const bits = [`${minutes} мин`];
+  if (band.hrAvg) bits.push(`средний ${band.hrAvg}`);
+  if (band.hrMax) bits.push(`максимум ${band.hrMax}`);
+  if (timeline.segments.length) bits.push(`${timeline.segments.length} упр.`);
+  return `${bits.join(" · ")} — веди пальцем по графику`;
+}
+
+function hrZoneLabel(bpm, hrMax) {
+  const api = wearableApi();
+  const key = api?.zoneForBpm?.(bpm, hrMax);
+  return (key && api?.ZONE_LABELS?.[key]) || "";
+}
+
+// Касания по графику и блокам упражнений.
+function bindHrTimeline(root) {
+  const chart = root.querySelector("[data-hr-chart]");
+  const view = hrTimelineView;
+  if (!chart || !view) return;
+  const plot = chart.querySelector("[data-hr-plot]");
+  const cursor = chart.querySelector("[data-hr-cursor]");
+  const dot = chart.querySelector("[data-hr-dot]");
+  const readout = chart.querySelector("[data-hr-readout]");
+  const idleText = readout.textContent;
+
+  const clearSegments = () => {
+    chart.querySelectorAll("[data-hr-seg]").forEach((node) => node.removeAttribute("data-active"));
+    chart.querySelectorAll("[data-hr-block]").forEach((node) => node.removeAttribute("data-active"));
+  };
+
+  const highlight = (index) => {
+    clearSegments();
+    if (index == null) return;
+    chart.querySelector(`[data-hr-seg="${index}"]`)?.setAttribute("data-active", "1");
+    chart.querySelector(`[data-hr-block="${index}"]`)?.setAttribute("data-active", "1");
+  };
+
+  const scrub = (clientX) => {
+    const rect = plot.getBoundingClientRect();
+    if (!rect.width) return;
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const time = view.start + ratio * view.span;
+    const point = view.points.reduce((best, item) =>
+      Math.abs(item.t - time) < Math.abs(best.t - time) ? item : best, view.points[0]);
+    const px = ((point.t - view.start) / view.span) * view.width;
+    const py = view.height - ((point.bpm - view.lo) / Math.max(1, view.hi - view.lo)) * view.height;
+    cursor.setAttribute("x1", px.toFixed(1));
+    cursor.setAttribute("x2", px.toFixed(1));
+    dot.setAttribute("cx", px.toFixed(1));
+    dot.setAttribute("cy", py.toFixed(1));
+    chart.dataset.active = "1";
+
+    const segment = view.segments.find((item) => point.t >= item.from && point.t <= item.to);
+    highlight(segment ? segment.index : null);
+    const elapsed = Math.max(0, Math.round((point.t - view.start) / 1000));
+    const clock = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
+    const zone = hrZoneLabel(point.bpm, view.hrMax);
+    const parts = [clock, `${point.bpm} уд`, zone, segment ? `${segment.index + 1}. ${segment.name}` : null];
+    readout.textContent = parts.filter(Boolean).join(" · ");
+  };
+
+  const reset = () => {
+    chart.dataset.active = "";
+    clearSegments();
+    readout.textContent = idleText;
+  };
+
+  plot.addEventListener("pointerdown", (event) => {
+    plot.setPointerCapture?.(event.pointerId);
+    scrub(event.clientX);
+  });
+  plot.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "mouse" && !event.buttons) return;
+    scrub(event.clientX);
+  });
+  // После отпускания палец уже не на экране — значение под курсором оставляем,
+  // чтобы его можно было спокойно прочитать.
+  plot.addEventListener("pointercancel", reset);
+  plot.addEventListener("pointerleave", (event) => {
+    if (event.pointerType === "mouse") reset();
+  });
+
+  chart.querySelectorAll("[data-hr-block]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.hrBlock);
+      const segment = view.segments[index];
+      if (!segment) return;
+      if (button.dataset.active) {
+        reset();
+        return;
+      }
+      highlight(index);
+      chart.dataset.active = "";
+      const minutes = Math.max(1, Math.round((segment.to - segment.from) / 60000));
+      const stats = segment.avg ? `пульс ${segment.avg}, макс ${segment.max}` : "пульса нет";
+      const zone = segment.avg ? hrZoneLabel(segment.avg, view.hrMax) : "";
+      readout.textContent = [`${index + 1}. ${segment.name}`, stats, zone, `${minutes} мин`]
+        .filter(Boolean)
+        .join(" · ");
+    });
+  });
 }
 
 // Пульс по упражнениям: окно подхода — это время от прошлой отметки до текущей.
@@ -2561,55 +2740,6 @@ function hrSeriesPoints(workout) {
   return (workout.wearable?.hrSeries || [])
     .map((point) => ({ bpm: Number(point.bpm) || 0, t: Date.parse(point.t) }))
     .filter((point) => point.bpm > 30 && Number.isFinite(point.t));
-}
-
-function exerciseHeartHtml(workout) {
-  const points = hrSeriesPoints(workout);
-  if (points.length < 3) return "";
-
-  const marked = exerciseSetWindows(workout);
-  const windows = marked.length ? marked : estimatedExerciseWindows(workout, points);
-  if (!windows.length) return "";
-
-  const byExercise = new Map();
-  windows.forEach((window) => {
-    const inside = points.filter((point) => point.t >= window.from && point.t <= window.to);
-    if (!inside.length) return;
-    const stats = byExercise.get(window.exerciseId) || { sum: 0, count: 0, max: 0 };
-    inside.forEach((point) => {
-      stats.sum += point.bpm;
-      stats.count += 1;
-      stats.max = Math.max(stats.max, point.bpm);
-    });
-    byExercise.set(window.exerciseId, stats);
-  });
-  if (!byExercise.size) return "";
-
-  const rows = [...byExercise.entries()]
-    .map(([exerciseId, stats]) => ({
-      name: findExercise(exerciseId)?.name || exerciseId,
-      avg: Math.round(stats.sum / stats.count),
-      max: stats.max,
-    }))
-    .sort((a, b) => b.avg - a.avg);
-  const peak = Math.max(...rows.map((row) => row.max), 1);
-  const note = marked.length
-    ? "По отметкам подходов."
-    : "Приблизительно: подходы не отмечались по ходу, поэтому время поделено по порядку плана и числу подходов.";
-
-  return `
-    <div class="band-exercise-hr">
-      <strong>Пульс по упражнениям</strong>
-      ${rows.map((row) => `
-        <div class="band-exercise-hr-row">
-          <span>${escapeHtml(row.name)}</span>
-          <i><em style="width:${Math.max(8, Math.round((row.avg / peak) * 100))}%"></em></i>
-          <b>${row.avg}<small>/${row.max}</small></b>
-        </div>
-      `).join("")}
-      <small class="band-hint">${note}</small>
-    </div>
-  `;
 }
 
 // Пики пульса — это и есть подходы: их видно в сигнале, даже если галочки

@@ -1656,15 +1656,68 @@ select {
 
 .hr-chart {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin-top: 10px;
 }
 
 .hr-chart svg {
+  display: block;
   width: 100%;
-  height: 132px;
+  height: 140px;
   border-radius: 12px;
   background: var(--panel-2);
+}
+
+.hr-chart-readout {
+  min-height: 18px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.hr-chart[data-active="1"] .hr-chart-readout {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.hr-chart-plot {
+  position: relative;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.hr-seg {
+  fill: transparent;
+}
+
+.hr-seg[data-active="1"] {
+  fill: var(--accent);
+  opacity: 0.18;
+}
+
+.hr-seg-edge {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.hr-cursor {
+  stroke: var(--text);
+  stroke-width: 1;
+  opacity: 0;
+}
+
+.hr-cursor-dot {
+  fill: var(--text);
+  opacity: 0;
+}
+
+.hr-chart[data-active="1"] .hr-cursor {
+  opacity: 0.5;
+}
+
+.hr-chart[data-active="1"] .hr-cursor-dot {
+  opacity: 1;
 }
 
 .hr-chart-axis {
@@ -1674,7 +1727,41 @@ select {
   font-size: 11px;
 }
 
-.band-exercise-hr,
+.hr-strip {
+  display: flex;
+  gap: 2px;
+}
+
+.hr-strip-block {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid var(--workout-line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.hr-strip-block b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hr-strip-block span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hr-strip-block[data-active="1"] {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
 .band-recovery {
   display: grid;
   gap: 6px;
@@ -1685,43 +1772,6 @@ select {
 .band-recovery span {
   color: var(--muted);
   line-height: 1.45;
-}
-
-.band-exercise-hr-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 84px auto;
-  align-items: center;
-  gap: 8px;
-}
-
-.band-exercise-hr-row span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.band-exercise-hr-row i {
-  display: block;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--panel-2);
-  overflow: hidden;
-}
-
-.band-exercise-hr-row i em {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-}
-
-.band-exercise-hr-row b {
-  font-variant-numeric: tabular-nums;
-}
-
-.band-exercise-hr-row small {
-  color: var(--muted);
-  font-weight: 600;
 }
 
 .band-hint {
