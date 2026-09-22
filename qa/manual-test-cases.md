@@ -11,8 +11,10 @@
 3. Tab navigation: workout, calendar, AI, cabinet, analytics.
 4. AI flow: send a question, receive answer, no daily-limit or login error text.
 5. Cabinet/history: finished workout appears in history list.
-6. Offline behavior: cached shell loads and the app stays usable.
-7. Production smoke: main html, manifest, service worker, index return 200.
+6. AI plan confirmation: after finishing a session the chat offers the next plan; the main screen stays empty until «Принять план», and «Отклонить» leaves it empty.
+7. Band session chart: drag across the pulse chart — time, bpm, zone and exercise appear; tapping an exercise block shows its average and max pulse.
+8. Offline behavior: cached shell loads and the app stays usable.
+9. Production smoke: main html, manifest, service worker, index return 200.
 
 ## Environment limitations
 - Cloud sync stays optional and only runs if an old session is already on the device.

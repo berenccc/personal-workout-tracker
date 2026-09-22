@@ -3392,8 +3392,12 @@ function renderAiChat() {
       return `<div class="ai-msg ${message.role === "user" ? "ai-msg-user" : "ai-msg-bot"}">${body}</div>`;
     })
     .join("");
+  // Предложенный план остаётся доступным, даже если последний запрос упал:
+  // иначе принять его уже нечем, хотя он уже собран.
   elements.aiChatLog.innerHTML =
-    bubbles + (aiThinking ? aiTypingBubble() : aiError ? aiErrorBubble() : pendingPlanCard());
+    bubbles +
+    (aiThinking ? aiTypingBubble() : aiError ? aiErrorBubble() : "") +
+    pendingPlanCard();
   scrollAiChatToBottom();
 }
 
