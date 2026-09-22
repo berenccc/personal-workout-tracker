@@ -1724,6 +1724,12 @@ select {
   font-weight: 600;
 }
 
+.band-hint {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .band-diag-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

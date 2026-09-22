@@ -2507,6 +2507,7 @@ function hrChartHtml(band) {
 }
 
 // Пульс по упражнениям: окно подхода — это время от прошлой отметки до текущей.
+// Отметки годятся, только если их ставили по ходу тренировки, а не пачкой в конце.
 function exerciseSetWindows(workout) {
   const marks = [];
   (workout.exercises || []).forEach((item) => {
@@ -2516,10 +2517,43 @@ function exerciseSetWindows(workout) {
     });
   });
   marks.sort((a, b) => a.doneAt - b.doneAt);
+  if (marks.length < 3) return [];
+
+  const spread = marks.at(-1).doneAt - marks[0].doneAt;
+  const gaps = marks.slice(1).map((mark, index) => mark.doneAt - marks[index].doneAt);
+  const typicalGap = gaps.sort((a, b) => a - b)[Math.floor(gaps.length / 2)];
+  if (spread < 5 * 60 * 1000 || typicalGap < 20000) return [];
+
   return marks.map((mark, index) => {
     const previous = marks[index - 1];
     const from = previous ? previous.doneAt : mark.doneAt - 60000;
     return { ...mark, from, to: mark.doneAt };
+  });
+}
+
+// Запасной вариант: подходы закрыты одной пачкой или вообще не отмечены.
+// Делим сессию на блоки пропорционально числу подходов в порядке плана.
+function estimatedExerciseWindows(workout, points) {
+  if (!points.length) return [];
+  const count = (item, onlyDone) =>
+    (item.sets || []).filter((set) => (onlyDone ? set.done : true) && set.mark !== "skip").length;
+  const exercises = workout.exercises || [];
+  const onlyDone = exercises.some((item) => count(item, true) > 0);
+  const rows = exercises
+    .map((item) => ({ exerciseId: item.exerciseId, sets: count(item, onlyDone) }))
+    .filter((row) => row.sets > 0);
+  const totalSets = rows.reduce((sum, row) => sum + row.sets, 0);
+  if (!totalSets) return [];
+
+  const start = points[0].t;
+  const span = points.at(-1).t - start;
+  if (span < 4 * 60 * 1000) return [];
+
+  let cursor = start;
+  return rows.map((row) => {
+    const from = cursor;
+    cursor += (row.sets / totalSets) * span;
+    return { exerciseId: row.exerciseId, from, to: cursor, sets: row.sets };
   });
 }
 
@@ -2531,24 +2565,22 @@ function hrSeriesPoints(workout) {
 
 function exerciseHeartHtml(workout) {
   const points = hrSeriesPoints(workout);
-  const windows = exerciseSetWindows(workout);
-  if (points.length < 3 || !windows.length) {
-    return windows.length
-      ? ""
-      : `<p class="wearable-help">Отмечай подходы галочкой во время тренировки — тогда приложение разложит пульс по упражнениям и паузам.</p>`;
-  }
+  if (points.length < 3) return "";
+
+  const marked = exerciseSetWindows(workout);
+  const windows = marked.length ? marked : estimatedExerciseWindows(workout, points);
+  if (!windows.length) return "";
 
   const byExercise = new Map();
   windows.forEach((window) => {
     const inside = points.filter((point) => point.t >= window.from && point.t <= window.to);
     if (!inside.length) return;
-    const stats = byExercise.get(window.exerciseId) || { sum: 0, count: 0, max: 0, sets: 0 };
+    const stats = byExercise.get(window.exerciseId) || { sum: 0, count: 0, max: 0 };
     inside.forEach((point) => {
       stats.sum += point.bpm;
       stats.count += 1;
       stats.max = Math.max(stats.max, point.bpm);
     });
-    stats.sets += 1;
     byExercise.set(window.exerciseId, stats);
   });
   if (!byExercise.size) return "";
@@ -2558,10 +2590,12 @@ function exerciseHeartHtml(workout) {
       name: findExercise(exerciseId)?.name || exerciseId,
       avg: Math.round(stats.sum / stats.count),
       max: stats.max,
-      sets: stats.sets,
     }))
     .sort((a, b) => b.avg - a.avg);
   const peak = Math.max(...rows.map((row) => row.max), 1);
+  const note = marked.length
+    ? "По отметкам подходов."
+    : "Приблизительно: подходы не отмечались по ходу, поэтому время поделено по порядку плана и числу подходов.";
 
   return `
     <div class="band-exercise-hr">
@@ -2573,31 +2607,65 @@ function exerciseHeartHtml(workout) {
           <b>${row.avg}<small>/${row.max}</small></b>
         </div>
       `).join("")}
+      <small class="band-hint">${note}</small>
     </div>
   `;
+}
+
+// Пики пульса — это и есть подходы: их видно в сигнале, даже если галочки
+// проставлены пачкой в конце или не проставлены вообще.
+function heartPeaks(points) {
+  if (points.length < 8) return [];
+  const avg = points.reduce((sum, point) => sum + point.bpm, 0) / points.length;
+  const peaks = [];
+  points.forEach((point) => {
+    if (point.bpm < avg + 4) return;
+    const neighbours = points.filter((other) => Math.abs(other.t - point.t) <= 45000);
+    if (point.bpm < Math.max(...neighbours.map((other) => other.bpm))) return;
+    const after = points.filter((other) => other.t > point.t && other.t <= point.t + 90000);
+    if (!after.length) return;
+    const drop = point.bpm - Math.min(...after.map((other) => other.bpm));
+    if (drop < 4) return;
+    const previous = peaks.at(-1);
+    if (previous && point.t - previous.t < 60000) {
+      if (point.bpm > previous.bpm) peaks[peaks.length - 1] = { t: point.t, bpm: point.bpm, drop };
+      return;
+    }
+    peaks.push({ t: point.t, bpm: point.bpm, drop });
+  });
+  return peaks;
 }
 
 // Насколько быстро пульс падает после подхода — прямая оценка качества отдыха.
 function restRecoveryHtml(workout) {
   const points = hrSeriesPoints(workout);
-  const windows = exerciseSetWindows(workout);
-  if (points.length < 5 || windows.length < 2) return "";
+  if (points.length < 8) return "";
 
-  const drops = [];
-  windows.forEach((window) => {
-    const at = points.filter((point) => point.t <= window.to).at(-1);
-    if (!at) return;
-    const after = points.filter((point) => point.t > window.to && point.t <= window.to + 90000);
-    if (!after.length) return;
-    drops.push(at.bpm - Math.min(...after.map((point) => point.bpm)));
-  });
-  if (drops.length < 2) return "";
+  const marks = exerciseSetWindows(workout);
+  let drops = [];
+  let gaps = [];
+  let basis = "";
+
+  if (marks.length >= 3) {
+    marks.forEach((window) => {
+      const at = points.filter((point) => point.t <= window.to).at(-1);
+      const after = points.filter((point) => point.t > window.to && point.t <= window.to + 90000);
+      if (at && after.length) drops.push(at.bpm - Math.min(...after.map((point) => point.bpm)));
+    });
+    gaps = marks.slice(1).map((window, index) => (window.to - marks[index].to) / 1000);
+    basis = "по отметкам подходов";
+  }
+
+  if (drops.length < 3) {
+    const peaks = heartPeaks(points);
+    if (peaks.length < 3) return "";
+    drops = peaks.map((peak) => peak.drop);
+    gaps = peaks.slice(1).map((peak, index) => (peak.t - peaks[index].t) / 1000);
+    basis = `по пикам пульса, найдено ${peaks.length} рабочих подходов`;
+  }
 
   const avgDrop = Math.round(drops.reduce((sum, value) => sum + value, 0) / drops.length);
-  const restGaps = windows
-    .slice(1)
-    .map((window, index) => (window.to - windows[index].to) / 1000)
-    .filter((seconds) => seconds > 20 && seconds < 900);
+  const restGaps = gaps.filter((seconds) => seconds > 20 && seconds < 900);
   const avgRest = restGaps.length
     ? Math.round(restGaps.reduce((sum, value) => sum + value, 0) / restGaps.length)
     : null;
@@ -2610,8 +2678,9 @@ function restRecoveryHtml(workout) {
   return `
     <div class="band-recovery">
       <strong>Отдых между подходами</strong>
-      <span>Падение пульса за 90 сек: −${avgDrop} уд.${avgRest ? ` · средняя пауза ${Math.round(avgRest)} сек` : ""}</span>
+      <span>Падение пульса за 90 сек: −${avgDrop} уд.${avgRest ? ` · средняя пауза ${avgRest} сек` : ""}</span>
       <span>${verdict}</span>
+      <small class="band-hint">Считаю ${basis}.</small>
     </div>
   `;
 }
