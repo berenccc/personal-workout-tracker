@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=147" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=147" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=147" />
-    <link rel="manifest" href="./manifest.webmanifest?v=147" />
-    <link rel="stylesheet" href="./training-tracker.css?v=147" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=149" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=149" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=149" />
+    <link rel="manifest" href="./manifest.webmanifest?v=149" />
+    <link rel="stylesheet" href="./training-tracker.css?v=149" />
   </head>
   <body>
     <main class="app">
@@ -33,7 +33,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v147</span>
+          <span class="version-badge">v149</span>
         </div>
       </section>
 
@@ -222,32 +222,36 @@
 
       <section class="view" data-view="band">
       <section class="panel band-page">
-        <div class="panel-header">
+        <div class="band-head">
           <div>
             <p class="eyebrow">Mi Band</p>
-            <h2>Браслет</h2>
+            <h2>Сегодня</h2>
           </div>
-          <small id="bandPageMeta" class="cabinet-status">Сон, пульс, шаги и калории</small>
+          <button id="wearableRefreshButton" class="band-refresh" type="button" aria-label="Обновить">
+            <span aria-hidden="true">↻</span>
+            <small id="bandPageMeta">—</small>
+          </button>
         </div>
-        <p id="wearableStatus" class="wearable-help">Данные идут через Mi Fitness → Health Connect</p>
-        <div class="cabinet-actions">
-          <button id="wearableConnectButton" class="button secondary" type="button">Подключить</button>
-          <button id="wearableRefreshButton" class="button ghost" type="button">Обновить</button>
-          <button id="wearableSettingsButton" class="button ghost" type="button">Health Connect</button>
-        </div>
-        <div id="wearableStats" class="wearable-stats" hidden></div>
-        <div id="bandSleepCard" class="band-sleep" hidden></div>
+        <div id="wearableStats" class="band-rings" hidden></div>
+        <div id="bandReadiness" class="band-readiness" hidden></div>
+        <div id="bandSleepCard" class="band-card" hidden></div>
+        <div id="bandHeartCard" class="band-card" hidden></div>
         <div id="bandLastSession"></div>
-        <div class="band-page-block">
-          <h3>Последние тренировки</h3>
-          <div id="bandChart" class="band-analytics"></div>
+        <div class="band-card">
+          <div class="band-card-head"><h3>Тренировки</h3><small>ккал · средний пульс</small></div>
+          <div id="bandChart" class="band-history"></div>
         </div>
-        <details class="gym-details">
-          <summary>Что именно приходит из Health Connect</summary>
+        <details class="band-card band-service">
+          <summary>Подключение и диагностика</summary>
+          <p id="wearableStatus" class="wearable-help">Данные идут через Mi Fitness → Health Connect</p>
+          <div class="cabinet-actions">
+            <button id="wearableConnectButton" class="button secondary" type="button">Выдать доступ</button>
+            <button id="wearableSettingsButton" class="button ghost" type="button">Открыть Health Connect</button>
+          </div>
           <div id="bandDiagnostics"></div>
           <button id="bandDiagnosticsButton" class="button ghost" type="button">Проверить ещё раз</button>
+          <p class="wearable-help">В Mi Fitness: профиль → Сторонние данные → Health Connect → включи пульс, сон, калории и тренировки. На зале запускай на браслете тренировку «Силовая» — тогда Mi выгрузит частый пульс.</p>
         </details>
-        <p class="wearable-help">В Mi Fitness: профиль → Health Connect → шаги, пульс, сон, калории и тренировки. После старта зала запусти на браслете свободную тренировку — тогда пульс и зоны попадут в отчёт сессии.</p>
       </section>
       </section>
 
@@ -482,12 +486,12 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=147"></script>
-    <script src="./wearable.js?v=147"></script>
-    <script src="./training-tracker.js?v=147"></script>
+    <script src="./exercise-catalog.js?v=149"></script>
+    <script src="./wearable.js?v=149"></script>
+    <script src="./training-tracker.js?v=149"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=147"></script>
-    <script src="./cloud.js?v=147"></script>
+    <script src="./supabase-config.js?v=149"></script>
+    <script src="./cloud.js?v=149"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -522,7 +526,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v147";
+      const APP_VERSION = "v149";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

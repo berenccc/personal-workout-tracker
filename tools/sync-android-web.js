@@ -49,7 +49,7 @@ let html = fs.readFileSync(path.join(root, "training-tracker.html"), "utf8");
 html = html.replace(
   /<script>\s*const APP_VERSION[\s\S]*?<\/script>/,
   `<script>
-      const APP_VERSION = "v147-android";
+      const APP_VERSION = "v149-android";
     </script>`
 );
 fs.writeFileSync(path.join(www, "index.html"), html);

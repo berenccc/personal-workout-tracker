@@ -566,31 +566,347 @@ h3 {
 
 .band-page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
-.band-page-block h3 {
-  margin: 0 0 8px;
-  font-size: 15px;
+.band-page > *,
+.band-card > * {
+  min-width: 0;
 }
 
-.band-sleep {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
+.band-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.band-head h2 {
+  margin: 0;
+}
+
+.band-refresh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
   border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.band-refresh span {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.band-refresh small {
+  font-size: 11px;
+}
+
+.band-rings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.band-ring {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 12px 6px 10px;
+  border-radius: 16px;
+  background: var(--panel-2);
+  text-align: center;
+  min-width: 0;
+}
+
+.band-ring-svg {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+}
+
+.band-ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 10%, transparent);
+  stroke-width: 7;
+}
+
+.band-ring strong {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.band-ring span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.band-ring small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.band-readiness {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
   border-radius: 14px;
   background: var(--panel-2);
 }
 
-.band-sleep strong {
+.band-readiness i {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f2c230;
+}
+
+.band-readiness[data-tone="good"] i { background: #34c77b; }
+.band-readiness[data-tone="bad"] i { background: #ff4d5e; }
+
+.band-readiness div {
+  display: grid;
+  gap: 2px;
+}
+
+.band-readiness strong {
   font-size: 14px;
 }
 
-.band-sleep span {
+.band-readiness span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.band-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--panel-2);
+}
+
+.band-card[data-tone="warn"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #f2c230 55%, transparent);
+}
+
+.band-card .wearable-help {
+  margin: 0;
+}
+
+.band-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.band-card-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.band-card-head small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.band-big {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.band-big small {
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.band-stack {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.band-stack span {
+  min-width: 3px;
+}
+
+.band-stack-thin {
+  grid-column: 1 / -1;
+  height: 5px;
+}
+
+.band-legend {
+  display: grid;
+  gap: 6px;
+}
+
+.band-legend div {
+  display: grid;
+  grid-template-columns: 10px 1fr auto 38px;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.band-legend i,
+.band-zone-row i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.band-legend small {
+  color: var(--muted);
+  text-align: right;
+}
+
+.band-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 6px;
+}
+
+.band-tiles div {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.band-tiles span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.band-tiles b {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.band-day-hr {
+  display: block;
+  width: 100%;
+  height: 70px;
+}
+
+.band-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.band-zone-list {
+  display: grid;
+  gap: 8px;
+}
+
+.band-zone-row {
+  display: grid;
+  grid-template-columns: 118px 1fr 52px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.band-zone-row span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.band-zone-row em {
+  height: 8px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  overflow: hidden;
+}
+
+.band-zone-row em b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.band-zone-row small {
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.band-history {
+  display: grid;
+}
+
+.band-history-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.band-history-row:last-child {
+  border-bottom: 0;
+}
+
+.band-history-row > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.band-history-row strong {
+  font-size: 14px;
+}
+
+.band-history-row small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.band-history-nums {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.band-history-nums b {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.band-history-nums span {
+  color: #ff4d5e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.band-service summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
 }
 
 .band-today-head {
@@ -702,38 +1018,6 @@ h3 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.band-analytics {
-  display: grid;
-  gap: 12px;
-}
-
-.band-analytics-row {
-  display: grid;
-  grid-template-columns: 72px 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.band-analytics-row small,
-.band-analytics-row span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.band-analytics-bar {
-  height: 10px;
-  border-radius: 99px;
-  background: var(--panel-2);
-  overflow: hidden;
-}
-
-.band-analytics-bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
 }
 
 .overview-card > span {
@@ -1656,6 +1940,7 @@ select {
 
 .hr-chart {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
   margin-top: 10px;
 }
@@ -1663,9 +1948,47 @@ select {
 .hr-chart svg {
   display: block;
   width: 100%;
-  height: 140px;
-  border-radius: 12px;
-  background: var(--panel-2);
+  height: 150px;
+}
+
+.hr-grid {
+  stroke: color-mix(in srgb, var(--text) 10%, transparent);
+  stroke-width: 1;
+}
+
+.hr-avg {
+  stroke: color-mix(in srgb, var(--text) 45%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.hr-grid-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hr-grid-labels span {
+  position: absolute;
+  right: 2px;
+  transform: translateY(-110%);
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.hr-chart-legend {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.hr-legend-avg {
+  display: inline-block;
+  width: 14px;
+  margin-right: 6px;
+  vertical-align: middle;
+  border-top: 1px dashed currentColor;
 }
 
 .hr-chart-readout {
@@ -1730,6 +2053,12 @@ select {
 .hr-strip {
   display: flex;
   gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hr-strip-block {
+  flex-basis: 0;
 }
 
 .hr-strip-block {
