@@ -4806,8 +4806,9 @@ async function callOpenAi(messages, toolChoice, deferredTool = "") {
     } catch (error) {
       assertAiRunAlive();
       if (error?.message === AI_CANCELLED) throw error;
-      if (error?.status === 429) throw new Error("AI временно перегружен, попробуй ещё раз чуть позже");
       if (/не ответил/.test(error?.message || "")) throw error;
+      if (error?.message) throw new Error(error.message);
+      throw new Error("AI-сервер временно недоступен");
     }
   }
 
