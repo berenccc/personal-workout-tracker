@@ -94,6 +94,10 @@ function hasPersonalAccess(request: Request) {
   return Boolean(expected) && provided === expected;
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -134,31 +138,62 @@ Deno.serve(async (request) => {
   const toolChoice = sanitizeToolChoice(body.toolChoice, tools);
   if (!messages.length) return json({ error: "Некорректный запрос" }, 400);
 
-  const openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${openAiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: Deno.env.get("OPENAI_MODEL") || "gpt-5.6-terra",
-      temperature: 0.4,
-      max_completion_tokens: 900,
-      reasoning_effort: "none",
-      messages: [
-        { role: "system", content: `${SYSTEM_PROMPT}\n\nСегодня ${new Date().toISOString().slice(0, 10)}.` },
-        ...messages,
-      ],
-      tools,
-      ...(toolChoice ? { tool_choice: toolChoice } : {}),
-    }),
-  });
+  const primaryModel = Deno.env.get("OPENAI_MODEL") || "gpt-5.6-terra";
+  const fallbackModel = Deno.env.get("OPENAI_FALLBACK_MODEL") || "gpt-4o-mini";
+  const models = [primaryModel, primaryModel, fallbackModel];
+  const payload = {
+    temperature: 0.4,
+    max_completion_tokens: 900,
+    reasoning_effort: "none",
+    messages: [
+      { role: "system", content: `${SYSTEM_PROMPT}\n\nСегодня ${new Date().toISOString().slice(0, 10)}.` },
+      ...messages,
+    ],
+    tools,
+    ...(toolChoice ? { tool_choice: toolChoice } : {}),
+  };
 
-  const result = await openAiResponse.json().catch(() => ({ error: { message: "Пустой ответ AI" } }));
-  if (!openAiResponse.ok) {
-    console.error("OpenAI error", openAiResponse.status, result?.error?.message);
-    return json({ error: "AI временно недоступен" }, openAiResponse.status === 429 ? 429 : 502);
+  let openAiResponse: Response | null = null;
+  let result: any = null;
+  for (let attempt = 0; attempt < models.length; attempt++) {
+    if (attempt > 0) await wait(800 * attempt);
+    openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${openAiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...payload,
+        model: models[attempt],
+      }),
+    });
+    result = await openAiResponse.json().catch(() => ({ error: { message: "Пустой ответ AI" } }));
+    if (openAiResponse.ok) return json(result, 200);
+
+    const providerCode = result?.error?.code || result?.error?.type || "";
+    console.error("OpenAI error", openAiResponse.status, providerCode, result?.error?.message);
+    if (providerCode === "insufficient_quota" || providerCode === "credit_balance_exhausted") break;
+    const retryable = openAiResponse.status === 429 || openAiResponse.status >= 500;
+    if (!retryable) break;
   }
 
-  return json(result, 200);
+  if (!openAiResponse) return json({ error: "AI временно недоступен" }, 502);
+  const providerCode = result?.error?.code || result?.error?.type || "";
+  if (providerCode === "insufficient_quota" || providerCode === "credit_balance_exhausted") {
+    // Текущее приложение любой ответ 429 показывает как «перегружен».
+    // Отдаём обычный ответ чата, чтобы на телефоне была видна настоящая причина.
+    return json({
+      choices: [{
+        message: {
+          role: "assistant",
+          content: "AI сейчас не отвечает, потому что на счёте OpenAI закончились деньги. Это не перегрузка приложения. Пополни баланс на platform.openai.com — после оплаты тренер заработает в этой же версии, без новой установки.",
+        },
+      }],
+    }, 200);
+  }
+  return json(
+    { error: "AI временно перегружен — резервная модель тоже не ответила" },
+    openAiResponse.status === 429 ? 429 : 502,
+  );
 });
