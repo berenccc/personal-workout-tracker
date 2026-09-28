@@ -4262,30 +4262,62 @@ function catalogExercise(id) {
   return exercises.find((exercise) => exercise.id === resolved) || null;
 }
 
-function planOrderText() {
-  if (!selected.length) return "план пуст";
-  return selected
+function planOrderText(items = selected) {
+  if (!items.length) return "план пуст";
+  return items
     .map((item, index) => `${index + 1}. ${catalogExercise(item.exerciseId)?.name || item.exerciseId} (${item.exerciseId})`)
     .join("; ");
 }
 
-function planIndexFromArgs(args) {
-  if (!selected.length) return { error: "План пуст, менять нечего." };
+function planIndexFromArgs(args, items = selected) {
+  if (!items.length) return { error: "План пуст, менять нечего." };
   const position = Number(args.position);
-  if (Number.isInteger(position) && position >= 1 && position <= selected.length) return { index: position - 1 };
+  if (Number.isInteger(position) && position >= 1 && position <= items.length) return { index: position - 1 };
   if (Number.isFinite(position) && position > 0) {
-    return { error: `Позиции ${position} нет. Сейчас в плане ${selected.length}: ${planOrderText()}.` };
+    return { error: `Позиции ${position} нет. Сейчас в плане ${items.length}: ${planOrderText(items)}.` };
   }
   const id = String(args.exerciseId || "").trim();
   if (!id) return { error: "Укажи position (номер с 1) или exerciseId упражнения." };
   const resolved = EXERCISE_ALIASES[id] || id;
   const matches = [];
-  selected.forEach((item, index) => {
+  items.forEach((item, index) => {
     if (item.exerciseId === id || item.exerciseId === resolved) matches.push(index);
   });
-  if (!matches.length) return { error: `В плане нет «${id}». Сейчас: ${planOrderText()}.` };
+  if (!matches.length) return { error: `В плане нет «${id}». Сейчас: ${planOrderText(items)}.` };
   if (matches.length > 1) return { error: `«${id}» стоит в плане ${matches.length} раза. Укажи position.` };
   return { index: matches[0] };
+}
+
+// Пока план от AI ждёт «Принять», пользователь видит именно его — правки идут туда.
+// Во время тренировки предложение не трогаем: правим то, что сейчас выполняется.
+function aiEditTarget() {
+  const active = elements.workoutPanel.classList.contains("is-active");
+  if (pendingAiPlan && !active) {
+    const items = pendingAiPlan.exercises.map((item) =>
+      planEntry(item.exerciseId, (item.sets || []).map((set) => [set.weight, set.reps, set.rpe ?? ""]))
+    );
+    return {
+      items,
+      commit(next, message) {
+        storePendingAiPlan({
+          ...pendingAiPlan,
+          exercises: next.map((item) => ({
+            exerciseId: item.exerciseId,
+            sets: item.sets.map((set) => ({ weight: set.weight, reps: set.reps, rpe: set.rpe ?? "" })),
+          })),
+        });
+        renderAiChat();
+        return `${message} Правка внесена в предложенный план — он всё ещё ждёт кнопки «Принять план». Сейчас: ${planOrderText(next)}.`;
+      },
+    };
+  }
+  return {
+    items: selected,
+    commit(next, message) {
+      selected = next;
+      return commitPlanEdit(message);
+    },
+  };
 }
 
 function rowsFromToolSets(sets) {
@@ -4345,6 +4377,15 @@ function executeAiTool(name, args) {
       `Mi Band: ${formatWearableLine(wearableApi()?.loadSnapshot?.()) || "нет свежих данных"}`,
       "Упражнения:",
       plan.join("\n") || "план пуст",
+      ...(pendingAiPlan && !isActive
+        ? [
+            "",
+            "Предложенный план (ждёт кнопки «Принять план»; add/update/remove/reorder сейчас правят именно его):",
+            ...pendingPlanLines(pendingAiPlan).map((line, index) =>
+              line.replace(/^\d+\. /, `${index + 1}. `).replace(/:/, ` (${pendingAiPlan.exercises[index].exerciseId}):`)
+            ),
+          ]
+        : []),
     ].join("\n");
   }
 
@@ -4372,17 +4413,19 @@ function executeAiTool(name, args) {
       .filter((row) => row[1] > 0);
     if (!rows.length) return "Ошибка: не переданы подходы (weight, reps).";
 
-    selected.push(planEntry(exercise.id, rows));
-    renderSelectedExercises();
-    persistAiPlan();
-    saveWorkoutDraft();
-    return `Добавил в текущий план: ${exercise.name}, ${rows.length} подх. Остальные упражнения не тронуты.`;
+    const target = aiEditTarget();
+    return target.commit(
+      [...target.items, planEntry(exercise.id, rows)],
+      `Добавил: ${exercise.name}, ${rows.length} подх. Остальные упражнения не тронуты.`
+    );
   }
 
   if (name === "update_exercise_in_plan") {
-    const located = planIndexFromArgs(args);
+    const target = aiEditTarget();
+    const items = [...target.items];
+    const located = planIndexFromArgs(args, items);
     if (located.error) return `Ошибка: ${located.error}`;
-    const current = selected[located.index];
+    const current = items[located.index];
     const nextId = String(args.newExerciseId || "").trim();
     const hasSets = Array.isArray(args.sets);
     if (!nextId && !hasSets) return "Ошибка: передай newExerciseId (замена) и/или sets (новые подходы).";
@@ -4398,46 +4441,49 @@ function executeAiTool(name, args) {
     if (hasSets) {
       const rows = rowsFromToolSets(args.sets);
       if (!rows.length) return "Ошибка: не переданы подходы (weight, reps).";
-      if (replacing) selected[located.index] = planEntry(replacement.id, rows);
+      if (replacing) items[located.index] = planEntry(replacement.id, rows);
       else current.sets = rows.map(([weight, reps, rpe]) => ({ weight, reps, rpe, done: false, mark: "normal" }));
     } else {
       const rows = current.sets.map((set) => [set.weight, set.reps, set.rpe ?? ""]);
-      selected[located.index] = planEntry(replacement.id, rows.length ? rows : [[0, 10, ""]]);
+      items[located.index] = planEntry(replacement.id, rows.length ? rows : [[0, 10, ""]]);
     }
 
     const dropped = doneCount && (replacing || hasSets) ? ` Сбросил ${doneCount} уже отмеченных подходов у этого упражнения.` : "";
     const action = replacing
       ? `Заменил «${previousName}» на «${replacement.name}».`
       : `Обновил подходы у «${replacement.name}».`;
-    return commitPlanEdit(`${action}${dropped}`);
+    return target.commit(items, `${action}${dropped}`);
   }
 
   if (name === "remove_exercise_from_plan") {
-    const located = planIndexFromArgs(args);
+    const target = aiEditTarget();
+    const items = [...target.items];
+    const located = planIndexFromArgs(args, items);
     if (located.error) return `Ошибка: ${located.error}`;
-    const [removed] = selected.splice(located.index, 1);
+    const [removed] = items.splice(located.index, 1);
     const title = catalogExercise(removed.exerciseId)?.name || removed.exerciseId;
     const doneCount = removed.sets.filter((set) => set.done).length;
-    return commitPlanEdit(`Убрал «${title}».${doneCount ? ` У него было ${doneCount} отмеченных подходов.` : ""}`);
+    return target.commit(items, `Убрал «${title}».${doneCount ? ` У него было ${doneCount} отмеченных подходов.` : ""}`);
   }
 
   if (name === "reorder_plan") {
+    const target = aiEditTarget();
+    const current = target.items;
     const ids = Array.isArray(args.exerciseIds) ? args.exerciseIds.map((id) => String(id)) : [];
-    if (ids.length !== selected.length) {
-      return `Ошибка: нужен полный список из ${selected.length} exerciseId в новом порядке. Сейчас: ${planOrderText()}.`;
+    if (ids.length !== current.length) {
+      return `Ошибка: нужен полный список из ${current.length} exerciseId в новом порядке. Сейчас: ${planOrderText(current)}.`;
     }
-    const pool = selected.map((item) => ({ item, used: false }));
+    const pool = current.map((item) => ({ item, used: false }));
     const next = [];
     for (const id of ids) {
       const resolved = EXERCISE_ALIASES[id] || id;
       const found = pool.find((entry) => !entry.used && (entry.item.exerciseId === id || entry.item.exerciseId === resolved));
-      if (!found) return `Ошибка: «${id}» нет в плане или он указан лишний раз. Сейчас: ${planOrderText()}.`;
+      if (!found) return `Ошибка: «${id}» нет в плане или он указан лишний раз. Сейчас: ${planOrderText(current)}.`;
       found.used = true;
       next.push(found.item);
     }
-    if (next.every((item, index) => item === selected[index])) return `Порядок уже такой. Сейчас: ${planOrderText()}.`;
-    selected = next;
-    return commitPlanEdit("Поменял порядок. Отметки подходов сохранены.");
+    if (next.every((item, index) => item === current[index])) return `Порядок уже такой. Сейчас: ${planOrderText(current)}.`;
+    return target.commit(next, "Поменял порядок. Отметки подходов сохранены.");
   }
 
   if (name === "get_exercise_catalog") {

@@ -5,6 +5,7 @@ from playwright.sync_api import Page, expect
 
 
 PLAN_KEY = "training-tracker-ai-plan-v1"
+PENDING_KEY = "training-tracker-ai-pending-plan-v1"
 
 
 def seeded_plan() -> str:
@@ -100,6 +101,25 @@ def test_ai_removes_exercise(local_server, browser_context):
     ask(page, "Убери тягу")
 
     assert titles(page) == ["Жим штанги лёжа", "Жим ногами без наклона"]
+
+
+def test_ai_removes_exercise_from_pending_proposal(local_server, browser_context):
+    page = browser_context.new_page()
+    prepare_tool_stub(page, "remove_exercise_from_plan", {"exerciseId": "lat-pulldown"})
+    proposal = json.loads(seeded_plan())
+    proposal.pop("planDate")
+    page.add_init_script(
+        f"localStorage.setItem({json.dumps(PENDING_KEY)}, {json.dumps(json.dumps(proposal, ensure_ascii=False))});"
+    )
+    page.goto(local_server, wait_until="domcontentloaded")
+
+    ask(page, "Убери тягу")
+
+    offer = page.locator(".ai-plan-offer-list li")
+    expect(offer).to_have_count(2)
+    expect(page.locator(".ai-plan-offer-list")).not_to_contain_text("Тяга верхнего блока")
+    stored = json.loads(page.evaluate(f"() => localStorage.getItem({json.dumps(PENDING_KEY)})"))
+    assert [item["exerciseId"] for item in stored["exercises"]] == ["bench", "leg-press"]
 
 
 def test_ai_reorders_plan_and_keeps_done_sets(local_server, browser_context):
