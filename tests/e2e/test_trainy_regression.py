@@ -100,7 +100,7 @@ def test_workout_finish_updates_history(local_server, browser_context):
     expect(finish_notice).to_contain_text("сохранена")
     expect(finish_notice).to_contain_text("подходов")
 
-    page.click('.bottom-nav-btn[data-target="cabinet"]')
+    page.click('.bottom-nav-btn[data-target="calendar"]')
     expect(page.locator("#historyList .history-item").first).to_contain_text("qa-run")
 
 

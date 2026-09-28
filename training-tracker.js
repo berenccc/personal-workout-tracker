@@ -927,6 +927,17 @@ function bindEvents() {
     if (!chip) return;
     toggleWeekday(Number(chip.dataset.weekday));
   });
+  elements.historyList?.addEventListener("click", (event) => {
+    const removeButton = event.target.closest('[data-action="delete-workout"]');
+    if (removeButton) {
+      deleteWorkoutAt(Number(removeButton.dataset.index));
+      return;
+    }
+    if (event.target.closest('[data-action="history-more"]')) {
+      historyLimit += HISTORY_PAGE;
+      renderHistory();
+    }
+  });
   elements.dayDetail?.addEventListener("click", (event) => {
     if (event.target.closest(".day-detail-close")) {
       selectedDayIso = null;
@@ -993,9 +1004,12 @@ function bindEvents() {
   elements.chartExerciseSelect.addEventListener("change", renderCharts);
   window.addEventListener("pagehide", saveWorkoutDraft);
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") saveWorkoutDraft();
-    else refreshWearable(true);
+    if (document.visibilityState === "hidden") {
+      saveWorkoutDraft();
+      flushAllCloudDeletes();
+    } else refreshWearable(true);
   });
+  window.addEventListener("pagehide", flushAllCloudDeletes);
 
   elements.workoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1007,6 +1021,7 @@ function bindEvents() {
       alert("Добавь хотя бы одно упражнение.");
       return;
     }
+    const resumeDraft = buildWorkoutDraft();
     const band = await attachWearableMetrics(workout);
     if (band) workout.wearable = band;
 
@@ -1022,8 +1037,13 @@ function bindEvents() {
       );
       if (navigator.vibrate) navigator.vibrate(80);
 
+      lastFinishedWorkout = { workout, draft: resumeDraft };
       const pushedToCloud = await window.cloudSync?.pushWorkout(workout);
-      showToast(pushedToCloud ? "Сохранено в облаке ✓" : "Сохранено ✓");
+      showToast(pushedToCloud ? "Сохранено в облаке ✓" : "Сохранено ✓", "success", {
+        actionLabel: "Вернуть",
+        onAction: resumeFinishedWorkout,
+        duration: 10000,
+      });
       try {
         await copyText(buildWorkoutReport(workout));
         elements.copyReportButton.textContent = "Отчет скопирован";
@@ -1129,7 +1149,11 @@ function saveWorkoutDraft() {
 
   if (!hasStarted && !hasChanges) return;
 
-  const draft = {
+  localStorage.setItem(WORKOUT_DRAFT_KEY, JSON.stringify(buildWorkoutDraft()));
+}
+
+function buildWorkoutDraft() {
+  return {
     version: 1,
     savedAt: Date.now(),
     sessionUid: workoutSessionUid,
@@ -1145,10 +1169,8 @@ function saveWorkoutDraft() {
       sessionEffort: elements.sessionEffortInput.value,
       afterNotes: elements.afterNotesInput.value,
     },
-    selected,
+    selected: JSON.parse(JSON.stringify(selected)),
   };
-
-  localStorage.setItem(WORKOUT_DRAFT_KEY, JSON.stringify(draft));
 }
 
 function restoreWorkoutDraft() {
@@ -1213,7 +1235,7 @@ function setFinishButtonState(mode) {
   button.textContent = mode === "saving" ? "Сохраняю..." : "Завершить тренировку";
 }
 
-function showToast(message, tone = "success") {
+function showToast(message, tone = "success", { actionLabel, onAction, duration } = {}) {
   let container = document.querySelector("#toastContainer");
   if (!container) {
     container = document.createElement("div");
@@ -1224,13 +1246,64 @@ function showToast(message, tone = "success") {
   const toast = document.createElement("div");
   toast.className = `toast toast-${tone}`;
   toast.setAttribute("role", "status");
-  toast.textContent = message;
-  container.appendChild(toast);
-  requestAnimationFrame(() => toast.classList.add("is-visible"));
-  setTimeout(() => {
+  const text = document.createElement("span");
+  text.textContent = message;
+  toast.appendChild(text);
+  const hide = () => {
     toast.classList.remove("is-visible");
     setTimeout(() => toast.remove(), 350);
-  }, 2800);
+  };
+  if (actionLabel && onAction) {
+    toast.classList.add("has-action");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "toast-action";
+    button.textContent = actionLabel;
+    button.addEventListener("click", () => {
+      hide();
+      onAction();
+    });
+    toast.appendChild(button);
+  }
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("is-visible"));
+  setTimeout(hide, duration || (actionLabel ? 6000 : 2800));
+}
+
+// Последняя сохранённая тренировка и её черновик: если «Завершить» нажали случайно,
+// тренировку можно вернуть в редактор, не теряя отметок и таймера.
+let lastFinishedWorkout = null;
+
+function resumeFinishedWorkout() {
+  const finished = lastFinishedWorkout;
+  if (!finished) return;
+  if (workoutTimer.startedAt && !workoutTimer.stoppedAt) {
+    showToast("Сейчас идёт другая тренировка — сначала заверши её", "warn");
+    return;
+  }
+  lastFinishedWorkout = null;
+
+  const index = state.workouts.indexOf(finished.workout);
+  if (index >= 0) {
+    state.workouts.splice(index, 1);
+    saveState();
+    window.cloudSync?.deleteWorkout?.(finished.workout);
+  }
+  stopAiRun();
+  localStorage.removeItem(AI_POST_WORKOUT_PENDING_KEY);
+  dropPendingAiPlan();
+
+  localStorage.setItem(WORKOUT_DRAFT_KEY, JSON.stringify({
+    ...finished.draft,
+    isActive: true,
+    timer: { startedAt: finished.draft.timer?.startedAt || Date.now(), stoppedAt: null },
+  }));
+  hideFinishNotice();
+  restoreWorkoutDraft();
+  render();
+  renderAiChat();
+  window.showAppView?.("workout");
+  showToast("Тренировка снова открыта — продолжай");
 }
 
 function showFinishNotice(workout, pushedToCloud) {
@@ -1255,7 +1328,10 @@ function showFinishNotice(workout, pushedToCloud) {
     ${workout.durationMs ? `<p>Длительность: <strong>${formatDuration(workout.durationMs)}</strong></p>` : ""}
     ${wearableCardHtml(workout.wearable)}
     <ol class="finish-summary-list">${rows.join("")}</ol>
+    <button class="button ghost" type="button" data-action="resume-workout">Нажал случайно — вернуться к тренировке</button>
   `;
+  elements.finishNotice.querySelector('[data-action="resume-workout"]')
+    ?.addEventListener("click", resumeFinishedWorkout);
   elements.finishNotice.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1264,18 +1340,52 @@ function hideFinishNotice() {
   elements.finishNotice.innerHTML = "";
 }
 
+const DELETE_UNDO_MS = 8000;
+const pendingCloudDeletes = new Map();
+
+function flushCloudDelete(workout) {
+  if (!pendingCloudDeletes.has(workout)) return;
+  window.clearTimeout(pendingCloudDeletes.get(workout));
+  pendingCloudDeletes.delete(workout);
+  window.cloudSync?.deleteWorkout?.(workout);
+}
+
+function flushAllCloudDeletes() {
+  [...pendingCloudDeletes.keys()].forEach(flushCloudDelete);
+}
+
 function deleteWorkoutAt(index) {
   const workout = state.workouts[index];
   if (!workout) return;
-  if (!confirm(`Удалить тренировку ${formatDate(workout.date)}?`)) return;
 
   state.workouts.splice(index, 1);
   saveState();
-  window.cloudSync?.deleteWorkout?.(workout);
+  if (lastFinishedWorkout?.workout === workout) lastFinishedWorkout = null;
   if (!workoutsOnDate(workout.date).length) selectedDayIso = null;
   render();
   renderDayDetail();
-  showToast("Тренировка удалена");
+
+  // Из облака удаляем только после окна отмены, иначе «Вернуть» пришлось бы заливать заново.
+  const cloudTimer = window.setTimeout(() => flushCloudDelete(workout), DELETE_UNDO_MS);
+  pendingCloudDeletes.set(workout, cloudTimer);
+  showToast(`Тренировка ${formatDate(workout.date)} удалена`, "success", {
+    actionLabel: "Вернуть",
+    duration: DELETE_UNDO_MS,
+    onAction: () => {
+      if (pendingCloudDeletes.has(workout)) {
+        window.clearTimeout(pendingCloudDeletes.get(workout));
+        pendingCloudDeletes.delete(workout);
+      } else {
+        window.cloudSync?.pushWorkout?.(workout);
+      }
+      state.workouts.push(workout);
+      state.workouts.sort((a, b) => a.date.localeCompare(b.date));
+      saveState();
+      render();
+      renderDayDetail();
+      showToast("Тренировка возвращена");
+    },
+  });
 }
 
 function upsertWorkout(workout) {
@@ -1781,10 +1891,77 @@ function updateNativeWidget() {
     weekWorkouts: [...dates].filter((iso) => iso >= mondayOf(new Date())).length,
     sleep: widgetReadinessLine(snapshot),
     week: weekWidgetDays(),
+    listLines: active ? widgetActiveLines() : widgetIdleLines(snapshot),
+    ...(active ? widgetNotice() : {}),
     updatedAt: new Date().toISOString(),
   };
 
   bridge.setWidgetData({ json: JSON.stringify(payload) }).catch(() => {});
+}
+
+// Последний живой пульс с браслета: берём только свежий, старше 3 минут уже не «сейчас».
+let liveBandHr = null;
+
+function freshLiveHr() {
+  if (!liveBandHr?.bpm || Date.now() - liveBandHr.at > 3 * 60 * 1000) return null;
+  return liveBandHr.bpm;
+}
+
+function setsSummary(sets) {
+  const work = sets.filter((set) => set.mark !== "skip");
+  if (!work.length) return "";
+  const top = work.reduce((best, set) => (Number(set.weight) > Number(best.weight) ? set : best), work[0]);
+  const reps = work.every((set) => Number(set.reps) === Number(work[0].reps)) ? work[0].reps : top.reps;
+  return `${work.length}×${reps}${Number(top.weight) ? ` · ${formatNumber(top.weight)}` : ""}`;
+}
+
+// Высокий виджет показывает больше: сначала упражнения, потом день и неделя.
+function widgetIdleLines(snapshot) {
+  const lines = selected.map((item, index) => {
+    const name = findExercise(item.exerciseId)?.name || item.exerciseId;
+    const sets = setsSummary(item.sets);
+    return `${index + 1}. ${name}${sets ? ` — ${sets}` : ""}`;
+  });
+
+  const today = [
+    snapshot.todaySteps != null ? `${Number(snapshot.todaySteps).toLocaleString("ru-RU")} шагов` : null,
+    snapshot.todayCalories ? `${snapshot.todayCalories} ккал` : null,
+    snapshot.restingHr ? `пульс покоя ${snapshot.restingHr}` : null,
+  ].filter(Boolean);
+  if (today.length) lines.push("", `Сегодня: ${today.join(" · ")}`);
+
+  const weekStart = mondayOf(new Date());
+  const week = state.workouts.filter((workout) => workout.date >= weekStart);
+  if (week.length) {
+    const sets = week.reduce((sum, workout) => sum + doneSetCount(workout), 0);
+    lines.push(`Неделя: ${week.length} ${plural(week.length, "тренировка", "тренировки", "тренировок")} · ${sets} подх.`);
+  }
+  return lines;
+}
+
+function widgetActiveLines() {
+  const current = selected.find((item) => item.sets.some((set) => !set.done));
+  return selected.map((item) => {
+    const name = findExercise(item.exerciseId)?.name || item.exerciseId;
+    const done = item.sets.filter((set) => set.done).length;
+    const mark = done === item.sets.length ? "✓" : item === current ? "▸" : "·";
+    return `${mark} ${name} ${done}/${item.sets.length}`;
+  });
+}
+
+function widgetNotice() {
+  const sets = selected.flatMap((item) => item.sets);
+  const doneSets = sets.filter((set) => set.done).length;
+  const current = selected.find((item) => item.sets.some((set) => !set.done));
+  const bpm = freshLiveHr();
+  const progress = `${doneSets}/${sets.length} подходов`;
+  const currentName = current ? findExercise(current.exerciseId)?.name : null;
+  return {
+    activeEyebrow: bpm ? `Идёт тренировка · ♥ ${bpm}` : "Идёт тренировка",
+    noticeTitle: bpm ? `♥ ${bpm} уд/мин · ${progress}` : `Тренировка · ${progress}`,
+    noticeText: currentName ? `Сейчас: ${currentName}` : "Все подходы закрыты",
+    noticeDetails: widgetActiveLines().join("\n"),
+  };
 }
 
 // Что именно предстоит: упражнения, объём и прикидка времени.
@@ -1867,7 +2044,8 @@ function handleWidgetAction(action) {
   if (!action) return;
   if (action === "start" || action === "open") {
     window.showAppView?.("workout");
-    if (action === "start" && !workoutTimer.startedAt) startWorkoutTimer();
+    // Тап по виджету легко сделать случайно, поэтому тренировку не стартуем без подтверждения.
+    if (action === "start" && !workoutTimer.startedAt) showStartPrompt();
     return;
   }
   if (action === "last") {
@@ -1880,6 +2058,34 @@ function handleWidgetAction(action) {
     renderScheduleCalendar();
     renderDayDetail();
   }
+}
+
+function showStartPrompt() {
+  document.querySelector("#startPrompt")?.remove();
+  const sets = selected.reduce((sum, item) => sum + item.sets.length, 0);
+  const plan = selected.length
+    ? `${escapeHtml(currentPlanTitle())} · ${selected.length} упр. · ${sets} подх.`
+    : "План пуст — можно начать и добавить упражнения по ходу.";
+  const sheet = document.createElement("div");
+  sheet.id = "startPrompt";
+  sheet.className = "start-prompt";
+  sheet.innerHTML = `
+    <div class="start-prompt-card" role="dialog" aria-label="Начать тренировку">
+      <strong>Начинаем тренировку?</strong>
+      <p>${plan}</p>
+      <div class="start-prompt-actions">
+        <button class="button ghost" type="button" data-start-prompt="cancel">Не сейчас</button>
+        <button class="button primary" type="button" data-start-prompt="go">Стартуем</button>
+      </div>
+    </div>
+  `;
+  sheet.addEventListener("click", (event) => {
+    const choice = event.target.closest("[data-start-prompt]")?.dataset.startPrompt;
+    if (!choice && event.target !== sheet) return;
+    sheet.remove();
+    if (choice === "go" && !workoutTimer.startedAt) startWorkoutTimer();
+  });
+  document.body.appendChild(sheet);
 }
 
 async function consumeWidgetLaunch() {
@@ -3331,6 +3537,8 @@ async function pollLiveBandHr() {
     if (!live?.bpm) return;
     node.hidden = false;
     node.textContent = `${live.bpm}`;
+    liveBandHr = { bpm: live.bpm, at: Date.now() };
+    updateNativeWidget();
   } catch {
     // пульс во время сессии не обязателен
   }
@@ -3682,11 +3890,11 @@ const AI_SYSTEM_PROMPT = `Ты — персональный AI-тренер вн
 
 ПРОФИЛЬ АТЛЕТА: мужчина, тренируется в зале 2-3 раза в неделю на тренажёрах, гантелях и штанге. Цель — форма, самочувствие и сила без выгорания и без работы в отказ. Не любит farmer-carry. В зале есть гравитрон, жимы/тяги на тренажёрах, Belt Squat, Glute Drive, Hip&Glute, сгибания/разгибания ног, пресс/вращение корпуса, кардио (эллипс, вело, гребля, степпер, аэробайк), канаты, плюс свободные веса, перекладина, брусья, резинки и мячи — бери упражнения только из «Моего зала» / get_exercise_catalog. История знает случаи перегруза ЦНС, боли в левом плече и эпизод с правым коленом на жиме ногами — следи за этими сигналами. Если в контексте есть данные Mi Band (сон, пульс покоя, пульс сессии) — учитывай их в нагрузке: короткий сон или высокий пульс покоя = легче, без героизма.
 
-ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план и статус тренировки), get_exercise_catalog (доступные упражнения и их id). Для последней тренировки и ближайшего плана запрашивай подробные 3–12 сессий через count. Для вопросов о прогрессе, плато, рекордах, балансе нагрузки и долгосрочном планировании дополнительно вызывай get_recent_workouts с days: 365 — он вернёт компактную историю за год. Полную замену плана делай через set_planned_workout, точечное добавление одного упражнения — через add_exercise_to_plan. ВАЖНО: set_planned_workout НЕ меняет план сразу — он показывает предложение с кнопкой «Принять план», и пользователь решает сам. Поэтому после вызова не пиши «план сохранён/обновлён»; скажи, что предложил план и ждёшь подтверждения. add_exercise_to_plan применяется сразу, потому что о нём просят явно. Используй только exerciseId из каталога. На оффтоп-запросах инструменты не вызывай.
+ИНСТРУМЕНТЫ: у тебя есть функции. Прежде чем оценивать тренировку или менять план — ВСЕГДА сначала прочитай данные: get_recent_workouts (история), get_planned_workout (текущий план и статус тренировки), get_exercise_catalog (доступные упражнения и их id). Для последней тренировки и ближайшего плана запрашивай подробные 3–12 сессий через count. Для вопросов о прогрессе, плато, рекордах, балансе нагрузки и долгосрочном планировании дополнительно вызывай get_recent_workouts с days: 365 — он вернёт компактную историю за год. Полную замену плана с нуля делай через set_planned_workout. Точечные правки текущего плана применяй сразу: добавить — add_exercise_to_plan, заменить упражнение или его подходы — update_exercise_in_plan, убрать — remove_exercise_from_plan, поменять порядок — reorder_plan. ВАЖНО: set_planned_workout НЕ меняет план сразу — он показывает предложение с кнопкой «Принять план», и пользователь решает сам. Поэтому после вызова не пиши «план сохранён/обновлён»; скажи, что предложил план и ждёшь подтверждения. add_exercise_to_plan применяется сразу, потому что о нём просят явно. Используй только exerciseId из каталога. На оффтоп-запросах инструменты не вызывай.
 
 НОВЫЕ УПРАЖНЕНИЯ: если пользователь встретил в зале тренажёр или упражнение, которого нет в каталоге («тут стоит хаммер», «добавь тягу Т-грифа», «есть новый тренажёр на икры»), — добавь его через add_new_exercise (подбери группу, единицу и шаг веса), а затем, если уместно, сразу поставь в текущую тренировку через add_exercise_to_plan с консервативными весами для первого знакомства (RPE 6-7, «прощупать» вес).
 
-ВО ВРЕМЯ АКТИВНОЙ ТРЕНИРОВКИ (статус «тренировка идёт»): не вызывай set_planned_workout — он перезапишет отметки уже сделанных подходов. Добавляй через add_exercise_to_plan, а изменения существующих упражнений проговаривай словами.
+ВО ВРЕМЯ АКТИВНОЙ ТРЕНИРОВКИ (статус «тренировка идёт»): не вызывай set_planned_workout — он перезапишет отметки уже сделанных подходов. Добавляй, заменяй, удаляй и меняй порядок точечными инструментами: отметки подходов у упражнений, которые остаются, сохраняются.
 
 МЕТОДИКА (научная база: позиция ACSM и мета-анализы по гипертрофии/силе):
 - Объём: 10-20 рабочих подходов на мышечную группу в неделю, 2-3 подхода на упражнение, 8-20 повторов (в основном 6-12). Больше 20 подходов в неделю на группу — убывающая отдача.
@@ -3769,6 +3977,66 @@ const AI_TOOL_DEFS = [
           },
         },
         required: ["exerciseId", "sets"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_exercise_in_plan",
+      description: "Заменяет одно упражнение в текущем плане другим или меняет только его подходы. Остальные упражнения и отметки их подходов не трогает. Применяется сразу, когда пользователь просит заменить, поменять или переделать упражнение. Укажи position (номер с 1 из get_planned_workout) или exerciseId того, что меняешь.",
+      parameters: {
+        type: "object",
+        properties: {
+          position: { type: "integer", description: "Номер упражнения в плане, с 1." },
+          exerciseId: { type: "string", description: "id упражнения, которое меняешь, если номер не указан." },
+          newExerciseId: { type: "string", description: "id замены из каталога. Не передавай, если нужно поменять только подходы." },
+          sets: {
+            type: "array",
+            description: "Новые подходы. Если не передать при замене упражнения, вес и повторы копируются.",
+            items: {
+              type: "object",
+              properties: {
+                weight: { type: "number" },
+                reps: { type: "integer" },
+                rpe: { type: "number" },
+              },
+              required: ["weight", "reps"],
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "remove_exercise_from_plan",
+      description: "Удаляет одно упражнение из текущего плана. Остальные упражнения и отметки их подходов не трогает. Применяется сразу, когда пользователь просит убрать или удалить упражнение.",
+      parameters: {
+        type: "object",
+        properties: {
+          position: { type: "integer", description: "Номер упражнения в плане, с 1." },
+          exerciseId: { type: "string", description: "id упражнения, которое удаляешь, если номер не указан." },
+        },
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "reorder_plan",
+      description: "Меняет порядок упражнений текущего плана. Передай полный список exerciseId в новом порядке, по одному на каждое упражнение. Подходы и отметки выполнения сохраняются. Применяется сразу.",
+      parameters: {
+        type: "object",
+        properties: {
+          exerciseIds: {
+            type: "array",
+            items: { type: "string" },
+            description: "Все exerciseId плана в новом порядке.",
+          },
+        },
+        required: ["exerciseIds"],
       },
     },
   },
@@ -3988,6 +4256,50 @@ function buildPeriodHistoryForAi(period, days) {
   ].join("\n").slice(0, 15800);
 }
 
+function catalogExercise(id) {
+  const resolved = EXERCISE_ALIASES[id] || id;
+  return exercises.find((exercise) => exercise.id === resolved) || null;
+}
+
+function planOrderText() {
+  if (!selected.length) return "план пуст";
+  return selected
+    .map((item, index) => `${index + 1}. ${catalogExercise(item.exerciseId)?.name || item.exerciseId} (${item.exerciseId})`)
+    .join("; ");
+}
+
+function planIndexFromArgs(args) {
+  if (!selected.length) return { error: "План пуст, менять нечего." };
+  const position = Number(args.position);
+  if (Number.isInteger(position) && position >= 1 && position <= selected.length) return { index: position - 1 };
+  if (Number.isFinite(position) && position > 0) {
+    return { error: `Позиции ${position} нет. Сейчас в плане ${selected.length}: ${planOrderText()}.` };
+  }
+  const id = String(args.exerciseId || "").trim();
+  if (!id) return { error: "Укажи position (номер с 1) или exerciseId упражнения." };
+  const resolved = EXERCISE_ALIASES[id] || id;
+  const matches = [];
+  selected.forEach((item, index) => {
+    if (item.exerciseId === id || item.exerciseId === resolved) matches.push(index);
+  });
+  if (!matches.length) return { error: `В плане нет «${id}». Сейчас: ${planOrderText()}.` };
+  if (matches.length > 1) return { error: `«${id}» стоит в плане ${matches.length} раза. Укажи position.` };
+  return { index: matches[0] };
+}
+
+function rowsFromToolSets(sets) {
+  return (Array.isArray(sets) ? sets : [])
+    .map((set) => [Number(set?.weight) || 0, Number(set?.reps) || 0, set?.rpe ? Number(set.rpe) : ""])
+    .filter((row) => row[1] > 0);
+}
+
+function commitPlanEdit(message) {
+  renderSelectedExercises();
+  persistAiPlan();
+  saveWorkoutDraft();
+  return `${message} Сейчас: ${planOrderText()}.`;
+}
+
 function executeAiTool(name, args) {
   if (name === "get_recent_workouts") {
     const requestedDays = Number(args.days);
@@ -4008,12 +4320,12 @@ function executeAiTool(name, args) {
   }
 
   if (name === "get_planned_workout") {
-    const plan = selected.map((item) => {
+    const plan = selected.map((item, index) => {
       const exercise = findExercise(item.exerciseId);
       const sets = item.sets
         .map((set) => `${formatNumber(set.weight)}x${set.reps}${set.rpe ? `@${set.rpe}` : ""}${set.done ? " ✓" : ""}`)
         .join(", ");
-      return `- ${exercise ? exercise.name : item.exerciseId} (${item.exerciseId}): ${sets}`;
+      return `${index + 1}. ${exercise ? exercise.name : item.exerciseId} (${item.exerciseId}): ${sets}`;
     });
     const isActive = elements.workoutPanel.classList.contains("is-active");
     const upcoming = [];
@@ -4064,6 +4376,67 @@ function executeAiTool(name, args) {
     persistAiPlan();
     saveWorkoutDraft();
     return `Добавил в текущий план: ${exercise.name}, ${rows.length} подх. Остальные упражнения не тронуты.`;
+  }
+
+  if (name === "update_exercise_in_plan") {
+    const located = planIndexFromArgs(args);
+    if (located.error) return `Ошибка: ${located.error}`;
+    const current = selected[located.index];
+    const nextId = String(args.newExerciseId || "").trim();
+    const hasSets = Array.isArray(args.sets);
+    if (!nextId && !hasSets) return "Ошибка: передай newExerciseId (замена) и/или sets (новые подходы).";
+
+    const replacement = nextId ? catalogExercise(nextId) : catalogExercise(current.exerciseId);
+    if (!replacement) {
+      return `Ошибка: неизвестный exerciseId «${nextId}». Возьми id из get_exercise_catalog.`;
+    }
+
+    const previousName = catalogExercise(current.exerciseId)?.name || current.exerciseId;
+    const doneCount = current.sets.filter((set) => set.done).length;
+    const replacing = replacement.id !== current.exerciseId;
+    if (hasSets) {
+      const rows = rowsFromToolSets(args.sets);
+      if (!rows.length) return "Ошибка: не переданы подходы (weight, reps).";
+      if (replacing) selected[located.index] = planEntry(replacement.id, rows);
+      else current.sets = rows.map(([weight, reps, rpe]) => ({ weight, reps, rpe, done: false, mark: "normal" }));
+    } else {
+      const rows = current.sets.map((set) => [set.weight, set.reps, set.rpe ?? ""]);
+      selected[located.index] = planEntry(replacement.id, rows.length ? rows : [[0, 10, ""]]);
+    }
+
+    const dropped = doneCount && (replacing || hasSets) ? ` Сбросил ${doneCount} уже отмеченных подходов у этого упражнения.` : "";
+    const action = replacing
+      ? `Заменил «${previousName}» на «${replacement.name}».`
+      : `Обновил подходы у «${replacement.name}».`;
+    return commitPlanEdit(`${action}${dropped}`);
+  }
+
+  if (name === "remove_exercise_from_plan") {
+    const located = planIndexFromArgs(args);
+    if (located.error) return `Ошибка: ${located.error}`;
+    const [removed] = selected.splice(located.index, 1);
+    const title = catalogExercise(removed.exerciseId)?.name || removed.exerciseId;
+    const doneCount = removed.sets.filter((set) => set.done).length;
+    return commitPlanEdit(`Убрал «${title}».${doneCount ? ` У него было ${doneCount} отмеченных подходов.` : ""}`);
+  }
+
+  if (name === "reorder_plan") {
+    const ids = Array.isArray(args.exerciseIds) ? args.exerciseIds.map((id) => String(id)) : [];
+    if (ids.length !== selected.length) {
+      return `Ошибка: нужен полный список из ${selected.length} exerciseId в новом порядке. Сейчас: ${planOrderText()}.`;
+    }
+    const pool = selected.map((item) => ({ item, used: false }));
+    const next = [];
+    for (const id of ids) {
+      const resolved = EXERCISE_ALIASES[id] || id;
+      const found = pool.find((entry) => !entry.used && (entry.item.exerciseId === id || entry.item.exerciseId === resolved));
+      if (!found) return `Ошибка: «${id}» нет в плане или он указан лишний раз. Сейчас: ${planOrderText()}.`;
+      found.used = true;
+      next.push(found.item);
+    }
+    if (next.every((item, index) => item === selected[index])) return `Порядок уже такой. Сейчас: ${planOrderText()}.`;
+    selected = next;
+    return commitPlanEdit("Поменял порядок. Отметки подходов сохранены.");
   }
 
   if (name === "get_exercise_catalog") {
@@ -4681,33 +5054,81 @@ function emptyChart(message) {
   return `<div class="empty">${message}</div>`;
 }
 
+const HISTORY_PAGE = 20;
+let historyLimit = HISTORY_PAGE;
+
+function workoutTitle(workout) {
+  const groups = [...new Set((workout.exercises || []).map((item) => findExercise(item.exerciseId)?.group).filter(Boolean))];
+  if (!groups.length) return "Тренировка";
+  if (groups.length <= 2) return groups.join(" + ");
+  return `${groups.slice(0, 2).join(" + ")} +${groups.length - 2}`;
+}
+
+function historyMonthLabel(iso) {
+  const date = new Date(`${iso.slice(0, 7)}-01T12:00:00`);
+  const label = date.toLocaleDateString("ru-RU", { month: "long", year: "numeric" }).replace(" г.", "");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 function renderHistory() {
-  const workouts = state.workouts
+  if (!elements.historyList) return;
+  const all = state.workouts
     .map((workout, index) => ({ workout, index }))
-    .reverse()
-    .slice(0, 8);
-  elements.historyList.innerHTML = workouts.length
-    ? workouts.map(({ workout, index }) => `
-      <article class="history-item">
-        <div class="history-header">
-          <div class="history-meta">
-            <strong>${formatDate(workout.date)}</strong>
-            <span>${readinessLabel(workout.readiness)}</span>
-            <span>${doneSetCount(workout)}/${workoutSetCount(workout)} подходов</span>
-            <span>RPE ${averageWorkoutRpe(workout) || "n/a"}</span>
-            ${workout.sessionEffort ? `<span>${sessionEffortLabel(workout.sessionEffort)}</span>` : ""}
-            ${workout.wearable?.sessionTypeLabel ? `<span>${workout.wearable.sessionTypeLabel}</span>` : ""}
-            ${workout.wearable?.calories ? `<span>${workout.wearable.calories} ккал</span>` : ""}
+    .sort((a, b) => b.workout.date.localeCompare(a.workout.date) || b.index - a.index);
+  const meta = document.querySelector("#historyMeta");
+  if (meta) meta.textContent = all.length ? `${all.length} ${plural(all.length, "тренировка", "тренировки", "тренировок")}` : "";
+
+  if (!all.length) {
+    elements.historyList.innerHTML = `<div class="empty">Пока пусто. Сохранённые тренировки появятся здесь.</div>`;
+    return;
+  }
+
+  let month = "";
+  const rows = all.slice(0, historyLimit).map(({ workout, index }) => {
+    const monthKey = workout.date.slice(0, 7);
+    const header = monthKey !== month ? `<h3 class="history-month">${historyMonthLabel(workout.date)}</h3>` : "";
+    month = monthKey;
+    const facts = [
+      `${doneSetCount(workout)}/${workoutSetCount(workout)} подх.`,
+      workout.durationMinutes ? `${workout.durationMinutes} мин` : null,
+      averageWorkoutRpe(workout) ? `RPE ${averageWorkoutRpe(workout)}` : null,
+      workout.wearable?.calories ? `${workout.wearable.calories} ккал` : null,
+    ].filter(Boolean).join(" · ");
+    const exercisesHtml = (workout.exercises || []).map((item) => {
+      const sets = (item.sets || [])
+        .map((set) => `${formatNumber(set.weight)}×${set.reps}${set.rpe ? `<em>@${set.rpe}</em>` : ""}${set.done === false ? " ✗" : ""}`)
+        .join(", ");
+      return `<li><strong>${escapeHtml(findExercise(item.exerciseId)?.name || item.exerciseId)}</strong><span>${sets}</span></li>`;
+    }).join("");
+    return `
+      ${header}
+      <details class="history-item" data-history-index="${index}">
+        <summary>
+          <div class="history-row-main">
+            <strong>${escapeHtml(workoutTitle(workout))}</strong>
+            <small>${escapeHtml(facts)}</small>
           </div>
+          <span class="history-date">${formatDate(workout.date)}</span>
+        </summary>
+        <div class="history-body">
+          <div class="day-detail-meta">
+            <span>${readinessLabel(workout.readiness)}</span>
+            ${workout.sessionEffort ? `<span>${sessionEffortLabel(workout.sessionEffort)}</span>` : ""}
+            ${workout.wearable?.hrAvg ? `<span>пульс ${workout.wearable.hrAvg}</span>` : ""}
+          </div>
+          ${workout.notes ? `<p class="day-detail-note">${escapeHtml(workout.notes)}</p>` : ""}
+          ${workout.afterNotes ? `<p class="day-detail-note after">«${escapeHtml(workout.afterNotes)}»</p>` : ""}
+          <ul class="day-detail-exercises">${exercisesHtml}</ul>
+          <button class="button ghost danger-action" type="button" data-action="delete-workout" data-index="${index}">Удалить тренировку</button>
         </div>
-        ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
-        ${workout.afterNotes ? `<p>${escapeHtml(workout.afterNotes)}</p>` : ""}
-        <div class="history-exercises">
-          ${workout.exercises.map((item) => `<span class="chip">${findExercise(item.exerciseId).name}: ${item.sets.length} п.</span>`).join("")}
-        </div>
-      </article>
-    `).join("")
-    : `<div class="empty">Пока пусто. Нажми “Загрузить пример” или сохрани сегодняшнюю тренировку.</div>`;
+      </details>
+    `;
+  }).join("");
+
+  const more = all.length > historyLimit
+    ? `<button class="button ghost history-more" type="button" data-action="history-more">Показать ещё (${all.length - historyLimit})</button>`
+    : "";
+  elements.historyList.innerHTML = rows + more;
 }
 
 function bestExercisePerformance(workouts, exerciseId) {

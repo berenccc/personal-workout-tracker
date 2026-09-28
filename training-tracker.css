@@ -2260,37 +2260,82 @@ select {
   font-size: 12px;
 }
 
-.history-item {
-  display: grid;
-  gap: 8px;
-  padding: 10px;
+.history-panel {
+  margin-top: 12px;
 }
 
-.history-header {
+.history-list {
+  gap: 8px;
+}
+
+.history-month {
+  margin: 10px 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.history-month:first-child {
+  margin-top: 0;
+}
+
+.history-item {
+  padding: 0;
+}
+
+.history-item summary {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 12px;
+  cursor: pointer;
+  list-style: none;
 }
 
-.history-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.history-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-row-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history-row-main strong {
+  font-size: 14px;
+}
+
+.history-row-main small,
+.history-date {
   color: var(--muted);
-  font-size: 13px;
-}
-
-.history-push-button {
-  flex: 0 0 auto;
-  padding: 8px 10px;
   font-size: 12px;
 }
 
-.history-exercises {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.history-date {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.history-item[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.history-body {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.history-body .danger-action {
+  justify-self: start;
+}
+
+.history-more {
+  justify-self: center;
 }
 
 .chip {
@@ -3285,6 +3330,44 @@ html.keyboard-open .ai-chat-composer .button {
   width: min(420px, calc(100vw - 24px));
 }
 
+.start-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 16px calc(84px + env(safe-area-inset-bottom, 0px));
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.start-prompt-card {
+  display: grid;
+  gap: 10px;
+  width: min(420px, 100%);
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+.start-prompt-card strong {
+  font-size: 18px;
+}
+
+.start-prompt-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.start-prompt-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .toast {
   padding: 10px 16px;
   border-radius: 12px;
@@ -3307,6 +3390,26 @@ html.keyboard-open .ai-chat-composer .button {
 
 .toast-warn {
   background: rgba(150, 100, 30, 0.96);
+}
+
+.toast.has-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  pointer-events: auto;
+}
+
+.toast-action {
+  flex: none;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .gym-details summary {
