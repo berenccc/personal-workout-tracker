@@ -1888,7 +1888,7 @@ function weekWidgetDays() {
     if (done.has(iso)) state = "done";
     else if (iso === today) state = "today";
     else if (isPlannedDate(iso)) state = "planned";
-    return { label, state, iso };
+    return { label, date: String(date.getDate()), state, iso };
   });
 }
 
@@ -1934,6 +1934,8 @@ function updateNativeWidget() {
     sleep: widgetReadinessLine(snapshot),
     week: weekWidgetDays(),
     listLines: active ? widgetActiveLines() : widgetIdleLines(snapshot),
+    planRows: widgetPlanRows(active),
+    footerLines: active ? [] : widgetFooterLines(snapshot),
     ...(active ? widgetNotice() : {}),
     updatedAt: new Date().toISOString(),
   };
@@ -1955,6 +1957,47 @@ function setsSummary(sets) {
   const top = work.reduce((best, set) => (Number(set.weight) > Number(best.weight) ? set : best), work[0]);
   const reps = work.every((set) => Number(set.reps) === Number(work[0].reps)) ? work[0].reps : top.reps;
   return `${work.length}×${reps}${Number(top.weight) ? ` · ${formatNumber(top.weight)}` : ""}`;
+}
+
+// На виджете узко: «Тяга верхнего блока / тяга сверху» → «Тяга верхнего блока».
+function widgetExerciseName(exerciseId) {
+  const name = findExercise(exerciseId)?.name || exerciseId;
+  return name.split(" / ")[0].trim();
+}
+
+// Строки плана для виджета: название слева, объём или прогресс ровной колонкой справа.
+function widgetPlanRows(active) {
+  const current = selected.find((item) => item.sets.some((set) => !set.done));
+  return selected.map((item) => {
+    const exercise = findExercise(item.exerciseId);
+    const name = widgetExerciseName(item.exerciseId);
+    if (active) {
+      const done = item.sets.filter((set) => set.done).length;
+      const state = done === item.sets.length ? "done" : item === current ? "current" : "todo";
+      return { name, detail: `${done}/${item.sets.length}`, state };
+    }
+    if (exercise?.cardio) return { name, detail: planWeightBrief(exercise, item.sets), state: "plan" };
+    const summary = setsSummary(item.sets);
+    const unit = exercise && Number(item.sets.find((set) => Number(set.weight))?.weight) ? ` ${shortUnit(exercise)}` : "";
+    return { name, detail: summary ? `${summary}${unit}` : "", state: "plan" };
+  });
+}
+
+function widgetFooterLines(snapshot) {
+  const lines = [];
+  const today = [
+    snapshot.todaySteps != null ? `${Number(snapshot.todaySteps).toLocaleString("ru-RU")} шагов` : null,
+    snapshot.todayCalories ? `${snapshot.todayCalories} ккал` : null,
+    snapshot.restingHr ? `пульс покоя ${snapshot.restingHr}` : null,
+  ].filter(Boolean);
+  if (today.length) lines.push(`Сегодня: ${today.join(" · ")}`);
+  const weekStart = mondayOf(new Date());
+  const week = state.workouts.filter((workout) => workout.date >= weekStart);
+  if (week.length) {
+    const sets = week.reduce((sum, workout) => sum + doneSetCount(workout), 0);
+    lines.push(`Неделя: ${week.length} ${plural(week.length, "тренировка", "тренировки", "тренировок")} · ${sets} подх.`);
+  }
+  return lines;
 }
 
 // Высокий виджет показывает больше: сначала упражнения, потом день и неделя.
