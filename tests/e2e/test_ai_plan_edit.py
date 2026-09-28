@@ -122,6 +122,25 @@ def test_ai_removes_exercise_from_pending_proposal(local_server, browser_context
     assert [item["exerciseId"] for item in stored["exercises"]] == ["bench", "leg-press"]
 
 
+def test_ai_removes_from_home_plan_and_mirrors_pending(local_server, browser_context):
+    page = browser_context.new_page()
+    proposal = json.loads(seeded_plan())
+    proposal.pop("planDate")
+    proposal["exercises"].reverse()
+    page.add_init_script(
+        f"localStorage.setItem({json.dumps(PENDING_KEY)}, {json.dumps(json.dumps(proposal, ensure_ascii=False))});"
+    )
+    open_plan(page, local_server, "remove_exercise_from_plan", {"position": 2})
+
+    ask(page, "Убери тягу")
+
+    assert titles(page) == ["Жим штанги лёжа", "Жим ногами без наклона"]
+    expect(page.locator("#planSummary")).not_to_contain_text("Тяга верхнего блока")
+    expect(page.locator("#planSummary .plan-summary-list li")).to_have_count(2)
+    stored = json.loads(page.evaluate(f"() => localStorage.getItem({json.dumps(PENDING_KEY)})"))
+    assert [item["exerciseId"] for item in stored["exercises"]] == ["leg-press", "bench"]
+
+
 def test_ai_reorders_plan_and_keeps_done_sets(local_server, browser_context):
     page = browser_context.new_page()
     open_plan(page, local_server, "reorder_plan", {
