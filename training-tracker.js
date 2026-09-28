@@ -1814,11 +1814,53 @@ function render() {
   updateNativeWidget();
 }
 
+const TITLE_AREAS = {
+  Ноги: "ноги",
+  Икры: "ноги",
+  "Задняя цепь": "ноги",
+  Плиометрика: "ноги",
+  Спина: "спина",
+  Грудь: "грудь",
+  Плечи: "плечи",
+  Руки: "руки",
+  Кор: "кор",
+  Функционал: "функционал",
+};
+const UPPER_AREAS = new Set(["спина", "грудь", "плечи", "руки"]);
+const TITLE_ORDER = ["спина", "грудь", "плечи", "руки", "ноги", "функционал", "кор"];
+
+// Название по тому, чему отдана тренировка: считаем подходы по зонам,
+// мелкие добивки (кор, пара подходов на руки) в название не тащим.
+function trainingTitle(items) {
+  const volume = new Map();
+  let cardioSets = 0;
+  items.forEach((item) => {
+    const group = findExercise(item.exerciseId)?.group;
+    const sets = Math.max(1, (item.sets || []).filter((set) => set.mark !== "skip").length);
+    if (group === "Кардио") cardioSets += sets;
+    const area = TITLE_AREAS[group];
+    if (area) volume.set(area, (volume.get(area) || 0) + sets);
+  });
+  if (!volume.size) return cardioSets ? "Кардио" : "Тренировка";
+
+  // Кор почти всегда добивка — в название попадает, только если кроме него ничего нет.
+  if (volume.size > 1) volume.delete("кор");
+  const total = [...volume.values()].reduce((sum, sets) => sum + sets, 0);
+  const ranked = [...volume.entries()].sort((a, b) => b[1] - a[1]);
+  const main = ranked.filter(([, sets], index) => index === 0 || sets / total >= 0.2).map(([area]) => area);
+  const upper = main.filter((area) => UPPER_AREAS.has(area));
+
+  let words;
+  if (main.includes("ноги") && upper.length >= 2) words = ["всё тело"];
+  else if (upper.length >= 3) words = ["верх тела"];
+  else words = main.slice(0, 2).sort((a, b) => TITLE_ORDER.indexOf(a) - TITLE_ORDER.indexOf(b));
+
+  const text = words.length > 1 ? `${words[0]} и ${words[1]}` : words[0];
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function currentPlanTitle() {
-  const groups = [...new Set(selected.map((item) => findExercise(item.exerciseId)?.group).filter(Boolean))];
-  if (!groups.length) return "Тренировка";
-  if (groups.length <= 2) return groups.join(" + ");
-  return `${groups.slice(0, 2).join(" + ")} +${groups.length - 2}`;
+  return trainingTitle(selected);
 }
 
 function renderWorkoutHeading() {
@@ -5131,10 +5173,7 @@ const HISTORY_PAGE = 20;
 let historyLimit = HISTORY_PAGE;
 
 function workoutTitle(workout) {
-  const groups = [...new Set((workout.exercises || []).map((item) => findExercise(item.exerciseId)?.group).filter(Boolean))];
-  if (!groups.length) return "Тренировка";
-  if (groups.length <= 2) return groups.join(" + ");
-  return `${groups.slice(0, 2).join(" + ")} +${groups.length - 2}`;
+  return trainingTitle(workout.exercises || []);
 }
 
 function historyMonthLabel(iso) {
