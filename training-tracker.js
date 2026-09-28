@@ -1959,6 +1959,7 @@ function widgetNotice() {
   return {
     activeEyebrow: bpm ? `Идёт тренировка · ♥ ${bpm}` : "Идёт тренировка",
     noticeTitle: bpm ? `♥ ${bpm} уд/мин · ${progress}` : `Тренировка · ${progress}`,
+    noticeProgress: progress,
     noticeText: currentName ? `Сейчас: ${currentName}` : "Все подходы закрыты",
     noticeDetails: widgetActiveLines().join("\n"),
   };
@@ -3518,7 +3519,7 @@ async function attachWearableMetrics(workout) {
 function startLiveBandHr() {
   stopLiveBandHr();
   pollLiveBandHr();
-  liveBandHrTimer = window.setInterval(pollLiveBandHr, 40000);
+  liveBandHrTimer = window.setInterval(pollLiveBandHr, 10000);
 }
 
 function stopLiveBandHr() {
