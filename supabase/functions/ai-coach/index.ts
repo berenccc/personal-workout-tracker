@@ -173,14 +173,24 @@ Deno.serve(async (request) => {
 
     const providerCode = result?.error?.code || result?.error?.type || "";
     console.error("OpenAI error", openAiResponse.status, providerCode, result?.error?.message);
+    if (providerCode === "insufficient_quota" || providerCode === "credit_balance_exhausted") break;
     const retryable = openAiResponse.status === 429 || openAiResponse.status >= 500;
-    if (!retryable || providerCode === "insufficient_quota") break;
+    if (!retryable) break;
   }
 
   if (!openAiResponse) return json({ error: "AI временно недоступен" }, 502);
   const providerCode = result?.error?.code || result?.error?.type || "";
-  if (providerCode === "insufficient_quota") {
-    return json({ error: "На сервере закончилась квота OpenAI" }, 503);
+  if (providerCode === "insufficient_quota" || providerCode === "credit_balance_exhausted") {
+    // Текущее приложение любой ответ 429 показывает как «перегружен».
+    // Отдаём обычный ответ чата, чтобы на телефоне была видна настоящая причина.
+    return json({
+      choices: [{
+        message: {
+          role: "assistant",
+          content: "AI сейчас не отвечает, потому что на счёте OpenAI закончились деньги. Это не перегрузка приложения. Пополни баланс на platform.openai.com — после оплаты тренер заработает в этой же версии, без новой установки.",
+        },
+      }],
+    }, 200);
   }
   return json(
     { error: "AI временно перегружен — резервная модель тоже не ответила" },
