@@ -117,6 +117,9 @@ def test_hr_timeline_renders_with_exercise_blocks(local_server, browser_context)
     expect(chart).to_be_visible()
     expect(chart.locator("[data-hr-seg]")).to_have_count(3)
     expect(chart.locator("[data-hr-block]")).to_have_count(3)
+    # Разминка до первой галочки входит в первый блок, поэтому он начинается от старта.
+    assert float(chart.locator("[data-hr-seg='0']").get_attribute("x")) < 2
+    expect(chart.locator("[data-hr-block='0']")).to_have_text("1")
     expect(chart.locator("[data-hr-readout]")).to_contain_text("средний 135")
     expect(chart.locator("polyline").first).to_be_attached()
     expect(page.locator("#bandLastSession .band-zone-row")).to_have_count(5)

@@ -3104,8 +3104,9 @@ function hrTimelineHtml(workout) {
   const strip = segments.map((segment) => `
     <button type="button" class="hr-strip-block" data-hr-block="${segment.index}"
       style="flex:${Math.max(1, Math.round(segment.to - segment.from))}"
-      title="${escapeHtml(segment.name)}">
-      <b>${segment.index + 1}</b><span>${escapeHtml(segment.name)}</span>
+      title="${escapeHtml(segment.name)}"
+      aria-label="${escapeHtml(segment.name)}">
+      <b>${segment.index + 1}</b>
     </button>
   `).join("");
 
@@ -3255,9 +3256,14 @@ function exerciseSetWindows(workout) {
   const typicalGap = gaps.sort((a, b) => a - b)[Math.floor(gaps.length / 2)];
   if (spread < 5 * 60 * 1000 || typicalGap < 20000) return [];
 
+  // Первый блок начинается со старта тренировки: разминка идёт до первой галочки,
+  // и обрезать её до минуты перед отметкой значит потерять пик пульса.
+  const sessionStart = Date.parse(workout.startedAt || "");
   return marks.map((mark, index) => {
     const previous = marks[index - 1];
-    const from = previous ? previous.doneAt : mark.doneAt - 60000;
+    const from = previous
+      ? previous.doneAt
+      : (Number.isFinite(sessionStart) && sessionStart < mark.doneAt ? sessionStart : mark.doneAt - 60000);
     return { ...mark, from, to: mark.doneAt };
   });
 }
