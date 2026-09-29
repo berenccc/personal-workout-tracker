@@ -1765,6 +1765,109 @@ select {
   white-space: nowrap;
 }
 
+.pr-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 14px;
+}
+
+.pr-pair small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.pr-pair b {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-exercise-button {
+  position: relative;
+  width: min(100%, 280px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 42px 8px 12px;
+  background: var(--panel-2);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.chart-exercise-button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  width: 0;
+  height: 0;
+  margin-top: -2px;
+  border-top: 6px solid currentColor;
+  border-right: 5px solid transparent;
+  border-left: 5px solid transparent;
+}
+
+.chart-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.chart-sheet[hidden] {
+  display: none;
+}
+
+.chart-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.chart-sheet-card {
+  position: absolute;
+  right: 12px;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  max-height: min(68vh, 520px);
+  border-radius: 18px;
+  padding: 12px;
+  background: #17191e;
+}
+
+.chart-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chart-exercise-list {
+  display: grid;
+  gap: 4px;
+  overflow: auto;
+  margin-top: 8px;
+}
+
+.chart-exercise-option {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.chart-exercise-option.is-on {
+  background: var(--accent-soft);
+}
+
 .heatmap {
   grid-template-columns: repeat(13, minmax(0, 1fr));
   gap: 6px;
@@ -2548,6 +2651,14 @@ select {
   .panel-header {
     gap: 8px;
     margin-bottom: 10px;
+  }
+
+  .chart-exercise-button {
+    width: 100%;
+  }
+
+  .pr-item {
+    grid-template-columns: 1fr;
   }
 
   .workout-panel .panel-header,

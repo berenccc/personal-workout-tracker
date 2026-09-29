@@ -227,9 +227,14 @@ def test_tabs_calendar_and_analytics_render(local_server, browser_context):
     page.click("#calModeButton")
     expect(page.locator("#scheduleCalendar")).to_be_visible()
 
-    page.click('.bottom-nav-btn[data-target="analytics"]')
-    expect(page.locator("#chartExerciseSelect")).to_be_visible()
+    page.click('.bottom-nav-btn[data-target="cabinet"]')
+    page.click("#openRecordsButton")
+    expect(page.locator("#chartExerciseButton")).to_be_visible()
     expect(page.locator("#statsGrid")).to_be_visible()
+    page.click("#chartExerciseButton")
+    expect(page.locator("#chartExerciseMenu")).to_be_visible()
+    page.click("#chartExerciseDismiss")
+    expect(page.locator("#chartExerciseMenu")).to_be_hidden()
 
 
 def test_production_page_loads(browser_context):

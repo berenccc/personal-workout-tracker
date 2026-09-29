@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=163" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=163" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=163" />
-    <link rel="manifest" href="./manifest.webmanifest?v=163" />
-    <link rel="stylesheet" href="./training-tracker.css?v=163" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=164" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=164" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=164" />
+    <link rel="manifest" href="./manifest.webmanifest?v=164" />
+    <link rel="stylesheet" href="./training-tracker.css?v=164" />
   </head>
   <body>
     <main class="app">
@@ -33,7 +33,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v163</span>
+          <span class="version-badge">v164</span>
         </div>
       </section>
 
@@ -264,6 +264,16 @@
 
         <section class="cabinet-section">
           <div class="cabinet-section-head">
+            <h3>Результаты</h3>
+            <p>Лучшие веса, твои цифры и графики упражнений, которые ты уже делал.</p>
+          </div>
+          <div class="cabinet-actions">
+            <button id="openRecordsButton" class="button secondary" type="button">Открыть результаты</button>
+          </div>
+        </section>
+
+        <section class="cabinet-section">
+          <div class="cabinet-section-head">
             <h3>Аккаунт</h3>
             <p id="cloudStatus">Подключаю облако…</p>
           </div>
@@ -390,15 +400,27 @@
               <p class="eyebrow">Прогресс</p>
               <h2>Графики</h2>
             </div>
-            <select id="chartExerciseSelect"></select>
+            <button id="chartExerciseButton" class="chart-exercise-button" type="button" aria-expanded="false" aria-controls="chartExerciseMenu">
+              <span id="chartExerciseLabel">Упражнение</span>
+            </button>
+          </div>
+          <div id="chartExerciseMenu" class="chart-sheet" hidden>
+            <button id="chartExerciseClose" class="chart-sheet-backdrop" type="button" aria-label="Закрыть"></button>
+            <div class="chart-sheet-card" role="dialog" aria-label="Выбор упражнения">
+              <div class="chart-sheet-head">
+                <strong>Какое упражнение</strong>
+                <button id="chartExerciseDismiss" class="button ghost" type="button">Закрыть</button>
+              </div>
+              <div id="chartExerciseList" class="chart-exercise-list"></div>
+            </div>
           </div>
           <div class="chart-grid">
             <div>
-              <h3>Лучший вес по тренировкам</h3>
+              <h3 id="weightChartTitle">Лучший вес по тренировкам</h3>
               <div id="weightChart" class="chart"></div>
             </div>
             <div>
-              <h3>Объем нагрузки</h3>
+              <h3 id="volumeChartTitle">Объем нагрузки</h3>
               <div id="volumeChart" class="chart"></div>
             </div>
           </div>
@@ -436,13 +458,6 @@
           <span>Браслет</span>
           <span class="bottom-nav-dot"></span>
         </button>
-        <button class="bottom-nav-btn" data-target="analytics" type="button">
-          <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4v1a3 3 0 0 0 3 3"/><path d="M17 5h3v1a3 3 0 0 1-3 3"/><line x1="12" y1="13" x2="12" y2="17"/><path d="M8 21h8"/><path d="M10 17h4v4h-4z"/>
-          </svg>
-          <span>Рекорды</span>
-          <span class="bottom-nav-dot"></span>
-        </button>
         <button class="bottom-nav-btn" data-target="cabinet" type="button">
           <svg class="bottom-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
@@ -472,12 +487,12 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=163"></script>
-    <script src="./wearable.js?v=163"></script>
-    <script src="./training-tracker.js?v=163"></script>
+    <script src="./exercise-catalog.js?v=164"></script>
+    <script src="./wearable.js?v=164"></script>
+    <script src="./training-tracker.js?v=164"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=163"></script>
-    <script src="./cloud.js?v=163"></script>
+    <script src="./supabase-config.js?v=164"></script>
+    <script src="./cloud.js?v=164"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -512,7 +527,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v163";
+      const APP_VERSION = "v164";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

@@ -609,7 +609,6 @@ const elements = {
   saveAiBaseUrlButton: document.querySelector("#saveAiBaseUrlButton"),
   readinessPill: document.querySelector("#readinessPill"),
   prBoard: document.querySelector("#prBoard"),
-  chartExerciseSelect: document.querySelector("#chartExerciseSelect"),
   weightChart: document.querySelector("#weightChart"),
   volumeChart: document.querySelector("#volumeChart"),
   historyList: document.querySelector("#historyList"),
@@ -1023,19 +1022,34 @@ function bindEvents() {
   });
   elements.sessionEffortInput.addEventListener("change", saveWorkoutDraft);
   elements.afterNotesInput.addEventListener("input", saveWorkoutDraft);
-  elements.chartExerciseSelect.addEventListener("change", renderCharts);
+  document.querySelector("#openRecordsButton")?.addEventListener("click", () => window.showAppView?.("analytics"));
+  document.querySelector("#chartExerciseButton")?.addEventListener("click", () => setChartMenu(true));
+  document.querySelector("#chartExerciseClose")?.addEventListener("click", () => setChartMenu(false));
+  document.querySelector("#chartExerciseDismiss")?.addEventListener("click", () => setChartMenu(false));
+  document.querySelector("#chartExerciseList")?.addEventListener("click", (event) => {
+    const choice = event.target.closest("[data-chart-exercise]")?.dataset.chartExercise;
+    if (!choice) return;
+    chartExerciseId = choice;
+    setChartMenu(false);
+    fillExerciseSelects();
+    renderCharts();
+  });
   window.addEventListener("pagehide", saveWorkoutDraft);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       saveWorkoutDraft();
       flushAllCloudDeletes();
-    } else refreshWearable(true);
+    } else {
+      refreshWearable(true);
+      applyLockDones();
+    }
   });
   window.addEventListener("pagehide", flushAllCloudDeletes);
 
   elements.workoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (isFinishingWorkout) return;
+    await applyLockDones();
     if (workoutIsLive()) {
       if (finishArmedUntil < Date.now()) {
         finishArmedUntil = Date.now() + 4000;
@@ -1461,22 +1475,44 @@ function renderExercisePicker() {
   if (pickList.some((exercise) => exercise.id === previous)) elements.exerciseSelect.value = previous;
 }
 
+let chartExerciseId = "";
+
+function doneExerciseIds() {
+  const ids = new Set();
+  state.workouts.forEach((workout) =>
+    (workout.exercises || []).forEach((item) => {
+      if (item.exerciseId) ids.add(item.exerciseId);
+    })
+  );
+  return ids;
+}
+
+function setChartMenu(open) {
+  const menu = document.querySelector("#chartExerciseMenu");
+  const button = document.querySelector("#chartExerciseButton");
+  if (menu) menu.hidden = !open;
+  if (button) button.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
 function fillExerciseSelects() {
-  const optionFor = (exercise) => `<option value="${exercise.id}">${exercise.name}</option>`;
-  const previousChartChoice = elements.chartExerciseSelect.value;
   renderExercisePicker();
 
-  // В «Прогрессе» показываем только упражнения, по которым есть история.
-  const doneIds = new Set();
-  state.workouts.forEach((workout) =>
-    (workout.exercises || []).forEach((item) => doneIds.add(item.exerciseId))
-  );
-  const chartList = exercises.filter((exercise) => doneIds.has(exercise.id));
-  const chartPick = chartList.length ? chartList : exercises;
-  elements.chartExerciseSelect.innerHTML = chartPick.map(optionFor).join("");
-  elements.chartExerciseSelect.value = chartPick.some((exercise) => exercise.id === previousChartChoice)
-    ? previousChartChoice
-    : (chartPick.find((exercise) => exercise.id === "bench") || chartPick[0])?.id || "";
+  const chartPick = exercises
+    .filter((exercise) => doneExerciseIds().has(exercise.id))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  if (!chartPick.some((exercise) => exercise.id === chartExerciseId)) {
+    chartExerciseId = chartPick[0]?.id || "";
+  }
+  const list = document.querySelector("#chartExerciseList");
+  if (list) {
+    list.innerHTML = chartPick.length
+      ? chartPick.map((exercise) =>
+        `<button type="button" class="chart-exercise-option${exercise.id === chartExerciseId ? " is-on" : ""}" data-chart-exercise="${exercise.id}">${escapeHtml(exercise.name)}</button>`
+      ).join("")
+      : `<p class="empty">Пока нет упражнений с историей.</p>`;
+  }
+  const label = document.querySelector("#chartExerciseLabel");
+  if (label) label.textContent = chartPick.find((exercise) => exercise.id === chartExerciseId)?.name || "Нет истории";
 }
 
 function mergeWorkouts(current, incoming) {
@@ -2233,6 +2269,7 @@ function updateNativeWidget() {
     planRows: widgetPlanRows(active, nextItems),
     footerLines: active ? [] : widgetFooterLines(snapshot),
     ...(active ? widgetNotice() : {}),
+    ...(active ? { liveSets: liveSetRows() } : {}),
     updatedAt: new Date().toISOString(),
   };
 
@@ -2328,6 +2365,69 @@ function widgetActiveLines() {
     const mark = done === item.sets.length ? "✓" : item === current ? "▸" : "·";
     return `${mark} ${name} ${done}/${item.sets.length}`;
   });
+}
+
+function lockSetDetail(exercise, set) {
+  if (exercise?.cardio) {
+    const minutes = Number(set.weight) || 0;
+    return minutes ? `${formatNumber(minutes)} мин` : "кардио";
+  }
+  const reps = Number(set.reps) || 0;
+  if (exercise?.bodyweight || exercise?.unit === "повторы" || exercise?.unit === "сек/повт" || !Number(set.weight)) {
+    const unit = exercise?.unit === "сек/повт" ? "сек" : "раз";
+    return reps ? `${reps} ${unit}` : "";
+  }
+  return `${formatNumber(set.weight)} ${shortUnit(exercise)} × ${reps || "—"}`;
+}
+
+function liveSetRows() {
+  const rows = [];
+  selected.forEach((item) => {
+    const exercise = findExercise(item.exerciseId);
+    item.sets.forEach((set, index) => {
+      if (set.mark === "skip") return;
+      rows.push({
+        id: `${item.uid}:${index}`,
+        name: (exercise?.name || item.exerciseId).split(" / ")[0],
+        detail: lockSetDetail(exercise, set),
+        done: Boolean(set.done),
+      });
+    });
+  });
+  return rows;
+}
+
+async function applyLockDones() {
+  const bridge = window.Capacitor?.Plugins?.WidgetBridge;
+  if (!bridge?.consumeLockDones || !workoutIsLive()) return;
+  let ids = [];
+  try {
+    const result = await bridge.consumeLockDones();
+    ids = Array.isArray(result?.ids) ? result.ids : [];
+  } catch {
+    return;
+  }
+  if (!ids.length) return;
+  let changed = false;
+  ids.forEach((id) => {
+    const [uid, indexRaw] = String(id).split(":");
+    const item = selected.find((entry) => entry.uid === uid);
+    const index = Number(indexRaw);
+    const set = item?.sets?.[index];
+    if (!item || !set || set.done) return;
+    set.done = true;
+    set.doneAt = Date.now();
+    changed = true;
+    if (isExerciseComplete(item)) {
+      const upcoming = selected.find((entry) => entry.uid !== item.uid && !isExerciseComplete(entry));
+      if (upcoming) focusUid = upcoming.uid;
+    }
+  });
+  if (!changed) return;
+  startRest();
+  renderSelectedExercises();
+  saveWorkoutDraft();
+  updateNativeWidget();
 }
 
 function widgetNotice() {
@@ -2583,29 +2683,88 @@ function renderDashboard() {
 }
 
 function renderPrBoard() {
-  const targets = ["bench", "leg-press", "gravitron", "row", "deadlift", "db-press", "butterfly", "shoulder-press"];
-  const rows = targets
-    .map((exerciseId) => bestExercisePerformance(state.workouts, exerciseId))
-    .filter(Boolean)
-    .map(({ exercise, set, workout }) => {
-      const unit = shortUnit(exercise);
-      const value = `${formatNumber(set.weight)} ${unit}`;
-      const subtitle = exercise.lowerIsBetter
-        ? `${formatDate(workout.date)} · меньше противовес = сильнее`
-        : `${set.reps} повт · ${formatDate(workout.date)}`;
+  const rows = [...doneExerciseIds()]
+    .map((exerciseId) => {
+      const resolved = (typeof EXERCISE_ALIASES !== "undefined" && EXERCISE_ALIASES[exerciseId]) || exerciseId;
+      return exercises.find((exercise) => exercise.id === resolved);
+    })
+    .filter((exercise, index, list) => exercise && list.findIndex((item) => item.id === exercise.id) === index)
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+    .map((exercise) => {
+      const pair = exerciseResultPair(exercise);
+      const last = lastExerciseDate(exercise.id);
       return `
         <article class="pr-item">
           <div>
-            <strong>${exercise.name}</strong>
-            <span>${subtitle}</span>
+            <strong>${escapeHtml(exercise.name)}</strong>
+            <span>${last ? `последний раз ${formatDate(last)}` : ""}</span>
           </div>
-          <div class="pr-value">${value}</div>
+          <div class="pr-pair">
+            <div><small>${pair.workLabel}</small><b>${pair.work}</b></div>
+            <div><small>${pair.maxLabel}</small><b>${pair.max}</b></div>
+          </div>
         </article>
       `;
     })
     .join("");
 
-  elements.prBoard.innerHTML = rows || `<div class="empty">PR появятся после загрузки истории.</div>`;
+  elements.prBoard.innerHTML = rows || `<div class="empty">Результаты появятся после первой тренировки.</div>`;
+}
+
+function lastExerciseDate(exerciseId) {
+  const found = [...state.workouts].reverse().find((workout) =>
+    (workout.exercises || []).some((item) => item.exerciseId === exerciseId)
+  );
+  return found?.date || "";
+}
+
+function exerciseResultKind(exercise) {
+  if (exercise?.cardio) return "time";
+  if (exercise?.bodyweight || exercise?.unit === "повторы" || exercise?.unit === "сек/повт") return "reps";
+  return "weight";
+}
+
+function exerciseResultPair(exercise) {
+  const kind = exerciseResultKind(exercise);
+  const working = pickWorkingLoad(exercise);
+  const best = bestExercisePerformance(state.workouts, exercise.id);
+  if (kind === "time") {
+    return {
+      workLabel: "сейчас",
+      work: working ? `${formatNumber(working.weight)} мин` : "—",
+      maxLabel: "дольше всего",
+      max: best ? `${formatNumber(best.set.weight)} мин` : "—",
+    };
+  }
+  if (kind === "reps") {
+    const unit = exercise.unit === "сек/повт" ? "сек" : "раз";
+    const bestReps = bestRepsFor(exercise.id);
+    return {
+      workLabel: "сейчас",
+      work: working ? `${working.reps} ${unit}` : "—",
+      maxLabel: "максимум",
+      max: bestReps ? `${bestReps} ${unit}` : "—",
+    };
+  }
+  const unit = shortUnit(exercise);
+  return {
+    workLabel: "рабочий",
+    work: working ? `${formatNumber(working.weight)} ${unit}` : "—",
+    maxLabel: exercise.lowerIsBetter ? "лучший" : "максимум",
+    max: best ? `${formatNumber(best.set.weight)} ${unit}` : "—",
+  };
+}
+
+function bestRepsFor(exerciseId) {
+  let best = 0;
+  state.workouts.forEach((workout) => {
+    (workout.exercises || []).filter((item) => item.exerciseId === exerciseId).forEach((item) => {
+      (item.sets || []).forEach((set) => {
+        best = Math.max(best, Number(set.reps) || 0);
+      });
+    });
+  });
+  return best;
 }
 
 function renderSelectedExercises() {
@@ -2619,6 +2778,7 @@ function renderSelectedExercises() {
   renderWorkoutHeading();
   paintRestTimer();
   paintSetHeart();
+  if (workoutIsLive()) updateNativeWidget();
 }
 
 function collapsedPlanHost() {
@@ -4042,6 +4202,7 @@ function stopLiveBandHr() {
 }
 
 async function pollLiveBandHr() {
+  applyLockDones();
   const node = elements.bandLiveHr;
   const api = wearableApi();
   if (!node || !api?.liveHeartRate || !api.isNative?.()) return;
@@ -5585,25 +5746,62 @@ function suggestProgressions(workouts) {
 }
 
 function renderCharts() {
-  const exerciseId = elements.chartExerciseSelect.value;
+  const exercise = exercises.find((item) => item.id === chartExerciseId);
+  const weightTitle = document.querySelector("#weightChartTitle");
+  const volumeTitle = document.querySelector("#volumeChartTitle");
+  if (!exercise) {
+    if (weightTitle) weightTitle.textContent = "Прогресс";
+    if (volumeTitle) volumeTitle.textContent = "Сумма";
+    elements.weightChart.innerHTML = emptyChart("Выбери упражнение, которое уже было в тренировках.");
+    elements.volumeChart.innerHTML = emptyChart("Пока нет данных.");
+    return;
+  }
+  const kind = exerciseResultKind(exercise);
+  const bestLabel = kind === "time" ? "Минуты за тренировку" : kind === "reps" ? "Лучший подход, повторы" : "Лучший вес по тренировкам";
+  const sumLabel = kind === "time" ? "Сумма минут" : kind === "reps" ? "Сумма повторов" : "Объём, кг × повторы";
+  const axis = kind === "time" ? "мин" : kind === "reps" ? (exercise.unit === "сек/повт" ? "сек" : "раз") : "кг";
+  if (weightTitle) weightTitle.textContent = bestLabel;
+  if (volumeTitle) volumeTitle.textContent = sumLabel;
+
   const points = state.workouts
     .map((workout) => {
-      const item = workout.exercises.find((exercise) => exercise.exerciseId === exerciseId);
+      const item = (workout.exercises || []).find((entry) => entry.exerciseId === exercise.id);
       if (!item) return null;
-      const best = bestSet(item);
-      return {
-        label: workout.date.slice(5),
-        best: best ? best.weight : 0,
-        volume: exerciseVolume(item),
-      };
+      const measured = chartPoint(exercise, item);
+      return { label: workout.date.slice(5), ...measured };
     })
     .filter(Boolean);
 
-  elements.weightChart.innerHTML = points.length ? lineSvg(points.map((point) => point.best), points.map((point) => point.label)) : emptyChart("Пока нет данных по этому упражнению.");
-  elements.volumeChart.innerHTML = points.length ? barSvg(points.map((point) => point.volume), points.map((point) => point.label)) : emptyChart("Пока нет данных по объему.");
+  elements.weightChart.innerHTML = points.length
+    ? lineSvg(points.map((point) => point.best), points.map((point) => point.label), bestLabel)
+    : emptyChart("Пока нет данных по этому упражнению.");
+  elements.volumeChart.innerHTML = points.length
+    ? barSvg(points.map((point) => point.volume), points.map((point) => point.label), 240, `${sumLabel}, ${axis}`)
+    : emptyChart("Пока нет данных по объёму.");
 }
 
-function lineSvg(values, labels) {
+function chartPoint(exercise, item) {
+  const sets = item.sets || [];
+  const kind = exerciseResultKind(exercise);
+  if (kind === "time") {
+    const minutes = sets.map((set) => Number(set.weight) || 0);
+    return {
+      best: Math.max(0, ...minutes),
+      volume: minutes.reduce((sum, value) => sum + value, 0),
+    };
+  }
+  if (kind === "reps") {
+    const reps = sets.map((set) => Number(set.reps) || 0);
+    return {
+      best: Math.max(0, ...reps),
+      volume: reps.reduce((sum, value) => sum + value, 0),
+    };
+  }
+  const best = bestSet(item);
+  return { best: best ? Number(best.weight) || 0 : 0, volume: exerciseVolume(item) };
+}
+
+function lineSvg(values, labels, title = "Вес") {
   const width = 640;
   const height = 240;
   const padding = 34;
@@ -5621,7 +5819,7 @@ function lineSvg(values, labels) {
       <path d="M ${padding} ${height - padding} H ${width - padding}" stroke="var(--line)" fill="none" />
       <path d="${points.map(([x, y], index) => `${index ? "L" : "M"} ${x} ${y}`).join(" ")}" stroke="var(--accent)" stroke-width="3" fill="none" />
       ${points.map(([x, y], index) => `<circle cx="${x}" cy="${y}" r="4" fill="var(--accent-2)"><title>${labels[index]}: ${formatNumber(values[index])}</title></circle>`).join("")}
-      <text x="${padding}" y="22" fill="var(--muted)" font-size="12">Вес / помощь тренажера</text>
+      <text x="${padding}" y="22" fill="var(--muted)" font-size="12">${title}</text>
       <text x="${padding}" y="${height - 8}" fill="var(--muted)" font-size="12">Дата</text>
     </svg>
   `;

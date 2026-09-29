@@ -1,16 +1,16 @@
-const CACHE_NAME = "training-tracker-v163";
+const CACHE_NAME = "training-tracker-v164";
 const ASSETS = [
-  "./training-tracker.html?v=163",
-  "./training-tracker.css?v=163",
-  "./training-tracker.js?v=163",
-  "./wearable.js?v=163",
-  "./exercise-catalog.js?v=163",
-  "./supabase-config.js?v=163",
-  "./cloud.js?v=163",
-  "./manifest.webmanifest?v=163",
-  "./apple-touch-icon.png?v=163",
-  "./icon-192.png?v=163",
-  "./icon-512.png?v=163",
+  "./training-tracker.html?v=164",
+  "./training-tracker.css?v=164",
+  "./training-tracker.js?v=164",
+  "./wearable.js?v=164",
+  "./exercise-catalog.js?v=164",
+  "./supabase-config.js?v=164",
+  "./cloud.js?v=164",
+  "./manifest.webmanifest?v=164",
+  "./apple-touch-icon.png?v=164",
+  "./icon-192.png?v=164",
+  "./icon-512.png?v=164",
   "./icon-192.svg",
   "./icon-512.svg",
 ];
@@ -45,7 +45,7 @@ self.addEventListener("fetch", (event) => {
       fetch(event.request)
         .then((response) => response)
         .catch(() =>
-          caches.match("./training-tracker.html?v=163").then((cached) => cached || caches.match("./training-tracker.html"))
+          caches.match("./training-tracker.html?v=164").then((cached) => cached || caches.match("./training-tracker.html"))
         )
     );
     return;
