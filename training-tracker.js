@@ -328,17 +328,9 @@ function plural(n, one, few, many) {
 let selectedDayIso = null;
 
 function handleCalendarDayTap(iso) {
-  const today = formatInputDate(new Date());
-
-  // День с тренировкой или прошедший день: показываем детали (для прошлого — с дологированием).
-  if (workoutDateSet().has(iso) || iso < today) {
-    selectedDayIso = selectedDayIso === iso ? null : iso;
-    renderDayDetail();
-    renderScheduleCalendar();
-    return;
-  }
-
-  toggleScheduledDate(iso);
+  selectedDayIso = selectedDayIso === iso ? null : iso;
+  renderDayDetail();
+  renderScheduleCalendar();
 }
 
 function startBackfillWorkout(iso) {
@@ -364,8 +356,7 @@ function renderDayDetail() {
   if (!workouts.length) {
     const today = formatInputDate(new Date());
     if (selectedDayIso >= today) {
-      selectedDayIso = null;
-      box.hidden = true;
+      renderFutureDayPlan(box, selectedDayIso, today);
       return;
     }
     // Пустой прошедший день: предложить внести тренировку по памяти.
@@ -528,11 +519,8 @@ function toggleScheduledDate(iso) {
 
 function syncScheduleDependents() {
   renderScheduleCalendar();
-  // Дата в форме и рекомендации следуют за календарём, пока тренировка не начата.
-  if (!elements.workoutPanel.classList.contains("is-active")) {
-    elements.dateInput.value = nextPlannedWorkoutDate();
-  }
   renderCoach();
+  updateNativeWidget();
 }
 
 function toggleWeekday(index) {
@@ -569,7 +557,13 @@ function toggleCalendarMode() {
 
 let state = loadState();
 let selected = [];
+let dayPlans = {};
+let editingPlanIso = null;
 let isFinishingWorkout = false;
+let finishArmedUntil = 0;
+let focusUid = null;
+let restUntil = 0;
+let restTick = null;
 // Стабильный id на сессию: повторное "Завершить" перезапишет запись, а не создаст дубль.
 let workoutSessionUid = makeUid();
 let aiChat = loadAiChat();
@@ -707,6 +701,7 @@ function boot() {
   renderMyGym();
   renderWeekdayPicker();
   renderScheduleCalendar();
+  loadDayPlans();
   loadPlannedWorkout();
   applyStoredAiPlan();
   discardTestSessionOnce();
@@ -966,6 +961,13 @@ function bindEvents() {
       renderDayDetail();
       renderScheduleCalendar();
     }
+    if (event.target.closest('[data-action="toggle-plan"]') && selectedDayIso) {
+      toggleScheduledDate(selectedDayIso);
+      renderDayDetail();
+    }
+    if (event.target.closest('[data-action="open-plan"]') && selectedDayIso) {
+      openDayPlan(selectedDayIso);
+    }
   });
   elements.gymFromHistoryButton?.addEventListener("click", () => {
     myGymSet = defaultMyGymIds();
@@ -1000,7 +1002,21 @@ function bindEvents() {
     button.addEventListener("click", () => setWidgetStyle(button.dataset.widgetStyle));
   });
   elements.wearableApplyHint?.addEventListener("click", applyWearableReadiness);
-  elements.dateInput.addEventListener("change", saveWorkoutDraft);
+  elements.dateInput.addEventListener("change", () => {
+    if (workoutIsLive()) {
+      saveWorkoutDraft();
+      updateNativeWidget();
+      return;
+    }
+    const next = elements.dateInput.value;
+    if (editingPlanIso && editingPlanIso !== next) writeDayPlan(editingPlanIso, selected);
+    editingPlanIso = next;
+    loadDayPlanIntoSelected(next);
+    renderSelectedExercises();
+    renderCoach();
+    updateNativeWidget();
+    saveWorkoutDraft();
+  });
   elements.readinessInput.addEventListener("change", () => {
     renderCoach();
     saveWorkoutDraft();
@@ -1020,6 +1036,21 @@ function bindEvents() {
   elements.workoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (isFinishingWorkout) return;
+    if (workoutIsLive()) {
+      if (finishArmedUntil < Date.now()) {
+        finishArmedUntil = Date.now() + 4000;
+        const armed = finishArmedUntil;
+        elements.finishWorkoutButton.textContent = "Ещё раз — завершить";
+        window.setTimeout(() => {
+          if (!isFinishingWorkout && finishArmedUntil === armed) {
+            finishArmedUntil = 0;
+            elements.finishWorkoutButton.textContent = "Завершить тренировку";
+          }
+        }, 4100);
+        return;
+      }
+      finishArmedUntil = 0;
+    }
 
     stopWorkoutTimer();
     const workout = collectWorkout();
@@ -1109,6 +1140,7 @@ function startWorkoutTimer() {
   updateNativeWidget();
   nudgeBandWorkout("start");
   startLiveBandHr();
+  window.Capacitor?.Plugins?.WidgetBridge?.prepareHeartBroadcast?.().catch(() => {});
   window.setTimeout(() => elements.selectedExercises.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
 }
 
@@ -1143,6 +1175,13 @@ function resetWorkoutTimer() {
   if (elements.bandLiveHr) {
     elements.bandLiveHr.hidden = true;
     elements.bandLiveHr.textContent = "";
+  }
+  restUntil = 0;
+  focusUid = null;
+  finishArmedUntil = 0;
+  if (restTick) {
+    window.clearInterval(restTick);
+    restTick = null;
   }
   updateNativeWidget();
 }
@@ -1684,6 +1723,110 @@ function planEntry(exerciseId, rows) {
   };
 }
 
+const DAY_PLANS_KEY = "training-tracker-day-plans-v1";
+
+function workoutIsLive() {
+  return Boolean(workoutTimer.startedAt && !workoutTimer.stoppedAt);
+}
+
+function loadDayPlans() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DAY_PLANS_KEY));
+    dayPlans = saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  } catch {
+    dayPlans = {};
+  }
+}
+
+function saveDayPlans() {
+  localStorage.setItem(DAY_PLANS_KEY, JSON.stringify(dayPlans));
+}
+
+function planTemplate(items) {
+  return (items || [])
+    .map((item) => ({
+      exerciseId: item.exerciseId,
+      sets: (item.sets || []).map((set) => ({
+        weight: set.weight,
+        reps: set.reps,
+        rpe: set.rpe ?? "",
+      })),
+    }))
+    .filter((item) => item.exerciseId && item.sets.length);
+}
+
+function writeDayPlan(iso, items = selected) {
+  if (!iso || workoutIsLive()) return;
+  const exercises = planTemplate(items);
+  if (!exercises.length) delete dayPlans[iso];
+  else dayPlans[iso] = { exercises, notes: elements.notesInput?.value || "" };
+  saveDayPlans();
+}
+
+function loadDayPlanIntoSelected(iso) {
+  const stored = dayPlans[iso];
+  const valid = (stored?.exercises || []).filter((item) => findExercise(item.exerciseId));
+  selected = valid.map((item) =>
+    planEntry(item.exerciseId, (item.sets || []).map((set) => [set.weight, set.reps, set.rpe ?? ""]))
+  );
+  if (typeof stored?.notes === "string") elements.notesInput.value = stored.notes;
+}
+
+function itemsForDate(iso) {
+  if (!iso) return [];
+  const today = formatInputDate(new Date());
+  if (workoutIsLive() && iso === today) return selected;
+  if (!workoutIsLive() && iso === (editingPlanIso || elements.dateInput?.value)) return selected;
+  return dayPlans[iso]?.exercises || [];
+}
+
+function openDayPlan(iso) {
+  if (workoutIsLive()) {
+    showToast("Сначала заверши текущую тренировку", "warn");
+    return;
+  }
+  if (editingPlanIso && editingPlanIso !== iso) writeDayPlan(editingPlanIso, selected);
+  if (!isPlannedDate(iso)) {
+    excludeSet().delete(iso);
+    if (!weekdays().has(weekdayIndex(iso))) schedule().add(iso);
+    saveSchedule();
+  }
+  elements.dateInput.value = iso;
+  editingPlanIso = iso;
+  loadDayPlanIntoSelected(iso);
+  renderSelectedExercises();
+  renderScheduleCalendar();
+  renderCoach();
+  updateNativeWidget();
+  window.showAppView?.("workout");
+}
+
+function renderFutureDayPlan(box, iso, today) {
+  const planned = isPlannedDate(iso);
+  const items = itemsForDate(iso);
+  const lines = items.map((item, index) => {
+    const exercise = findExercise(item.exerciseId);
+    const name = exercise ? exercise.name : item.exerciseId;
+    return `<li><b>${index + 1}.</b> ${escapeHtml(name)}</li>`;
+  }).join("");
+  const when = iso === today ? "Сегодня" : formatDate(iso);
+  box.hidden = false;
+  box.innerHTML = `
+    <article class="day-detail-card">
+      <div class="day-detail-head">
+        <strong>${when}</strong>
+        <button class="icon-button day-detail-close" type="button" aria-label="Закрыть">×</button>
+      </div>
+      <p class="day-detail-note">${planned ? "День отмечен в календаре. Список упражнений только у этой даты." : "День пока не в календаре."}</p>
+      ${lines ? `<ol class="day-detail-exercises">${lines}</ol>` : `<p class="day-detail-note">Списка упражнений ещё нет.</p>`}
+      <div class="day-detail-actions">
+        <button class="button secondary" type="button" data-action="open-plan">Открыть план</button>
+        <button class="button ghost" type="button" data-action="toggle-plan">${planned ? "Снять отметку" : "Запланировать"}</button>
+      </div>
+    </article>
+  `;
+}
+
 // Конструктор тренировки по цели: собирает план из упражнений «Моего зала»
 // с весами из истории (suggestedSetsForExercise) и ротацией против прошлых сессий.
 const WORKOUT_GOALS = [
@@ -1979,8 +2122,26 @@ function widgetDayContent(iso, active, snapshot) {
       foot: [],
     };
   }
-  if (selected.length && iso === nextPlannedWorkoutDate() && iso >= today) {
-    return { when: widgetWhenLabel(iso), title: currentPlanTitle(), meta: widgetPlanLine(), rows: widgetPlanRows(false), quote: "", foot: [] };
+  const plannedItems = itemsForDate(iso);
+  if (plannedItems.length && iso >= today) {
+    return {
+      when: widgetWhenLabel(iso),
+      title: trainingTitle(plannedItems),
+      meta: widgetPlanLine(plannedItems),
+      rows: widgetPlanRows(false, plannedItems),
+      quote: "",
+      foot: [],
+    };
+  }
+  if (iso >= today && isPlannedDate(iso)) {
+    return {
+      when: widgetWhenLabel(iso),
+      title: "Тренировка",
+      meta: "Список ещё не собран",
+      rows: [],
+      quote: "",
+      foot: iso === today ? widgetFooterLines(snapshot) : [],
+    };
   }
   const rest = widgetRestCopy(iso, today);
   return {
@@ -2036,12 +2197,23 @@ function updateNativeWidget() {
   const active = Boolean(workoutTimer.startedAt && !workoutTimer.stoppedAt);
   const snapshot = window.TrainyWearable?.loadSnapshot?.() || {};
 
+  if (!active) writeDayPlan(editingPlanIso || elements.dateInput.value, selected);
+  const nextItems = active ? selected : itemsForDate(nextIso);
+  const nextTitle = active
+    ? currentPlanTitle()
+    : (nextItems.length ? trainingTitle(nextItems) : (nextIso && isPlannedDate(nextIso) ? "Тренировка" : "Отдых"));
+  const nextMeta = active
+    ? widgetProgressLine()
+    : (nextItems.length
+      ? widgetPlanLine(nextItems)
+      : (nextIso && isPlannedDate(nextIso) ? "Список ещё не собран" : "Тренировок нет — отдыхай."));
+
   const payload = {
     accent: currentAccent(),
     widgetStyle: currentWidgetStyle(),
-    nextTitle: currentPlanTitle(),
+    nextTitle,
     nextWhen: active ? "Идёт тренировка" : widgetWhenLabel(nextIso),
-    nextMeta: active ? widgetProgressLine() : widgetPlanLine(),
+    nextMeta,
     nextDate: nextIso || "",
     isActive: active,
     activeTimer: formatDuration(getWorkoutDurationMs()),
@@ -2057,8 +2229,8 @@ function updateNativeWidget() {
     today: formatInputDate(new Date()),
     week: weekWidgetDays(),
     days: widgetWeekDays(active, snapshot),
-    listLines: active ? widgetActiveLines() : widgetIdleLines(snapshot),
-    planRows: widgetPlanRows(active),
+    listLines: active ? widgetActiveLines() : widgetIdleLines(snapshot, nextItems),
+    planRows: widgetPlanRows(active, nextItems),
     footerLines: active ? [] : widgetFooterLines(snapshot),
     ...(active ? widgetNotice() : {}),
     updatedAt: new Date().toISOString(),
@@ -2090,9 +2262,9 @@ function widgetExerciseName(exerciseId) {
 }
 
 // Строки плана для виджета: название слева, объём или прогресс ровной колонкой справа.
-function widgetPlanRows(active) {
-  const current = selected.find((item) => item.sets.some((set) => !set.done));
-  return selected.map((item) => {
+function widgetPlanRows(active, items = selected) {
+  const current = items.find((item) => item.sets.some((set) => !set.done));
+  return items.map((item) => {
     const exercise = findExercise(item.exerciseId);
     const name = widgetExerciseName(item.exerciseId);
     if (active) {
@@ -2125,8 +2297,8 @@ function widgetFooterLines(snapshot) {
 }
 
 // Высокий виджет показывает больше: сначала упражнения, потом день и неделя.
-function widgetIdleLines(snapshot) {
-  const lines = selected.map((item, index) => {
+function widgetIdleLines(snapshot, items = selected) {
+  const lines = items.map((item, index) => {
     const name = findExercise(item.exerciseId)?.name || item.exerciseId;
     const sets = setsSummary(item.sets);
     return `${index + 1}. ${name}${sets ? ` — ${sets}` : ""}`;
@@ -2175,16 +2347,16 @@ function widgetNotice() {
 }
 
 // Что именно предстоит: упражнения, объём и прикидка времени.
-function widgetPlanLine() {
-  if (!selected.length) return "План ещё не собран — собери в приложении";
-  const sets = selected.reduce((sum, item) => sum + item.sets.length, 0);
-  const minutes = Math.round((sets * 2.6 + selected.length * 1.5) / 5) * 5;
-  const names = selected
+function widgetPlanLine(items = selected) {
+  if (!items.length) return "План ещё не собран — собери в приложении";
+  const sets = items.reduce((sum, item) => sum + item.sets.length, 0);
+  const minutes = Math.round((sets * 2.6 + items.length * 1.5) / 5) * 5;
+  const names = items
     .slice(0, 3)
     .map((item) => findExercise(item.exerciseId)?.name)
     .filter(Boolean)
     .join(", ");
-  return `${selected.length} упр. · ${sets} подх. · ~${minutes} мин${names ? `\n${names}` : ""}`;
+  return `${items.length} упр. · ${sets} подх. · ~${minutes} мин${names ? `\n${names}` : ""}`;
 }
 
 // Во время тренировки виджет показывает реальный прогресс, а не просто план.
@@ -2438,43 +2610,161 @@ function renderPrBoard() {
 
 function renderSelectedExercises() {
   elements.selectedExercises.innerHTML = "";
+  if (workoutIsLive()) renderSetFocus();
 
-  selected.forEach((item, index) => {
-    const exercise = findExercise(item.exerciseId);
-    const fragment = elements.exerciseTemplate.content.cloneNode(true);
-    const card = fragment.querySelector(".exercise-card");
-    card.dataset.uid = item.uid;
-    if (isExerciseComplete(item)) card.classList.add("exercise-complete");
-    const indexBadge = card.querySelector(".exercise-index");
-    if (indexBadge) indexBadge.textContent = String(index + 1);
-    card.querySelector("h3").textContent = exercise.name;
-    card.querySelector("p").textContent = exerciseSubtitle(exercise, item);
-    const moveUpButton = card.querySelector(".move-up");
-    const moveDownButton = card.querySelector(".move-down");
-    moveUpButton.disabled = index === 0;
-    moveDownButton.disabled = index === selected.length - 1;
-    moveUpButton.addEventListener("click", () => moveSelectedExercise(item.uid, -1));
-    moveDownButton.addEventListener("click", () => moveSelectedExercise(item.uid, 1));
-    card.querySelector(".remove-exercise").addEventListener("click", () => {
-      selected = selected.filter((selectedItem) => selectedItem.uid !== item.uid);
-      renderSelectedExercises();
-      saveWorkoutDraft();
-    });
-
-    const sets = card.querySelector(".sets");
-    item.sets.forEach((set, index) => sets.appendChild(renderSetRow(item.uid, index, set, exercise)));
-    card.querySelector(".add-set").addEventListener("click", () => {
-      const last = item.sets.at(-1) || { weight: 0, reps: 10, rpe: "" };
-      item.sets.push({ ...last, rpe: "", done: false, mark: "normal" });
-      renderSelectedExercises();
-      saveWorkoutDraft();
-    });
-
-    elements.selectedExercises.appendChild(fragment);
-  });
+  const host = workoutIsLive() ? collapsedPlanHost() : elements.selectedExercises;
+  selected.forEach((item, index) => host.appendChild(renderExerciseCard(item, index)));
 
   renderPlanSummary();
   renderWorkoutHeading();
+  paintRestTimer();
+  paintSetHeart();
+}
+
+function collapsedPlanHost() {
+  const details = document.createElement("details");
+  details.className = "set-rest-list";
+  const done = selected.filter(isExerciseComplete).length;
+  details.innerHTML = `<summary>Все упражнения · ${done}/${selected.length}</summary>`;
+  const body = document.createElement("div");
+  details.appendChild(body);
+  elements.selectedExercises.appendChild(details);
+  return body;
+}
+
+function focusExercise() {
+  const current = selected.find((item) => item.uid === focusUid);
+  if (current) return current;
+  return selected.find((item) => !isExerciseComplete(item)) || selected[0] || null;
+}
+
+function renderSetFocus() {
+  const item = focusExercise();
+  focusUid = item?.uid || null;
+  const card = document.createElement("section");
+  card.className = "set-focus";
+  if (!item) {
+    card.innerHTML = `<p class="set-next">Добавь упражнение — оно станет текущим подходом.</p>`;
+    elements.selectedExercises.appendChild(card);
+    return;
+  }
+
+  const exercise = findExercise(item.exerciseId);
+  const undone = item.sets.findIndex((set) => !set.done);
+  const setIndex = undone >= 0 ? undone : Math.max(0, item.sets.length - 1);
+  const set = item.sets[setIndex];
+  const next = selected.find((entry) => entry.uid !== item.uid && !isExerciseComplete(entry))
+    || selected[selected.indexOf(item) + 1];
+  const nextName = next ? findExercise(next.exerciseId)?.name : "";
+
+  card.innerHTML = `
+    <p class="set-kicker">Подход ${setIndex + 1} из ${item.sets.length}</p>
+    <h3 class="set-name">${escapeHtml(exercise.name)}</h3>
+    <p class="set-sub">${escapeHtml(exerciseSubtitle(exercise, item))}</p>
+    <p class="set-hr" id="setHrReadout">Пульс появится, если в Mi Fitness включена трансляция</p>
+    <div class="set-current"></div>
+    <div class="rest-timer" hidden>
+      <span>Отдых</span>
+      <strong data-rest-clock>1:30</strong>
+      <button type="button" data-rest="-15">−15</button>
+      <button type="button" data-rest="15">+15</button>
+      <button type="button" data-rest="skip">Дальше</button>
+    </div>
+    <p class="set-next">${nextName ? `Дальше: ${escapeHtml(nextName)}` : "Это последнее упражнение"}</p>
+  `;
+  if (set) card.querySelector(".set-current").appendChild(renderSetRow(item.uid, setIndex, set, exercise));
+  card.querySelectorAll("[data-rest]").forEach((button) => {
+    button.addEventListener("click", () => adjustRest(button.dataset.rest));
+  });
+  elements.selectedExercises.appendChild(card);
+}
+
+function renderExerciseCard(item, index) {
+  const exercise = findExercise(item.exerciseId);
+  const fragment = elements.exerciseTemplate.content.cloneNode(true);
+  const card = fragment.querySelector(".exercise-card");
+  card.dataset.uid = item.uid;
+  if (isExerciseComplete(item)) card.classList.add("exercise-complete");
+  const indexBadge = card.querySelector(".exercise-index");
+  if (indexBadge) indexBadge.textContent = String(index + 1);
+  card.querySelector("h3").textContent = exercise.name;
+  card.querySelector("p").textContent = exerciseSubtitle(exercise, item);
+  const moveUpButton = card.querySelector(".move-up");
+  const moveDownButton = card.querySelector(".move-down");
+  moveUpButton.disabled = index === 0;
+  moveDownButton.disabled = index === selected.length - 1;
+  moveUpButton.addEventListener("click", () => moveSelectedExercise(item.uid, -1));
+  moveDownButton.addEventListener("click", () => moveSelectedExercise(item.uid, 1));
+  card.querySelector(".remove-exercise").addEventListener("click", () => {
+    selected = selected.filter((selectedItem) => selectedItem.uid !== item.uid);
+    if (focusUid === item.uid) focusUid = null;
+    renderSelectedExercises();
+    saveWorkoutDraft();
+  });
+  card.querySelector("h3").addEventListener("click", () => {
+    if (!workoutIsLive()) return;
+    focusUid = item.uid;
+    renderSelectedExercises();
+  });
+
+  const sets = card.querySelector(".sets");
+  item.sets.forEach((set, setIndex) => sets.appendChild(renderSetRow(item.uid, setIndex, set, exercise)));
+  card.querySelector(".add-set").addEventListener("click", () => {
+    const last = item.sets.at(-1) || { weight: 0, reps: 10, rpe: "" };
+    item.sets.push({ ...last, rpe: "", done: false, mark: "normal" });
+    renderSelectedExercises();
+    saveWorkoutDraft();
+  });
+  return fragment;
+}
+
+function startRest(seconds = 90) {
+  restUntil = Date.now() + seconds * 1000;
+  if (!restTick) {
+    restTick = window.setInterval(() => {
+      if (restUntil <= Date.now()) {
+        restUntil = 0;
+        window.clearInterval(restTick);
+        restTick = null;
+        if (navigator.vibrate) navigator.vibrate(30);
+      }
+      paintRestTimer();
+    }, 250);
+  }
+  paintRestTimer();
+}
+
+function adjustRest(action) {
+  if (action === "skip") {
+    restUntil = 0;
+    paintRestTimer();
+    return;
+  }
+  const delta = Number(action) * 1000;
+  const base = Math.max(Date.now(), restUntil);
+  restUntil = base + delta;
+  if (restUntil <= Date.now()) restUntil = 0;
+  if (restUntil && !restTick) startRest(Math.ceil((restUntil - Date.now()) / 1000));
+  paintRestTimer();
+}
+
+function paintRestTimer() {
+  const box = document.querySelector(".set-focus .rest-timer");
+  if (!box) return;
+  const left = restUntil - Date.now();
+  box.hidden = left <= 0;
+  if (left <= 0) return;
+  const seconds = Math.ceil(left / 1000);
+  const clock = box.querySelector("[data-rest-clock]");
+  if (clock) clock.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function paintSetHeart() {
+  const node = document.querySelector("#setHrReadout");
+  if (!node) return;
+  const bpm = freshLiveHr();
+  node.classList.toggle("is-live", Boolean(bpm));
+  node.textContent = bpm ? `♥ ${bpm}` : "Пульс появится, если в Mi Fitness включена трансляция";
 }
 
 function moveSelectedExercise(uid, direction) {
@@ -2627,6 +2917,13 @@ function renderSetRow(uid, index, set, exercise) {
       if (input.dataset.field === "done") {
         // Метка времени подхода — основа для разбора пульса по упражнениям и отдыху.
         item.sets[index].doneAt = input.checked ? Date.now() : null;
+        if (input.checked) {
+          startRest();
+          if (isExerciseComplete(item)) {
+            const upcoming = selected.find((entry) => entry.uid !== item.uid && !isExerciseComplete(entry));
+            if (upcoming) focusUid = upcoming.uid;
+          }
+        }
         renderSelectedExercises();
         updateNativeWidget();
       }
@@ -3734,7 +4031,7 @@ async function attachWearableMetrics(workout) {
 function startLiveBandHr() {
   stopLiveBandHr();
   pollLiveBandHr();
-  liveBandHrTimer = window.setInterval(pollLiveBandHr, 10000);
+  liveBandHrTimer = window.setInterval(pollLiveBandHr, 2000);
 }
 
 function stopLiveBandHr() {
@@ -3754,6 +4051,7 @@ async function pollLiveBandHr() {
     node.hidden = false;
     node.textContent = `${live.bpm}`;
     liveBandHr = { bpm: live.bpm, at: Date.now() };
+    paintSetHeart();
     updateNativeWidget();
   } catch {
     // пульс во время сессии не обязателен
@@ -4319,27 +4617,40 @@ function applyStoredAiPlan() {
     localStorage.removeItem(AI_PLAN_STORAGE);
     return;
   }
-  if (!plan || plan.version !== 1 || !Array.isArray(plan.exercises) || !plan.exercises.length) return;
+  const today = formatInputDate(new Date());
+  if (!plan || plan.version !== 1 || !Array.isArray(plan.exercises) || !plan.exercises.length) {
+    editingPlanIso = elements.dateInput.value;
+    loadDayPlanIntoSelected(editingPlanIso);
+    return;
+  }
 
   // План выполнен: после его сохранения появилась тренировка на эту дату или позже.
   const planDate = plan.planDate || formatInputDate(new Date(plan.savedAt || Date.now()));
   if (state.workouts.some((workout) => workout.date >= planDate)) {
     localStorage.removeItem(AI_PLAN_STORAGE);
+    editingPlanIso = elements.dateInput.value;
+    loadDayPlanIntoSelected(editingPlanIso);
     return;
   }
 
   const valid = plan.exercises.filter((item) => findExercise(item.exerciseId));
-  if (!valid.length) return;
+  if (planDate >= today) elements.dateInput.value = planDate;
+  const iso = elements.dateInput.value;
+  if (!valid.length) {
+    editingPlanIso = iso;
+    loadDayPlanIntoSelected(iso);
+    return;
+  }
 
-  selected = valid.map((item) =>
-    planEntry(item.exerciseId, (item.sets || []).map((set) => [set.weight, set.reps, set.rpe ?? ""]))
-  );
-  if (typeof plan.notes === "string" && plan.notes.trim()) {
-    elements.notesInput.value = plan.notes;
+  if (!dayPlans[iso]?.exercises?.length) {
+    selected = valid.map((item) =>
+      planEntry(item.exerciseId, (item.sets || []).map((set) => [set.weight, set.reps, set.rpe ?? ""]))
+    );
+    if (typeof plan.notes === "string" && plan.notes.trim()) elements.notesInput.value = plan.notes;
+    writeDayPlan(iso, selected);
   }
-  if (planDate >= formatInputDate(new Date())) {
-    elements.dateInput.value = planDate;
-  }
+  editingPlanIso = iso;
+  loadDayPlanIntoSelected(iso);
 }
 
 function describeWorkoutForAi(workout) {

@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=162" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=162" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=162" />
-    <link rel="manifest" href="./manifest.webmanifest?v=162" />
-    <link rel="stylesheet" href="./training-tracker.css?v=162" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=163" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=163" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=163" />
+    <link rel="manifest" href="./manifest.webmanifest?v=163" />
+    <link rel="stylesheet" href="./training-tracker.css?v=163" />
   </head>
   <body>
     <main class="app">
@@ -33,7 +33,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v162</span>
+          <span class="version-badge">v163</span>
         </div>
       </section>
 
@@ -46,7 +46,7 @@
             </div>
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
-          <p class="workout-helper">Сначала оцени состояние и посмотри короткий план. Полный лог откроется после старта.</p>
+          <p class="workout-helper">Собери список на эту дату. После старта на экране останется один текущий подход.</p>
 
           <div class="pre-workout">
             <div class="form-row">
@@ -72,7 +72,6 @@
 
             <input id="notesInput" type="hidden" />
 
-            <button id="startWorkoutButton" class="button timer-button start-workout-button" type="button">Начать тренировку</button>
           </div>
 
           <div class="session-timer active-workout" aria-live="polite">
@@ -129,6 +128,7 @@
               <button id="copyReportButton" class="button secondary" type="button">Отчет</button>
             </div>
           </form>
+          <button id="startWorkoutButton" class="button timer-button start-workout-button" type="button">Начать тренировку</button>
 
           <div id="finishNotice" class="finish-notice" hidden></div>
         </div>
@@ -166,7 +166,7 @@
             <span><i class="cal-dot dot-planned"></i> запланирована</span>
             <span><i class="cal-dot dot-missed"></i> пропущена</span>
           </div>
-          <p class="workout-helper">Тап по зелёному дню — детали тренировки, по прошедшему пустому — внести по памяти, по будущему — запланировать или снять. Дата в форме и рекомендации следуют за ближайшим запланированным днём.</p>
+          <p class="workout-helper">Тап по дню открывает его. У прошедшей тренировки — запись, у будущего дня — свой список упражнений. Четверг и пятница не делят один план.</p>
           <div class="weekday-schedule">
             <div class="cabinet-section-head">
               <h3>Повторяющееся расписание</h3>
@@ -472,12 +472,12 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=162"></script>
-    <script src="./wearable.js?v=162"></script>
-    <script src="./training-tracker.js?v=162"></script>
+    <script src="./exercise-catalog.js?v=163"></script>
+    <script src="./wearable.js?v=163"></script>
+    <script src="./training-tracker.js?v=163"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=162"></script>
-    <script src="./cloud.js?v=162"></script>
+    <script src="./supabase-config.js?v=163"></script>
+    <script src="./cloud.js?v=163"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -512,7 +512,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v162";
+      const APP_VERSION = "v163";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

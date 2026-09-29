@@ -84,6 +84,7 @@ def finish_quick_workout(page: Page, after_notes: str = "qa-run") -> None:
     )
     page.fill("#afterNotesInput", after_notes)
     page.click("#finishWorkoutButton")
+    page.click("#finishWorkoutButton")
 
 
 def test_workout_finish_updates_history(local_server, browser_context):
