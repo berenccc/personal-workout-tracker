@@ -597,6 +597,7 @@ const elements = {
   sessionEffortInput: document.querySelector("#sessionEffortInput"),
   afterNotesInput: document.querySelector("#afterNotesInput"),
   exerciseSelect: document.querySelector("#exerciseSelect"),
+  exerciseSearchInput: document.querySelector("#exerciseSearchInput"),
   addExerciseButton: document.querySelector("#addExerciseButton"),
   copyReportButton: document.querySelector("#copyReportButton"),
   selectedExercises: document.querySelector("#selectedExercises"),
@@ -868,10 +869,15 @@ function bindEvents() {
   });
 
   elements.addExerciseButton.addEventListener("click", () => {
+    if (!findExercise(elements.exerciseSelect.value)) return;
     const uid = addExercise(elements.exerciseSelect.value);
     renderSelectedExercises();
     saveWorkoutDraft();
     keepExerciseTitleInView(uid);
+  });
+  elements.exerciseSearchInput?.addEventListener("input", renderExercisePicker);
+  elements.exerciseSearchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") event.preventDefault();
   });
   elements.buildWorkoutButton?.addEventListener("click", runWorkoutBuilder);
 
@@ -1394,12 +1400,32 @@ function upsertWorkout(workout) {
   state.workouts.push(workout);
 }
 
+function exercisePickList() {
+  const available = exercises.filter((exercise) => isExerciseAvailable(exercise));
+  return available.length ? available : exercises;
+}
+
+function renderExercisePicker() {
+  const optionFor = (exercise) => `<option value="${exercise.id}">${exercise.name}</option>`;
+  const query = (elements.exerciseSearchInput?.value || "").trim().toLocaleLowerCase("ru");
+  const pickList = exercisePickList().filter((exercise) => {
+    if (!query) return true;
+    const haystack = `${exercise.name} ${exercise.nameEn || ""}`.toLocaleLowerCase("ru");
+    return haystack.includes(query);
+  });
+  const previous = elements.exerciseSelect.value;
+  if (!pickList.length) {
+    elements.exerciseSelect.innerHTML = `<option value="">Ничего не нашлось</option>`;
+    return;
+  }
+  elements.exerciseSelect.innerHTML = pickList.map(optionFor).join("");
+  if (pickList.some((exercise) => exercise.id === previous)) elements.exerciseSelect.value = previous;
+}
+
 function fillExerciseSelects() {
   const optionFor = (exercise) => `<option value="${exercise.id}">${exercise.name}</option>`;
-  const available = exercises.filter((exercise) => isExerciseAvailable(exercise));
-  const pickList = available.length ? available : exercises;
   const previousChartChoice = elements.chartExerciseSelect.value;
-  elements.exerciseSelect.innerHTML = pickList.map(optionFor).join("");
+  renderExercisePicker();
 
   // В «Прогрессе» показываем только упражнения, по которым есть история.
   const doneIds = new Set();

@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=158" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=158" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=158" />
-    <link rel="manifest" href="./manifest.webmanifest?v=158" />
-    <link rel="stylesheet" href="./training-tracker.css?v=158" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=159" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=159" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=159" />
+    <link rel="manifest" href="./manifest.webmanifest?v=159" />
+    <link rel="stylesheet" href="./training-tracker.css?v=159" />
   </head>
   <body>
     <main class="app">
@@ -33,7 +33,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v158</span>
+          <span class="version-badge">v159</span>
         </div>
       </section>
 
@@ -92,24 +92,11 @@
           <form id="workoutForm" class="form active-workout">
             <p class="workout-helper active-helper">Идешь сверху вниз: галочка, вес/повторы, RPE. В конце нажми <strong>Завершить тренировку</strong>.</p>
 
-            <div class="workout-builder">
-              <label>
-                Что качаем
-                <select id="builderGoalSelect"></select>
-              </label>
-              <label>
-                Время
-                <select id="builderDurationSelect">
-                  <option value="30">~30 мин</option>
-                  <option value="45" selected>~45 мин</option>
-                  <option value="60">~60 мин</option>
-                  <option value="75">~75 мин</option>
-                </select>
-              </label>
-              <button id="buildWorkoutButton" class="button secondary" type="button">Собрать</button>
-            </div>
-
             <div class="exercise-picker">
+              <label class="exercise-search">
+                Поиск
+                <input id="exerciseSearchInput" type="search" placeholder="Жим, тяга, ноги" autocomplete="off" enterkeyhint="search" />
+              </label>
               <label>
                 Упражнение
                 <select id="exerciseSelect"></select>
@@ -485,12 +472,12 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=158"></script>
-    <script src="./wearable.js?v=158"></script>
-    <script src="./training-tracker.js?v=158"></script>
+    <script src="./exercise-catalog.js?v=159"></script>
+    <script src="./wearable.js?v=159"></script>
+    <script src="./training-tracker.js?v=159"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=158"></script>
-    <script src="./cloud.js?v=158"></script>
+    <script src="./supabase-config.js?v=159"></script>
+    <script src="./cloud.js?v=159"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -525,7 +512,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v158";
+      const APP_VERSION = "v159";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

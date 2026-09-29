@@ -1285,6 +1285,10 @@ select {
   flex-shrink: 0;
 }
 
+.exercise-search {
+  flex: 0.9;
+}
+
 .workout-builder {
   display: flex;
   gap: 12px;
