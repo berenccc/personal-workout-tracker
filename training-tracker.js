@@ -1901,6 +1901,102 @@ function renderWorkoutHeading() {
   }
 }
 
+const REST_QUOTES = [
+  "Отдых тоже тренировка. Мышцы растут, пока ты лежишь.",
+  "Сегодня можно ничего не доказывать. Завтра тело скажет спасибо.",
+  "Пропуск дня не обнуляет путь. Обнуляет только бросить совсем.",
+  "Лёгкий день — это не слабость. Это то, из чего собирается сильный.",
+  "Не каждый день рекорд. Каждый день — выбор вернуться.",
+  "Восстановление — часть плана, а не дырка в нём.",
+  "Ты уже в игре. Один спокойный день её не заканчивает.",
+  "Сила любит терпение больше, чем героизм.",
+  "Сегодня береги суставы. Железо никуда не денется.",
+  "Хорошая тренировка начинается с хорошего сна, а не с чувства вины.",
+  "Можно идти медленно. Нельзя только стоять и ругать себя за это.",
+  "Тело запоминает регулярность, а не один идеальный понедельник.",
+  "Отдых без угрызений — тоже дисциплина.",
+  "Завтрашний подход будет легче, если сегодня ты не добил себя.",
+  "Прогресс прячется в неделях, не в одном тяжёлом дне.",
+  "Ты не обязан быть машиной. Ты обязан быть на своей стороне.",
+  "Сделал меньше, чем хотел — всё равно сделал. Это считается.",
+  "Спокойный день держит форму не хуже, чем злой.",
+  "Не сравнивай свой вторник с чужим лучшим днём.",
+  "Вернёшься — и вес будет на месте. Никуда он не убежит.",
+  "Усталость проходит. Привычка остаётся, если её не бросать из стыда.",
+  "Сегодня победа — лечь спать вовремя.",
+  "Маленький шаг завтра лучше, чем идеальный план, который не начался.",
+  "Ты строишь тело на годы. Один выходной в эту стройку входит.",
+];
+
+function restQuote(iso) {
+  let hash = 0;
+  for (const char of iso) hash = (hash * 33 + char.charCodeAt(0)) >>> 0;
+  return REST_QUOTES[hash % REST_QUOTES.length];
+}
+
+function widgetRestCopy(iso, todayIso) {
+  const future = iso > todayIso;
+  return {
+    title: "Отдых",
+    meta: future ? "На этот день тренировки нет." : "Тренировок нет — отдыхай.",
+    quote: future ? "" : restQuote(iso),
+  };
+}
+
+function widgetWorkoutRows(workout) {
+  return (workout.exercises || []).map((item) => {
+    const exercise = findExercise(item.exerciseId);
+    const name = widgetExerciseName(item.exerciseId);
+    if (exercise?.cardio) return { name, detail: planWeightBrief(exercise, item.sets || []), state: "plan" };
+    const summary = setsSummary(item.sets || []);
+    const unit = exercise && Number((item.sets || []).find((set) => Number(set.weight))?.weight) ? ` ${shortUnit(exercise)}` : "";
+    return { name, detail: summary ? `${summary}${unit}` : "", state: "plan" };
+  });
+}
+
+function widgetSessionFacts(workout) {
+  const minutes = workout.durationMinutes || (workout.durationMs ? Math.round(workout.durationMs / 60000) : null);
+  const sets = (workout.exercises || []).reduce(
+    (sum, item) => sum + (item.sets || []).filter((set) => set.done !== false && set.mark !== "skip").length,
+    0
+  );
+  return [minutes ? `${minutes} мин` : null, sets ? `${sets} подх.` : null].filter(Boolean).join(" · ");
+}
+
+function widgetDayContent(iso, active, snapshot) {
+  const today = formatInputDate(new Date());
+  const workout = [...state.workouts].reverse().find((item) => item.date === iso);
+  if (active && iso === today) {
+    return { when: "Идёт тренировка", title: currentPlanTitle(), meta: widgetProgressLine(), rows: widgetPlanRows(true), quote: "", foot: [] };
+  }
+  if (workout) {
+    return {
+      when: widgetWhenLabel(iso),
+      title: trainingTitle(workout.exercises || []),
+      meta: widgetSessionFacts(workout),
+      rows: widgetWorkoutRows(workout),
+      quote: "",
+      foot: [],
+    };
+  }
+  if (selected.length && iso === nextPlannedWorkoutDate() && iso >= today) {
+    return { when: widgetWhenLabel(iso), title: currentPlanTitle(), meta: widgetPlanLine(), rows: widgetPlanRows(false), quote: "", foot: [] };
+  }
+  const rest = widgetRestCopy(iso, today);
+  return {
+    when: widgetWhenLabel(iso),
+    title: rest.title,
+    meta: rest.meta,
+    rows: [],
+    quote: rest.quote,
+    foot: iso === today ? widgetFooterLines(snapshot) : [],
+  };
+}
+
+function widgetWeekDays(active, snapshot) {
+  return Object.fromEntries(weekWidgetDays().map((day) => [day.iso, widgetDayContent(day.iso, active, snapshot)]));
+}
+
 function weekWidgetDays() {
   const today = formatInputDate(new Date());
   const done = workoutDateSet();
@@ -1914,7 +2010,7 @@ function weekWidgetDays() {
     if (done.has(iso)) state = "done";
     else if (iso === today) state = "today";
     else if (isPlannedDate(iso)) state = "planned";
-    return { label, date: String(date.getDate()), state, iso };
+    return { label, date: String(date.getDate()), iso, done: done.has(iso), today: iso === today, state };
   });
 }
 
@@ -1958,7 +2054,9 @@ function updateNativeWidget() {
     streak: weeklyStreak(dates),
     weekWorkouts: [...dates].filter((iso) => iso >= mondayOf(new Date())).length,
     sleep: widgetReadinessLine(snapshot),
+    today: formatInputDate(new Date()),
     week: weekWidgetDays(),
+    days: widgetWeekDays(active, snapshot),
     listLines: active ? widgetActiveLines() : widgetIdleLines(snapshot),
     planRows: widgetPlanRows(active),
     footerLines: active ? [] : widgetFooterLines(snapshot),
