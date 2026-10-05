@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=164" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=164" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=164" />
-    <link rel="manifest" href="./manifest.webmanifest?v=164" />
-    <link rel="stylesheet" href="./training-tracker.css?v=164" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=165" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=165" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=165" />
+    <link rel="manifest" href="./manifest.webmanifest?v=165" />
+    <link rel="stylesheet" href="./training-tracker.css?v=165" />
   </head>
   <body>
     <main class="app">
@@ -33,7 +33,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v164</span>
+          <span class="version-badge">v165</span>
         </div>
       </section>
 
@@ -119,7 +119,7 @@
               </label>
               <label>
                 Комментарий после
-                <input id="afterNotesInput" placeholder="Пульс, настроение, что забилось, что скипнул" />
+                <textarea id="afterNotesInput" rows="4" placeholder="Пульс, настроение, что забилось, что скипнул"></textarea>
               </label>
             </div>
 
@@ -487,12 +487,12 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=164"></script>
-    <script src="./wearable.js?v=164"></script>
-    <script src="./training-tracker.js?v=164"></script>
+    <script src="./exercise-catalog.js?v=165"></script>
+    <script src="./wearable.js?v=165"></script>
+    <script src="./training-tracker.js?v=165"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=164"></script>
-    <script src="./cloud.js?v=164"></script>
+    <script src="./supabase-config.js?v=165"></script>
+    <script src="./cloud.js?v=165"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -527,7 +527,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v164";
+      const APP_VERSION = "v165";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

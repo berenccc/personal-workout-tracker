@@ -562,6 +562,7 @@ let editingPlanIso = null;
 let isFinishingWorkout = false;
 let finishArmedUntil = 0;
 let focusUid = null;
+let planListOpen = false;
 let restUntil = 0;
 let restTick = null;
 // Стабильный id на сессию: повторное "Завершить" перезапишет запись, а не создаст дубль.
@@ -1192,6 +1193,7 @@ function resetWorkoutTimer() {
   }
   restUntil = 0;
   focusUid = null;
+  planListOpen = false;
   finishArmedUntil = 0;
   if (restTick) {
     window.clearInterval(restTick);
@@ -2786,6 +2788,11 @@ function collapsedPlanHost() {
   details.className = "set-rest-list";
   const done = selected.filter(isExerciseComplete).length;
   details.innerHTML = `<summary>Все упражнения · ${done}/${selected.length}</summary>`;
+  // Список перерисовывается после каждой правки — без этого он схлопывается после первого нажатия.
+  details.open = planListOpen;
+  details.addEventListener("toggle", () => {
+    planListOpen = details.open;
+  });
   const body = document.createElement("div");
   details.appendChild(body);
   elements.selectedExercises.appendChild(details);
@@ -2865,6 +2872,7 @@ function renderExerciseCard(item, index) {
     if (!workoutIsLive()) return;
     focusUid = item.uid;
     renderSelectedExercises();
+    elements.selectedExercises.querySelector(".set-focus")?.scrollIntoView({ block: "start" });
   });
 
   const sets = card.querySelector(".sets");

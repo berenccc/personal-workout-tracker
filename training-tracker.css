@@ -3409,7 +3409,10 @@ body {
 
 .set-focus {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -3438,10 +3441,12 @@ body {
 }
 
 .rest-timer {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) repeat(3, auto);
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 10px;
   border-radius: 14px;
   background: var(--accent-soft, rgba(200, 241, 53, 0.12));
 }
@@ -3450,22 +3455,55 @@ body {
   display: none;
 }
 
+.rest-timer span {
+  font-size: 13px;
+}
+
 .rest-timer strong {
-  margin-right: auto;
-  font-size: 32px;
+  font-size: 26px;
+  line-height: 1;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .rest-timer button {
   border: 0;
   border-radius: 999px;
-  padding: 8px 10px;
+  min-height: 34px;
+  padding: 6px 9px;
   background: rgba(0, 0, 0, 0.28);
   color: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.set-current,
+.set-focus .set-row {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .set-rest-list {
   margin-top: 14px;
+  min-width: 0;
+}
+
+#afterNotesInput {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 96px;
+  max-height: 40vh;
+  field-sizing: content;
+  border: 1px solid var(--workout-line, var(--line));
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--workout-card-2, var(--panel-2));
+  color: var(--workout-text, var(--text));
+  font: inherit;
+  line-height: 1.4;
+  resize: vertical;
+  overflow-wrap: anywhere;
 }
 
 .set-rest-list summary {
