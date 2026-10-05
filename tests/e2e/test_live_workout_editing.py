@@ -81,6 +81,33 @@ def test_reorder_and_add_sets_repeatedly_during_live_workout(local_server, brows
     expect(page.locator(".set-focus .set-name")).to_have_text(first)
 
 
+def test_live_pulse_drops_stale_peak(local_server, browser_context):
+    page = browser_context.new_page()
+    page.add_init_script(
+        """
+        window.__hr = { bpm: 131, at: Date.now() };
+        window.TrainyWearable = {
+          isNative: () => true,
+          liveHeartRate: async () => window.__hr,
+        };
+        """
+    )
+    page.clock.install()
+    start_with_exercises(page, local_server, count=1)
+    page.clock.run_for(2500)
+    expect(page.locator("#bandLiveHr")).to_have_text("131")
+    expect(page.locator("#setHrReadout")).to_have_text("♥ 131")
+
+    page.evaluate("() => { window.__hr = null; }")
+    page.clock.run_for(20000)
+    expect(page.locator("#bandLiveHr")).to_be_hidden()
+    expect(page.locator("#setHrReadout")).not_to_contain_text("131")
+
+    page.evaluate("() => { window.__hr = { bpm: 92, at: Date.now() }; }")
+    page.clock.run_for(2500)
+    expect(page.locator("#bandLiveHr")).to_have_text("92")
+
+
 def test_after_notes_is_multiline(local_server, browser_context):
     page = browser_context.new_page()
     start_with_exercises(page, local_server, count=1)

@@ -2280,9 +2280,18 @@ function updateNativeWidget() {
 
 // Последний живой пульс с браслета: берём только свежий, старше 3 минут уже не «сейчас».
 let liveBandHr = null;
+const LIVE_HR_FRESH_MS = 15 * 1000;
+
+function liveSampleTime(live) {
+  const raw = live?.at ?? live?.timestamp ?? live?.time;
+  const value = typeof raw === "string" ? Date.parse(raw) : Number(raw);
+  if (!Number.isFinite(value) || value <= 0) return Date.now();
+  return Math.min(value < 1e12 ? value * 1000 : value, Date.now());
+}
 
 function freshLiveHr() {
-  if (!liveBandHr?.bpm || Date.now() - liveBandHr.at > 3 * 60 * 1000) return null;
+  // Пик после подхода не должен висеть на экране в отдыхе, когда трансляция замолчала.
+  if (!liveBandHr?.bpm || Date.now() - liveBandHr.at > LIVE_HR_FRESH_MS) return null;
   return liveBandHr.bpm;
 }
 
@@ -4216,15 +4225,18 @@ async function pollLiveBandHr() {
   if (!node || !api?.liveHeartRate || !api.isNative?.()) return;
   try {
     const live = await api.liveHeartRate();
-    if (!live?.bpm) return;
-    node.hidden = false;
-    node.textContent = `${live.bpm}`;
-    liveBandHr = { bpm: live.bpm, at: Date.now() };
-    paintSetHeart();
-    updateNativeWidget();
+    const bpm = Math.round(Number(live?.bpm) || 0);
+    if (bpm >= 30 && bpm <= 230) liveBandHr = { bpm, at: liveSampleTime(live) };
   } catch {
     // пульс во время сессии не обязателен
   }
+  const fresh = freshLiveHr();
+  const shown = fresh ? `${fresh}` : "";
+  if (node.textContent === shown && node.hidden === !fresh) return;
+  node.hidden = !fresh;
+  node.textContent = shown;
+  paintSetHeart();
+  updateNativeWidget();
 }
 
 function wearableReportLine(wearable) {
