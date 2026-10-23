@@ -1,16 +1,32 @@
-const CACHE_NAME = "training-tracker-v178";
+const CACHE_NAME = "training-tracker-v179";
 const ASSETS = [
-  "./training-tracker.html?v=178",
-  "./training-tracker.css?v=178",
-  "./training-tracker.js?v=178",
-  "./wearable.js?v=178",
-  "./exercise-catalog.js?v=178",
-  "./supabase-config.js?v=178",
-  "./cloud.js?v=178",
-  "./manifest.webmanifest?v=178",
-  "./apple-touch-icon.png?v=178",
-  "./icon-192.png?v=178",
-  "./icon-512.png?v=178",
+  "./training-tracker.html?v=179",
+  "./training-tracker.css?v=179",
+  "./js/config.js?v=179",
+  "./js/exercises.js?v=179",
+  "./js/calendar.js?v=179",
+  "./js/theme.js?v=179",
+  "./js/storage.js?v=179",
+  "./js/session.js?v=179",
+  "./js/plan.js?v=179",
+  "./js/widget.js?v=179",
+  "./js/stats.js?v=179",
+  "./js/workout.js?v=179",
+  "./js/band.js?v=179",
+  "./js/music.js?v=179",
+  "./js/coach.js?v=179",
+  "./js/ai.js?v=179",
+  "./js/history.js?v=179",
+  "./js/utils.js?v=179",
+  "./js/app.js?v=179",
+  "./wearable.js?v=179",
+  "./exercise-catalog.js?v=179",
+  "./supabase-config.js?v=179",
+  "./cloud.js?v=179",
+  "./manifest.webmanifest?v=179",
+  "./apple-touch-icon.png?v=179",
+  "./icon-192.png?v=179",
+  "./icon-512.png?v=179",
   "./icon-192.svg",
   "./icon-512.svg",
 ];
@@ -48,7 +64,7 @@ self.addEventListener("fetch", (event) => {
       fetch(event.request)
         .then((response) => response)
         .catch(() =>
-          caches.match("./training-tracker.html?v=178").then((cached) => cached || caches.match("./training-tracker.html"))
+          caches.match("./training-tracker.html?v=179").then((cached) => cached || caches.match("./training-tracker.html"))
         )
     );
     return;

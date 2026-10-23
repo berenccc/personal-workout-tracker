@@ -7,7 +7,6 @@ const www = path.join(destRoot, "www");
 
 const files = [
   "training-tracker.css",
-  "training-tracker.js",
   "wearable.js",
   "exercise-catalog.js",
   "cloud.js",
@@ -39,6 +38,8 @@ for (const file of files) {
   const from = path.join(root, file);
   if (fs.existsSync(from)) fs.copyFileSync(from, path.join(www, file));
 }
+fs.rmSync(path.join(www, "js"), { recursive: true, force: true });
+copyDir(path.join(root, "js"), path.join(www, "js"));
 
 const workouts = path.join(root, "data", "workouts.json");
 if (fs.existsSync(workouts)) {

@@ -7,7 +7,7 @@
 - `package.json` + `capacitor.config.json` — Capacitor-обёртка. Приложение грузит
   боевую версию с GitHub Pages, так что веб-обновления подтягиваются без пересборки.
 - `www/index.html` — техническая заглушка (Capacitor требует папку webDir).
-- `training-tracker.js` — при каждом обновлении экрана шлёт сводку виджету
+- `js/widget.js` (`updateNativeWidget`) — при каждом обновлении экрана шлёт сводку виджету
   (`updateNativeWidget`): серия недель, тренировки за неделю, следующая тренировка.
 - `ios-native/` — Swift-файлы, которые нужно добавить в Xcode:
   - `WidgetBridgePlugin.swift` — принимает данные из веба, кладёт в App Group;

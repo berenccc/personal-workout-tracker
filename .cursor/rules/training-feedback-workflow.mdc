@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Training Feedback Workflow
 
-Personal workout data, hardcoded plans and hardcoded feedback were removed from the code in v106. The app now stores workouts locally and in Supabase cloud sync, and builds the `Рекомендация` block itself (`renderCoach()` → `recommendationCards()` in `training-tracker.js`). Do not re-add personal history, plans or feedback files to the repo.
+Personal workout data, hardcoded plans and hardcoded feedback were removed from the code in v106. The app now stores workouts locally and in Supabase cloud sync, and builds the `Рекомендация` block itself (`renderCoach()` → `recommendationCards()` in `js/coach.js`). Do not re-add personal history, plans or feedback files to the repo.
 
 When the user asks to evaluate a completed workout:
 
