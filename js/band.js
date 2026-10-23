@@ -958,10 +958,7 @@ function startLiveBandHr() {
   stopLiveBandHr();
   pollLiveBandHr();
   liveBandHrTimer = window.setInterval(pollLiveBandHr, 2000);
-  if (musicBridge()) {
-    refreshMusic();
-    musicTimer = window.setInterval(refreshMusic, 4000);
-  }
+  renderMusicBar();
 }
 
 function stopLiveBandHr() {
@@ -969,11 +966,7 @@ function stopLiveBandHr() {
     window.clearInterval(liveBandHrTimer);
     liveBandHrTimer = null;
   }
-  if (musicTimer) {
-    window.clearInterval(musicTimer);
-    musicTimer = null;
-  }
-  if (elements.musicCard) elements.musicCard.hidden = true;
+  renderMusicBar();
 }
 
 async function pollLiveBandHr() {

@@ -14,13 +14,14 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=179" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=179" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=179" />
-    <link rel="manifest" href="./manifest.webmanifest?v=179" />
-    <link rel="stylesheet" href="./training-tracker.css?v=179" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=180" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=180" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=180" />
+    <link rel="manifest" href="./manifest.webmanifest?v=180" />
+    <link rel="stylesheet" href="./training-tracker.css?v=180" />
   </head>
   <body>
+    <section id="musicBar" class="music-bar" aria-label="Музыка" hidden></section>
     <main class="app">
       <section class="view is-active" data-view="workout">
       <section class="hero">
@@ -33,7 +34,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v179</span>
+          <span class="version-badge">v180</span>
         </div>
       </section>
 
@@ -95,8 +96,6 @@
             <p class="workout-helper active-helper">Идешь сверху вниз: галочка, вес/повторы, как зашло. В конце нажми <strong>Завершить тренировку</strong>.</p>
 
             <div id="selectedExercises" class="selected-exercises"></div>
-
-            <section id="musicCard" class="music-card" hidden></section>
 
             <p class="save-hint">Финиш: проверь галочки и нажми <strong>Завершить тренировку</strong>.</p>
 
@@ -504,28 +503,28 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=179"></script>
-    <script src="./wearable.js?v=179"></script>
-    <script src="./js/config.js?v=179"></script>
-    <script src="./js/exercises.js?v=179"></script>
-    <script src="./js/calendar.js?v=179"></script>
-    <script src="./js/theme.js?v=179"></script>
-    <script src="./js/storage.js?v=179"></script>
-    <script src="./js/session.js?v=179"></script>
-    <script src="./js/plan.js?v=179"></script>
-    <script src="./js/widget.js?v=179"></script>
-    <script src="./js/stats.js?v=179"></script>
-    <script src="./js/workout.js?v=179"></script>
-    <script src="./js/band.js?v=179"></script>
-    <script src="./js/music.js?v=179"></script>
-    <script src="./js/coach.js?v=179"></script>
-    <script src="./js/ai.js?v=179"></script>
-    <script src="./js/history.js?v=179"></script>
-    <script src="./js/utils.js?v=179"></script>
-    <script src="./js/app.js?v=179"></script>
+    <script src="./exercise-catalog.js?v=180"></script>
+    <script src="./wearable.js?v=180"></script>
+    <script src="./js/config.js?v=180"></script>
+    <script src="./js/exercises.js?v=180"></script>
+    <script src="./js/calendar.js?v=180"></script>
+    <script src="./js/theme.js?v=180"></script>
+    <script src="./js/storage.js?v=180"></script>
+    <script src="./js/session.js?v=180"></script>
+    <script src="./js/plan.js?v=180"></script>
+    <script src="./js/widget.js?v=180"></script>
+    <script src="./js/stats.js?v=180"></script>
+    <script src="./js/workout.js?v=180"></script>
+    <script src="./js/band.js?v=180"></script>
+    <script src="./js/music.js?v=180"></script>
+    <script src="./js/coach.js?v=180"></script>
+    <script src="./js/ai.js?v=180"></script>
+    <script src="./js/history.js?v=180"></script>
+    <script src="./js/utils.js?v=180"></script>
+    <script src="./js/app.js?v=180"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=179"></script>
-    <script src="./cloud.js?v=179"></script>
+    <script src="./supabase-config.js?v=180"></script>
+    <script src="./cloud.js?v=180"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -560,7 +559,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v179";
+      const APP_VERSION = "v180";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

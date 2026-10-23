@@ -22,6 +22,15 @@
   --workout-accent: var(--accent);
   --workout-good: #4cc38a;
   --radius: 14px;
+  --music-bar-h: 0px;
+}
+
+html.has-music-bar {
+  --music-bar-h: 52px;
+}
+
+html.keyboard-open {
+  --music-bar-h: 0px;
 }
 
 :root[data-accent="cyan"] {
@@ -117,7 +126,7 @@ label,
 .app {
   width: min(720px, calc(100vw - 16px));
   margin: 0 auto;
-  padding: max(16px, env(safe-area-inset-top, 0px)) 0 28px;
+  padding: calc(max(16px, env(safe-area-inset-top, 0px)) + var(--music-bar-h)) 0 28px;
 }
 
 .hero,
@@ -1231,7 +1240,7 @@ h3 {
 
 .workout-panel.is-active .session-timer {
   position: sticky;
-  top: 10px;
+  top: calc(10px + var(--music-bar-h));
   z-index: 8;
   border-color: var(--accent-line);
   background: rgba(15, 17, 21, 0.96);
@@ -2073,7 +2082,7 @@ textarea {
 .view.is-active[data-view="ai"] {
   display: flex;
   flex-direction: column;
-  height: calc(var(--vv-height, 100dvh) - 68px - env(safe-area-inset-bottom, 0px) - 26px);
+  height: calc(var(--vv-height, 100dvh) - 68px - env(safe-area-inset-bottom, 0px) - 26px - var(--music-bar-h));
 }
 
 .ai-panel {
@@ -2797,7 +2806,7 @@ textarea {
   }
 
   .workout-panel.is-active .session-timer {
-    top: calc(env(safe-area-inset-top, 0px) + 8px);
+    top: calc(env(safe-area-inset-top, 0px) + 8px + var(--music-bar-h));
   }
 
   .session-timer strong {
@@ -2836,7 +2845,7 @@ textarea {
     border-radius: 12px;
     padding: 7px;
     background: var(--workout-card);
-    scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 64px);
+    scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 64px + var(--music-bar-h));
   }
 
   .workout-panel .sets {
@@ -3536,13 +3545,13 @@ body {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
-  scroll-margin-top: 96px;
+  scroll-margin-top: calc(96px + var(--music-bar-h));
   overflow-x: clip;
 }
 
 .set-head {
   position: sticky;
-  top: calc(env(safe-area-inset-top, 0px) + 76px);
+  top: calc(env(safe-area-inset-top, 0px) + 76px + var(--music-bar-h));
   z-index: 6;
   margin: -12px -12px 0;
   padding: 12px 12px 8px;
@@ -3647,30 +3656,48 @@ body {
   grid-column: 1 / -1;
 }
 
-.music-card {
-  display: grid;
-  gap: 10px;
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid var(--workout-line, var(--line));
-  border-radius: 16px;
+/* ── Music bar ─────────────────────────── */
+
+.music-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 20;
+  padding: env(safe-area-inset-top, 0px) 0 0;
+  border-bottom: 1px solid var(--line);
+  background: rgba(15, 17, 21, 0.97);
+  backdrop-filter: blur(14px);
 }
 
-.music-card[hidden] {
+.music-bar[hidden],
+html.keyboard-open .music-bar {
   display: none;
 }
 
-.music-head {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
+.music-row,
+.music-more {
+  width: min(720px, calc(100vw - 16px));
+  margin: 0 auto;
 }
 
-.music-head > span {
-  color: var(--workout-muted, var(--muted));
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
+.music-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 52px;
+}
+
+.music-now {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
 }
 
 .music-now strong,
@@ -3683,38 +3710,101 @@ body {
   white-space: nowrap;
 }
 
-.music-now span,
-.music-queue span,
-.music-note {
-  color: var(--workout-muted, var(--muted));
+.music-now strong {
   font-size: 13px;
 }
 
-.music-note {
+.music-now span,
+.music-queue span,
+.music-hint,
+.music-volume span,
+.music-more-title {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.music-hint {
+  flex: 1;
   margin: 0;
+  line-height: 1.3;
 }
 
 .music-controls {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+
+.music-btn {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.music-controls .button {
-  min-height: 44px;
-  font-size: 18px;
-}
-
-.music-more summary {
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
   cursor: pointer;
-  color: var(--workout-muted, var(--muted));
+}
+
+.music-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.music-btn.is-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.music-btn:active {
+  background: var(--accent-soft);
+}
+
+.music-btn.is-primary:active {
+  filter: brightness(1.16);
+}
+
+.music-link {
+  flex: none;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+}
+
+.music-more {
+  display: grid;
+  gap: 8px;
+  max-height: min(60vh, 420px);
+  overflow: auto;
+  padding: 4px 0 12px;
+}
+
+.music-volume {
+  display: grid;
+  gap: 4px;
+}
+
+.music-volume input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.music-more-title {
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .music-queue {
   display: grid;
   gap: 6px;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -3723,11 +3813,15 @@ body {
   width: 100%;
   min-width: 0;
   padding: 8px 10px;
-  border: 1px solid var(--workout-line, var(--line));
+  border: 1px solid var(--line);
   border-radius: 10px;
   background: transparent;
   color: inherit;
   text-align: left;
+}
+
+.music-more .music-link {
+  justify-self: start;
 }
 
 .set-rest-list summary {

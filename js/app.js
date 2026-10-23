@@ -22,6 +22,7 @@ let workoutTimer = {
 let liveBandHrTimer = null;
 let musicTimer = null;
 let musicState = null;
+let musicExpanded = false;
 
 const elements = {
   statsGrid: document.querySelector("#statsGrid"),
@@ -91,7 +92,7 @@ const elements = {
   bandLastSession: document.querySelector("#bandLastSession"),
   openBandViewButton: document.querySelector("#openBandViewButton"),
   bandLiveHr: document.querySelector("#bandLiveHr"),
-  musicCard: document.querySelector("#musicCard"),
+  musicBar: document.querySelector("#musicBar"),
   bandChart: document.querySelector("#bandChart"),
 };
 
@@ -151,6 +152,8 @@ function boot() {
   initWearable();
   consumeWidgetLaunch();
   bindKeyboardInset();
+  bindMusicBar();
+  initMusic();
 }
 
 function bindEvents() {
@@ -443,38 +446,6 @@ function render() {
   renderBandAnalytics();
   updateNativeWidget();
 }
-
-const TITLE_AREAS = {
-  Ноги: "ноги",
-  Икры: "ноги",
-  "Задняя цепь": "ноги",
-  Плиометрика: "ноги",
-  Спина: "спина",
-  Грудь: "грудь",
-  Плечи: "плечи",
-  Руки: "руки",
-  Кор: "кор",
-  Функционал: "функционал",
-};
-const UPPER_AREAS = new Set(["спина", "грудь", "плечи", "руки"]);
-const TITLE_ORDER = ["спина", "грудь", "плечи", "руки", "ноги", "функционал", "кор"];
-
-elements.musicCard?.addEventListener("click", async (event) => {
-  const button = event.target.closest("[data-music]");
-  const bridge = musicBridge();
-  if (!button || !bridge) return;
-  event.preventDefault();
-  const action = button.dataset.music;
-  try {
-    if (action === "access") await bridge.openAccess();
-    else if (action === "open") await bridge.openPlayer();
-    else if (action === "queue") await bridge.control({ action, id: Number(button.dataset.id) });
-    else await bridge.control({ action });
-  } catch (error) {
-    showToast(error?.message || "Плеер не ответил");
-  }
-  window.setTimeout(refreshMusic, 600);
-});
 
 // Запускаем приложение только после инициализации всех const/let ниже по файлу.
 // Иначе ранний boot может попасть в temporal dead zone новых модулей.

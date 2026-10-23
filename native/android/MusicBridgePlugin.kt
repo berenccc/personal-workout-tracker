@@ -2,6 +2,7 @@ package com.trainy.app
 
 import android.content.ComponentName
 import android.content.Intent
+import android.media.AudioManager
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
@@ -58,6 +59,9 @@ class MusicBridgePlugin : Plugin() {
                 ?: meta?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST).orEmpty()
         )
         payload.put("playing", playback?.state == PlaybackState.STATE_PLAYING)
+        val volume = current.playbackInfo
+        payload.put("volume", volume?.currentVolume ?: 0)
+        payload.put("volumeMax", volume?.maxVolume ?: 0)
 
         val queue = current.queue.orEmpty()
         val activeId = playback?.activeQueueItemId ?: -1L
@@ -93,6 +97,11 @@ class MusicBridgePlugin : Plugin() {
                 if (current.playbackState?.state == PlaybackState.STATE_PLAYING) controls.pause() else controls.play()
             }
             "queue" -> controls.skipToQueueItem(call.getLong("id") ?: -1L)
+            "volumeSet" -> current.setVolumeTo(call.getInt("value") ?: 0, 0)
+            // Через сессию плеера: громкость меняется и у телефона, и у Chromecast/колонки.
+            // FLAG_SHOW_UI показывает системный ползунок, чтобы было видно уровень.
+            "volumeUp" -> current.adjustVolume(AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI)
+            "volumeDown" -> current.adjustVolume(AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI)
             else -> {
                 call.reject("Неизвестная команда")
                 return
