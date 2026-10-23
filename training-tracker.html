@@ -14,11 +14,11 @@
       } catch (error) { /* приватный режим */ }
     </script>
     <title>Тренировки</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=164" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=164" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=164" />
-    <link rel="manifest" href="./manifest.webmanifest?v=164" />
-    <link rel="stylesheet" href="./training-tracker.css?v=164" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=176" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=176" />
+    <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=176" />
+    <link rel="manifest" href="./manifest.webmanifest?v=176" />
+    <link rel="stylesheet" href="./training-tracker.css?v=176" />
   </head>
   <body>
     <main class="app">
@@ -33,7 +33,7 @@
           </p>
         </div>
         <div class="hero-side">
-          <span class="version-badge">v164</span>
+          <span class="version-badge">v176</span>
         </div>
       </section>
 
@@ -46,7 +46,7 @@
             </div>
             <span id="readinessPill" class="pill">Готовность</span>
           </div>
-          <p class="workout-helper">Собери список на эту дату. После старта на экране останется один текущий подход.</p>
+          <p class="workout-helper">После старта на экране останется один текущий подход.</p>
 
           <div class="pre-workout">
             <div class="form-row">
@@ -66,7 +66,14 @@
             <button id="wearableApplyHint" class="wearable-apply" type="button" hidden></button>
 
             <div class="overview-card">
-              <span>Краткий план</span>
+              <div class="plan-open-head">
+                <span>Краткий план</span>
+                <button id="openPlanEditor" class="icon-button plan-gear" type="button" aria-label="Изменить план">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.2 7.2 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.22-1.14.54-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.49.4 1.04.72 1.63.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.59-.22 1.14-.54 1.63-.94l2.39.96c.22.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/>
+                  </svg>
+                </button>
+              </div>
               <div id="planSummary" class="plan-summary"></div>
             </div>
 
@@ -84,26 +91,12 @@
               <span class="timer-state">Тренировка идет</span>
             </div>
           </div>
-          <p id="bandNudge" class="band-nudge" hidden>
-            На браслет ушло уведомление. Запусти там <strong>Свободную тренировку</strong> — Xiaomi не даёт стартовать её с телефона сама.
-          </p>
-
           <form id="workoutForm" class="form active-workout">
-            <p class="workout-helper active-helper">Идешь сверху вниз: галочка, вес/повторы, RPE. В конце нажми <strong>Завершить тренировку</strong>.</p>
-
-            <div class="exercise-picker">
-              <label class="exercise-search">
-                Поиск
-                <input id="exerciseSearchInput" type="search" placeholder="Жим, тяга, ноги" autocomplete="off" enterkeyhint="search" />
-              </label>
-              <label>
-                Упражнение
-                <select id="exerciseSelect"></select>
-              </label>
-              <button id="addExerciseButton" class="button secondary" type="button">Добавить</button>
-            </div>
+            <p class="workout-helper active-helper">Идешь сверху вниз: галочка, вес/повторы, как зашло. В конце нажми <strong>Завершить тренировку</strong>.</p>
 
             <div id="selectedExercises" class="selected-exercises"></div>
+
+            <section id="musicCard" class="music-card" hidden></section>
 
             <p class="save-hint">Финиш: проверь галочки и нажми <strong>Завершить тренировку</strong>.</p>
 
@@ -117,9 +110,9 @@
                   <option value="too-hard">Перебор / надо облегчить</option>
                 </select>
               </label>
-              <label>
+              <label class="after-notes">
                 Комментарий после
-                <input id="afterNotesInput" placeholder="Пульс, настроение, что забилось, что скипнул" />
+                <textarea id="afterNotesInput" rows="4" placeholder="Пульс, настроение, что забилось, что скипнул"></textarea>
               </label>
             </div>
 
@@ -468,6 +461,30 @@
       </nav>
     </main>
 
+    <div id="planEditor" class="plan-editor" hidden>
+      <button id="planEditorBackdrop" class="plan-editor-backdrop" type="button" aria-label="Закрыть план"></button>
+      <div class="plan-editor-card" role="dialog" aria-label="План тренировки">
+        <div class="plan-editor-head">
+          <strong>План</strong>
+          <button id="closePlanEditor" class="button ghost" type="button">Готово</button>
+        </div>
+        <div id="planEditorHost" class="plan-editor-host"></div>
+        <button id="openExercisePicker" class="button secondary" type="button">Добавить упражнение</button>
+      </div>
+    </div>
+
+    <div id="exercisePickerSheet" class="plan-editor" hidden>
+      <button id="exercisePickerBackdrop" class="plan-editor-backdrop" type="button" aria-label="Закрыть список"></button>
+      <div class="plan-editor-card" role="dialog" aria-label="Выбор упражнения">
+        <div class="plan-editor-head">
+          <strong>Упражнение</strong>
+          <button id="closeExercisePicker" class="button ghost" type="button">Закрыть</button>
+        </div>
+        <input id="exerciseSearchInput" type="search" placeholder="Жим, тяга, ноги" autocomplete="off" enterkeyhint="search" />
+        <div id="exercisePickList" class="exercise-pick-list"></div>
+      </div>
+    </div>
+
     <template id="exerciseTemplate">
       <article class="exercise-card">
         <div class="exercise-card-header">
@@ -487,12 +504,12 @@
       </article>
     </template>
 
-    <script src="./exercise-catalog.js?v=164"></script>
-    <script src="./wearable.js?v=164"></script>
-    <script src="./training-tracker.js?v=164"></script>
+    <script src="./exercise-catalog.js?v=176"></script>
+    <script src="./wearable.js?v=176"></script>
+    <script src="./training-tracker.js?v=176"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="./supabase-config.js?v=164"></script>
-    <script src="./cloud.js?v=164"></script>
+    <script src="./supabase-config.js?v=176"></script>
+    <script src="./cloud.js?v=176"></script>
     <script>
       // Вкладки: показываем только активный экран
       (function () {
@@ -527,7 +544,7 @@
       })();
     </script>
     <script>
-      const APP_VERSION = "v164";
+      const APP_VERSION = "v176";
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         let reloadedForUpdate = false;
         navigator.serviceWorker.addEventListener("controllerchange", () => {

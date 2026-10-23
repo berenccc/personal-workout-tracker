@@ -573,6 +573,8 @@ let workoutTimer = {
   intervalId: null,
 };
 let liveBandHrTimer = null;
+let musicTimer = null;
+let musicState = null;
 
 const elements = {
   statsGrid: document.querySelector("#statsGrid"),
@@ -590,9 +592,8 @@ const elements = {
   notesInput: document.querySelector("#notesInput"),
   sessionEffortInput: document.querySelector("#sessionEffortInput"),
   afterNotesInput: document.querySelector("#afterNotesInput"),
-  exerciseSelect: document.querySelector("#exerciseSelect"),
   exerciseSearchInput: document.querySelector("#exerciseSearchInput"),
-  addExerciseButton: document.querySelector("#addExerciseButton"),
+  exercisePickList: document.querySelector("#exercisePickList"),
   copyReportButton: document.querySelector("#copyReportButton"),
   selectedExercises: document.querySelector("#selectedExercises"),
   exerciseTemplate: document.querySelector("#exerciseTemplate"),
@@ -643,6 +644,7 @@ const elements = {
   bandLastSession: document.querySelector("#bandLastSession"),
   openBandViewButton: document.querySelector("#openBandViewButton"),
   bandLiveHr: document.querySelector("#bandLiveHr"),
+  musicCard: document.querySelector("#musicCard"),
   bandChart: document.querySelector("#bandChart"),
 };
 
@@ -862,11 +864,23 @@ function bindEvents() {
     render();
   });
 
-  elements.addExerciseButton.addEventListener("click", () => {
-    if (!findExercise(elements.exerciseSelect.value)) return;
-    const uid = addExercise(elements.exerciseSelect.value);
+  document.querySelector("#openPlanEditor")?.addEventListener("click", openPlanEditor);
+  document.querySelector("#closePlanEditor")?.addEventListener("click", closePlanEditor);
+  document.querySelector("#planEditorBackdrop")?.addEventListener("click", closePlanEditor);
+  document.querySelector("#openExercisePicker")?.addEventListener("click", openExercisePicker);
+  document.querySelector("#closeExercisePicker")?.addEventListener("click", closeExercisePicker);
+  document.querySelector("#exercisePickerBackdrop")?.addEventListener("click", closeExercisePicker);
+  elements.exercisePickList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-exercise-id]");
+    if (!button) return;
+    const uid = addExercise(button.dataset.exerciseId);
     renderSelectedExercises();
     saveWorkoutDraft();
+    closeExercisePicker();
+    if (workoutIsLive()) {
+      showToast(`Добавлено в конец: ${findExercise(button.dataset.exerciseId).name}`);
+      return;
+    }
     keepExerciseTitleInView(uid);
   });
   elements.exerciseSearchInput?.addEventListener("input", renderExercisePicker);
@@ -1120,22 +1134,16 @@ function bindEvents() {
 }
 
 async function nudgeBandWorkout(phase) {
-  const box = document.querySelector("#bandNudge");
   const api = window.TrainyWearable;
   if (phase === "stop") {
-    if (box) box.hidden = true;
     await api?.stopBandWorkout?.();
     return;
   }
-  if (!api?.isNative?.()) {
-    if (box) box.hidden = true;
-    return;
-  }
+  if (!api?.isNative?.()) return;
   try {
     await api.startBandWorkout();
-    if (box) box.hidden = false;
   } catch {
-    if (box) box.hidden = true;
+    // уведомление на браслет не обязательно
   }
 }
 
@@ -1143,6 +1151,7 @@ function startWorkoutTimer() {
   if (workoutTimer.startedAt) return;
 
   hideFinishNotice();
+  closePlanEditor();
   elements.workoutPanel.classList.add("is-active");
   workoutTimer = {
     startedAt: Date.now(),
@@ -1150,6 +1159,7 @@ function startWorkoutTimer() {
     intervalId: window.setInterval(renderWorkoutTimer, 1000),
   };
   renderWorkoutTimer();
+  renderSelectedExercises();
   saveWorkoutDraft();
   updateNativeWidget();
   nudgeBandWorkout("start");
@@ -1183,8 +1193,6 @@ function resetWorkoutTimer() {
   elements.startWorkoutButton.disabled = false;
   elements.workoutTimerDisplay.textContent = "00:00";
   elements.workoutPanel.classList.remove("is-active");
-  const nudge = document.querySelector("#bandNudge");
-  if (nudge) nudge.hidden = true;
   stopLiveBandHr();
   if (elements.bandLiveHr) {
     elements.bandLiveHr.hidden = true;
@@ -1192,6 +1200,7 @@ function resetWorkoutTimer() {
   }
   restUntil = 0;
   focusUid = null;
+  setAllOpen = false;
   finishArmedUntil = 0;
   if (restTick) {
     window.clearInterval(restTick);
@@ -1217,6 +1226,8 @@ function buildWorkoutDraft() {
     savedAt: Date.now(),
     sessionUid: workoutSessionUid,
     isActive: elements.workoutPanel.classList.contains("is-active"),
+    focusUid,
+    restUntil,
     timer: {
       startedAt: workoutTimer.startedAt,
       stoppedAt: workoutTimer.stoppedAt,
@@ -1254,6 +1265,8 @@ function restoreWorkoutDraft() {
     elements.sessionEffortInput.value = fields.sessionEffort || elements.sessionEffortInput.value;
     elements.afterNotesInput.value = fields.afterNotes || "";
     selected = draft.selected;
+    focusUid = selected.some((item) => item.uid === draft.focusUid) ? draft.focusUid : null;
+    restUntil = Number(draft.restUntil) > Date.now() ? Number(draft.restUntil) : 0;
 
     if (draft.isActive || draft.timer?.startedAt) {
       elements.workoutPanel.classList.add("is-active");
@@ -1265,6 +1278,16 @@ function restoreWorkoutDraft() {
       if (!workoutTimer.stoppedAt) {
         workoutTimer.intervalId = window.setInterval(renderWorkoutTimer, 1000);
         startLiveBandHr();
+      }
+      if (restUntil && !restTick) {
+        restTick = window.setInterval(() => {
+          if (restUntil <= Date.now()) {
+            restUntil = 0;
+            window.clearInterval(restTick);
+            restTick = null;
+          }
+          paintRestTimer();
+        }, 250);
       }
       renderWorkoutTimer();
       setSyncStatus("Восстановил незавершенную тренировку с этого устройства.");
@@ -1459,20 +1482,53 @@ function exercisePickList() {
 }
 
 function renderExercisePicker() {
-  const optionFor = (exercise) => `<option value="${exercise.id}">${exercise.name}</option>`;
+  const list = elements.exercisePickList;
+  if (!list) return;
   const query = (elements.exerciseSearchInput?.value || "").trim().toLocaleLowerCase("ru");
-  const pickList = exercisePickList().filter((exercise) => {
-    if (!query) return true;
-    const haystack = `${exercise.name} ${exercise.nameEn || ""}`.toLocaleLowerCase("ru");
-    return haystack.includes(query);
-  });
-  const previous = elements.exerciseSelect.value;
-  if (!pickList.length) {
-    elements.exerciseSelect.innerHTML = `<option value="">Ничего не нашлось</option>`;
-    return;
-  }
-  elements.exerciseSelect.innerHTML = pickList.map(optionFor).join("");
-  if (pickList.some((exercise) => exercise.id === previous)) elements.exerciseSelect.value = previous;
+  const pickList = exercisePickList()
+    .filter((exercise) => {
+      if (!query) return true;
+      const haystack = `${exercise.name} ${exercise.nameEn || ""}`.toLocaleLowerCase("ru");
+      return haystack.includes(query);
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  list.innerHTML = pickList.length
+    ? pickList.map((exercise) =>
+      `<button type="button" class="exercise-pick-option" data-exercise-id="${exercise.id}">${escapeHtml(exercise.name)}</button>`
+    ).join("")
+    : `<p class="empty">Ничего не нашлось</p>`;
+}
+
+function openPlanEditor() {
+  const editor = document.querySelector("#planEditor");
+  const host = document.querySelector("#planEditorHost");
+  if (!editor || !host || !elements.selectedExercises) return;
+  host.appendChild(elements.selectedExercises);
+  editor.hidden = false;
+}
+
+function closePlanEditor() {
+  const editor = document.querySelector("#planEditor");
+  const form = document.querySelector("#workoutForm");
+  const anchor = form?.querySelector(".save-hint");
+  if (editor && form && elements.selectedExercises && anchor) form.insertBefore(elements.selectedExercises, anchor);
+  if (editor) editor.hidden = true;
+  closeExercisePicker();
+  renderCoach();
+}
+
+function openExercisePicker() {
+  const sheet = document.querySelector("#exercisePickerSheet");
+  if (!sheet) return;
+  if (elements.exerciseSearchInput) elements.exerciseSearchInput.value = "";
+  renderExercisePicker();
+  sheet.hidden = false;
+  elements.exerciseSearchInput?.focus();
+}
+
+function closeExercisePicker() {
+  const sheet = document.querySelector("#exercisePickerSheet");
+  if (sheet) sheet.hidden = true;
 }
 
 let chartExerciseId = "";
@@ -2142,23 +2198,52 @@ function widgetSessionFacts(workout) {
   return [minutes ? `${minutes} мин` : null, sets ? `${sets} подх.` : null].filter(Boolean).join(" · ");
 }
 
+// Короткая оценка прошедшего дня: факты остаются в первой строке, сюда — только вывод.
+function widgetSessionVerdict(workout) {
+  const notes = `${workout?.notes || ""} ${workout?.afterNotes || ""}`.toLowerCase();
+  if (/боль|колен|плеч|локт|сустав|травм|тянет|ныл/.test(notes)) return "В заметках есть про тело. Глянь.";
+  const skipped = (workout?.exercises || []).reduce((sum, item) => {
+    if (findExercise(item.exerciseId)?.cardio) return sum;
+    return sum + (item.sets || []).filter((set) => set.mark === "skip" || set.done === false).length;
+  }, 0);
+  if (skipped >= 2) return "Не всё закрыто — и так нормально.";
+  const rpe = Number(averageWorkoutRpe(workout));
+  if (rpe >= 8.2) return "Было тяжело, но дожал. Молодец.";
+  if (rpe && rpe <= 6.5) return "Легко и чисто. Запас ещё есть.";
+  return "Закрыл ровно, без надрыва. Молодец.";
+}
+
+// Начать имеет смысл только в день тренировки, когда список уже собран.
+function widgetDayChrome(iso, today, workout, plannedCount, active) {
+  if (active && iso === today) return { button: "pair", buttonAction: "" };
+  if (workout) return { button: "result", buttonAction: `day:${iso}` };
+  if (iso === today && plannedCount > 0) return { button: "pair", buttonAction: "" };
+  if (iso > today && plannedCount > 0) return { button: "open", buttonAction: `plan:${iso}` };
+  if (iso >= today) return { button: "open", buttonAction: "open" };
+  return { button: "open", buttonAction: `day:${iso}` };
+}
+
 function widgetDayContent(iso, active, snapshot) {
   const today = formatInputDate(new Date());
   const workout = [...state.workouts].reverse().find((item) => item.date === iso);
+  const plannedItems = itemsForDate(iso);
+  const chrome = widgetDayChrome(iso, today, workout, plannedItems.length, Boolean(active && iso === today));
   if (active && iso === today) {
-    return { when: "Идёт тренировка", title: currentPlanTitle(), meta: widgetProgressLine(), rows: widgetPlanRows(true), quote: "", foot: [] };
+    return { when: "Идёт тренировка", title: currentPlanTitle(), meta: widgetProgressLine(), rows: widgetPlanRows(true), quote: "", foot: [], ...chrome };
   }
   if (workout) {
+    const facts = widgetSessionFacts(workout);
+    const verdict = widgetSessionVerdict(workout);
     return {
       when: widgetWhenLabel(iso),
       title: trainingTitle(workout.exercises || []),
-      meta: widgetSessionFacts(workout),
+      meta: [facts, verdict].filter(Boolean).join("\n"),
       rows: widgetWorkoutRows(workout),
       quote: "",
       foot: [],
+      ...chrome,
     };
   }
-  const plannedItems = itemsForDate(iso);
   if (plannedItems.length && iso >= today) {
     return {
       when: widgetWhenLabel(iso),
@@ -2167,6 +2252,7 @@ function widgetDayContent(iso, active, snapshot) {
       rows: widgetPlanRows(false, plannedItems),
       quote: "",
       foot: [],
+      ...chrome,
     };
   }
   if (iso >= today && isPlannedDate(iso)) {
@@ -2177,6 +2263,7 @@ function widgetDayContent(iso, active, snapshot) {
       rows: [],
       quote: "",
       foot: iso === today ? widgetFooterLines(snapshot) : [],
+      ...chrome,
     };
   }
   const rest = widgetRestCopy(iso, today);
@@ -2187,6 +2274,7 @@ function widgetDayContent(iso, active, snapshot) {
     rows: [],
     quote: rest.quote,
     foot: iso === today ? widgetFooterLines(snapshot) : [],
+    ...chrome,
   };
 }
 
@@ -2253,6 +2341,8 @@ function updateNativeWidget() {
     nextDate: nextIso || "",
     isActive: active,
     activeTimer: formatDuration(getWorkoutDurationMs()),
+    restTimer: active ? restTimerText() : "",
+    restUntilMs: active && restUntil > Date.now() ? restUntil : 0,
     // Виджет тикает сам через Chronometer, поэтому ему нужна точка старта, а не текст.
     startedAtMs: active ? workoutTimer.startedAt : 0,
     startLabel: active ? "Открыть" : "Начать",
@@ -2269,18 +2359,19 @@ function updateNativeWidget() {
     planRows: widgetPlanRows(active, nextItems),
     footerLines: active ? [] : widgetFooterLines(snapshot),
     ...(active ? widgetNotice() : {}),
-    ...(active ? { liveSets: liveSetRows() } : {}),
+    ...(active ? { liveSets: liveSetRows(), liveFocusUid: focusExercise()?.uid || "" } : {}),
     updatedAt: new Date().toISOString(),
   };
 
   bridge.setWidgetData({ json: JSON.stringify(payload) }).catch(() => {});
 }
 
-// Последний живой пульс с браслета: берём только свежий, старше 3 минут уже не «сейчас».
+// Замер с браслета. В виджет и таймер попадает только свежий: старый пик с подхода
+// не должен висеть, когда на браслете пульс уже упал.
 let liveBandHr = null;
 
 function freshLiveHr() {
-  if (!liveBandHr?.bpm || Date.now() - liveBandHr.at > 3 * 60 * 1000) return null;
+  if (!liveBandHr?.bpm || Date.now() - liveBandHr.at > 25000) return null;
   return liveBandHr.bpm;
 }
 
@@ -2300,7 +2391,7 @@ function widgetExerciseName(exerciseId) {
 
 // Строки плана для виджета: название слева, объём или прогресс ровной колонкой справа.
 function widgetPlanRows(active, items = selected) {
-  const current = items.find((item) => item.sets.some((set) => !set.done));
+  const current = active ? focusExercise() : items.find((item) => item.sets.some((set) => !set.done));
   return items.map((item) => {
     const exercise = findExercise(item.exerciseId);
     const name = widgetExerciseName(item.exerciseId);
@@ -2358,7 +2449,7 @@ function widgetIdleLines(snapshot, items = selected) {
 }
 
 function widgetActiveLines() {
-  const current = selected.find((item) => item.sets.some((set) => !set.done));
+  const current = focusExercise();
   return selected.map((item) => {
     const name = findExercise(item.exerciseId)?.name || item.exerciseId;
     const done = item.sets.filter((set) => set.done).length;
@@ -2382,13 +2473,16 @@ function lockSetDetail(exercise, set) {
 
 function liveSetRows() {
   const rows = [];
-  selected.forEach((item) => {
+  const focused = focusExercise();
+  const ordered = focused ? [focused, ...selected.filter((item) => item.uid !== focused.uid)] : selected;
+  ordered.forEach((item) => {
     const exercise = findExercise(item.exerciseId);
     item.sets.forEach((set, index) => {
       if (set.mark === "skip") return;
       rows.push({
         id: `${item.uid}:${index}`,
         name: (exercise?.name || item.exerciseId).split(" / ")[0],
+        step: `Подход ${index + 1} из ${item.sets.length}`,
         detail: lockSetDetail(exercise, set),
         done: Boolean(set.done),
       });
@@ -2401,14 +2495,29 @@ async function applyLockDones() {
   const bridge = window.Capacitor?.Plugins?.WidgetBridge;
   if (!bridge?.consumeLockDones || !workoutIsLive()) return;
   let ids = [];
+  let lockFocus = "";
   try {
+    const focus = await bridge.consumeLockFocus?.();
+    lockFocus = String(focus?.uid || "");
     const result = await bridge.consumeLockDones();
     ids = Array.isArray(result?.ids) ? result.ids : [];
   } catch {
     return;
   }
-  if (!ids.length) return;
   let changed = false;
+  if (lockFocus && selected.some((entry) => entry.uid === lockFocus) && lockFocus !== focusUid) {
+    focusUid = lockFocus;
+    changed = true;
+  }
+  if (!ids.length) {
+    if (changed) {
+      renderSelectedExercises();
+      saveWorkoutDraft();
+      updateNativeWidget();
+    }
+    return;
+  }
+  let marked = false;
   ids.forEach((id) => {
     const [uid, indexRaw] = String(id).split(":");
     const item = selected.find((entry) => entry.uid === uid);
@@ -2417,14 +2526,15 @@ async function applyLockDones() {
     if (!item || !set || set.done) return;
     set.done = true;
     set.doneAt = Date.now();
-    changed = true;
+    set.rpe = feelRpe(set.mark);
+    marked = true;
     if (isExerciseComplete(item)) {
       const upcoming = selected.find((entry) => entry.uid !== item.uid && !isExerciseComplete(entry));
       if (upcoming) focusUid = upcoming.uid;
     }
   });
-  if (!changed) return;
-  startRest();
+  if (!changed && !marked) return;
+  if (marked) startRest();
   renderSelectedExercises();
   saveWorkoutDraft();
   updateNativeWidget();
@@ -2433,13 +2543,16 @@ async function applyLockDones() {
 function widgetNotice() {
   const sets = selected.flatMap((item) => item.sets);
   const doneSets = sets.filter((set) => set.done).length;
-  const current = selected.find((item) => item.sets.some((set) => !set.done));
+  const current = focusExercise();
   const bpm = freshLiveHr();
   const progress = `${doneSets}/${sets.length} подходов`;
   const currentName = current ? findExercise(current.exerciseId)?.name : null;
+  const workoutTime = formatDuration(getWorkoutDurationMs());
+  const rest = restTimerText();
+  const timing = rest ? `${workoutTime} · отдых ${rest}` : workoutTime;
   return {
-    activeEyebrow: bpm ? `Идёт тренировка · ♥ ${bpm}` : "Идёт тренировка",
-    noticeTitle: bpm ? `♥ ${bpm} уд/мин · ${progress}` : `Тренировка · ${progress}`,
+    activeEyebrow: bpm ? `Идёт ${timing} · ♥ ${bpm}` : `Идёт ${timing}`,
+    noticeTitle: bpm ? `♥ ${bpm} · ${progress}` : `Тренировка · ${progress}`,
     noticeProgress: progress,
     noticeText: currentName ? `Сейчас: ${currentName}` : "Все подходы закрыты",
     noticeDetails: widgetActiveLines().join("\n"),
@@ -2464,9 +2577,12 @@ function widgetProgressLine() {
   const sets = selected.flatMap((item) => item.sets);
   const doneSets = sets.filter((set) => set.done).length;
   const doneExercises = selected.filter((item) => item.sets.every((set) => set.done)).length;
-  const current = selected.find((item) => item.sets.some((set) => !set.done));
+  const current = focusExercise();
   const currentName = current ? findExercise(current.exerciseId)?.name : null;
+  const workoutTime = formatDuration(getWorkoutDurationMs());
+  const rest = restTimerText();
   return [
+    rest ? `⏱ ${workoutTime} · отдых ${rest}` : `⏱ ${workoutTime}`,
     `${doneSets}/${sets.length} подх. · ${doneExercises}/${selected.length} упр.`,
     currentName ? `Сейчас: ${currentName}` : "Все подходы закрыты",
   ].join("\n");
@@ -2522,23 +2638,45 @@ function workoutTonnage(workout) {
   }, 0);
 }
 
+function acknowledgeWidgetOpen(selector) {
+  requestAnimationFrame(() => {
+    const target = document.querySelector(selector);
+    if (!target) return;
+    target.classList.remove("widget-ack");
+    void target.offsetWidth;
+    target.classList.add("widget-ack");
+    target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    window.setTimeout(() => target.classList.remove("widget-ack"), 720);
+  });
+}
+
 function handleWidgetAction(action) {
   if (!action) return;
   if (action === "start" || action === "open") {
     window.showAppView?.("workout");
     // Тап по виджету легко сделать случайно, поэтому тренировку не стартуем без подтверждения.
     if (action === "start" && !workoutTimer.startedAt) showStartPrompt();
+    acknowledgeWidgetOpen("#startWorkoutButton");
     return;
   }
-  if (action === "last") {
-    const last = state.workouts.at(-1);
-    if (last) {
-      selectedDayIso = last.date;
-      calendarCursor = new Date(`${last.date}T00:00:00`);
+  if (action === "last" || action.startsWith("day:")) {
+    const iso = action.startsWith("day:") ? action.slice(4) : state.workouts.at(-1)?.date;
+    if (iso && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      selectedDayIso = iso;
+      calendarCursor = new Date(`${iso}T00:00:00`);
     }
     window.showAppView?.("calendar");
     renderScheduleCalendar();
     renderDayDetail();
+    acknowledgeWidgetOpen("#dayDetail .day-detail-card");
+    return;
+  }
+  if (action.startsWith("plan:")) {
+    const iso = action.slice(5);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+      openDayPlan(iso);
+      acknowledgeWidgetOpen("#workoutForm");
+    }
   }
 }
 
@@ -2688,7 +2826,8 @@ function renderPrBoard() {
       const resolved = (typeof EXERCISE_ALIASES !== "undefined" && EXERCISE_ALIASES[exerciseId]) || exerciseId;
       return exercises.find((exercise) => exercise.id === resolved);
     })
-    .filter((exercise, index, list) => exercise && list.findIndex((item) => item.id === exercise.id) === index)
+    .filter(Boolean)
+    .filter((exercise, index, list) => list.findIndex((item) => item.id === exercise.id) === index)
     .sort((a, b) => a.name.localeCompare(b.name, "ru"))
     .map((exercise) => {
       const pair = exerciseResultPair(exercise);
@@ -2767,19 +2906,31 @@ function bestRepsFor(exerciseId) {
   return best;
 }
 
-function renderSelectedExercises() {
+function renderSelectedExercises(options = {}) {
+  const listWasOpen = Boolean(elements.selectedExercises.querySelector(".set-rest-list[open]"));
+  const scrollY = window.scrollY;
   elements.selectedExercises.innerHTML = "";
   if (workoutIsLive()) renderSetFocus();
 
   const host = workoutIsLive() ? collapsedPlanHost() : elements.selectedExercises;
   selected.forEach((item, index) => host.appendChild(renderExerciseCard(item, index)));
+  if (workoutIsLive() && listWasOpen) {
+    const details = elements.selectedExercises.querySelector(".set-rest-list");
+    if (details) details.open = true;
+  }
 
   renderPlanSummary();
   renderWorkoutHeading();
   paintRestTimer();
   paintSetHeart();
-  if (workoutIsLive()) updateNativeWidget();
+  if (workoutIsLive()) {
+    if (options.scrollToFocus) document.querySelector(".set-focus")?.scrollIntoView({ block: "nearest" });
+    else window.scrollTo(0, scrollY);
+    updateNativeWidget();
+  }
 }
+
+let setAllOpen = false;
 
 function collapsedPlanHost() {
   const details = document.createElement("details");
@@ -2789,6 +2940,12 @@ function collapsedPlanHost() {
   const body = document.createElement("div");
   details.appendChild(body);
   elements.selectedExercises.appendChild(details);
+  const add = document.createElement("button");
+  add.type = "button";
+  add.className = "button secondary live-add-exercise";
+  add.textContent = "+ Добавить упражнение";
+  add.addEventListener("click", openExercisePicker);
+  elements.selectedExercises.appendChild(add);
   return body;
 }
 
@@ -2818,11 +2975,18 @@ function renderSetFocus() {
   const nextName = next ? findExercise(next.exerciseId)?.name : "";
 
   card.innerHTML = `
-    <p class="set-kicker">Подход ${setIndex + 1} из ${item.sets.length}</p>
-    <h3 class="set-name">${escapeHtml(exercise.name)}</h3>
+    <div class="set-head">
+      <p class="set-kicker">Подход ${setIndex + 1} из ${item.sets.length}</p>
+      <h3 class="set-name">${escapeHtml(exercise.name)}</h3>
+    </div>
     <p class="set-sub">${escapeHtml(exerciseSubtitle(exercise, item))}</p>
-    <p class="set-hr" id="setHrReadout">Пульс появится, если в Mi Fitness включена трансляция</p>
+    <p class="set-hr" id="setHrReadout" hidden></p>
     <div class="set-current"></div>
+    <details class="set-all"${setAllOpen ? " open" : ""}>
+      <summary>Все подходы · ${item.sets.filter((entry) => entry.done).length}/${item.sets.length}</summary>
+      <div class="set-all-list"></div>
+      <button class="button ghost add-set" type="button">+ подход</button>
+    </details>
     <div class="rest-timer" hidden>
       <span>Отдых</span>
       <strong data-rest-clock>1:30</strong>
@@ -2833,6 +2997,20 @@ function renderSetFocus() {
     <p class="set-next">${nextName ? `Дальше: ${escapeHtml(nextName)}` : "Это последнее упражнение"}</p>
   `;
   if (set) card.querySelector(".set-current").appendChild(renderSetRow(item.uid, setIndex, set, exercise));
+  const allList = card.querySelector(".set-all-list");
+  item.sets.forEach((entry, index) => {
+    if (index === setIndex) return;
+    allList.appendChild(renderSetRow(item.uid, index, entry, exercise));
+  });
+  card.querySelector(".set-all").addEventListener("toggle", (event) => {
+    setAllOpen = event.currentTarget.open;
+  });
+  card.querySelector(".add-set").addEventListener("click", () => {
+    const last = item.sets.at(-1) || { weight: 0, reps: 10, rpe: "" };
+    item.sets.push({ ...last, rpe: "", done: false, mark: "normal" });
+    renderSelectedExercises();
+    saveWorkoutDraft();
+  });
   card.querySelectorAll("[data-rest]").forEach((button) => {
     button.addEventListener("click", () => adjustRest(button.dataset.rest));
   });
@@ -2845,12 +3023,25 @@ function renderExerciseCard(item, index) {
   const card = fragment.querySelector(".exercise-card");
   card.dataset.uid = item.uid;
   if (isExerciseComplete(item)) card.classList.add("exercise-complete");
+  if (workoutIsLive() && item.uid === focusUid) card.classList.add("exercise-current");
   const indexBadge = card.querySelector(".exercise-index");
   if (indexBadge) indexBadge.textContent = String(index + 1);
   card.querySelector("h3").textContent = exercise.name;
   card.querySelector("p").textContent = exerciseSubtitle(exercise, item);
   const moveUpButton = card.querySelector(".move-up");
   const moveDownButton = card.querySelector(".move-down");
+  const actions = card.querySelector(".exercise-card-actions");
+  if (workoutIsLive() && actions) {
+    const focusButton = document.createElement("button");
+    focusButton.className = "icon-button focus-exercise";
+    focusButton.type = "button";
+    focusButton.textContent = "▶";
+    focusButton.title = "Сделать текущим";
+    focusButton.setAttribute("aria-label", "Сделать упражнение текущим");
+    focusButton.disabled = item.uid === focusUid;
+    focusButton.addEventListener("click", () => setFocusExercise(item.uid));
+    actions.prepend(focusButton);
+  }
   moveUpButton.disabled = index === 0;
   moveDownButton.disabled = index === selected.length - 1;
   moveUpButton.addEventListener("click", () => moveSelectedExercise(item.uid, -1));
@@ -2863,8 +3054,7 @@ function renderExerciseCard(item, index) {
   });
   card.querySelector("h3").addEventListener("click", () => {
     if (!workoutIsLive()) return;
-    focusUid = item.uid;
-    renderSelectedExercises();
+    setFocusExercise(item.uid);
   });
 
   const sets = card.querySelector(".sets");
@@ -2876,6 +3066,14 @@ function renderExerciseCard(item, index) {
     saveWorkoutDraft();
   });
   return fragment;
+}
+
+function setFocusExercise(uid) {
+  if (!selected.some((item) => item.uid === uid)) return;
+  focusUid = uid;
+  renderSelectedExercises({ scrollToFocus: true });
+  saveWorkoutDraft();
+  updateNativeWidget();
 }
 
 function startRest(seconds = 90) {
@@ -2892,12 +3090,15 @@ function startRest(seconds = 90) {
     }, 250);
   }
   paintRestTimer();
+  updateNativeWidget();
 }
 
 function adjustRest(action) {
   if (action === "skip") {
     restUntil = 0;
     paintRestTimer();
+    saveWorkoutDraft();
+    updateNativeWidget();
     return;
   }
   const delta = Number(action) * 1000;
@@ -2906,15 +3107,26 @@ function adjustRest(action) {
   if (restUntil <= Date.now()) restUntil = 0;
   if (restUntil && !restTick) startRest(Math.ceil((restUntil - Date.now()) / 1000));
   paintRestTimer();
+  saveWorkoutDraft();
+  updateNativeWidget();
+}
+
+function restSecondsLeft() {
+  return Math.max(0, Math.ceil((restUntil - Date.now()) / 1000));
+}
+
+function restTimerText() {
+  const seconds = restSecondsLeft();
+  if (!seconds) return "";
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 function paintRestTimer() {
   const box = document.querySelector(".set-focus .rest-timer");
   if (!box) return;
-  const left = restUntil - Date.now();
-  box.hidden = left <= 0;
-  if (left <= 0) return;
-  const seconds = Math.ceil(left / 1000);
+  const seconds = restSecondsLeft();
+  box.hidden = seconds <= 0;
+  if (seconds <= 0) return;
   const clock = box.querySelector("[data-rest-clock]");
   if (clock) clock.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
@@ -2922,9 +3134,23 @@ function paintRestTimer() {
 function paintSetHeart() {
   const node = document.querySelector("#setHrReadout");
   if (!node) return;
-  const bpm = freshLiveHr();
-  node.classList.toggle("is-live", Boolean(bpm));
-  node.textContent = bpm ? `♥ ${bpm}` : "Пульс появится, если в Mi Fitness включена трансляция";
+  const reading = liveBandHr;
+  const age = reading ? Date.now() - reading.at : Infinity;
+  const bpm = reading?.bpm && age <= 20 * 60 * 1000 ? reading.bpm : null;
+  const live = Boolean(bpm) && age <= 20000;
+  node.classList.toggle("is-live", live);
+  node.hidden = !bpm;
+  if (!bpm) {
+    node.textContent = "";
+    return;
+  }
+  if (!live) {
+    const sec = Math.max(1, Math.round(age / 1000));
+    const ago = sec >= 60 ? `${Math.round(sec / 60)} мин назад` : `${sec} с назад`;
+    node.textContent = `♥ ${bpm} · ${ago}`;
+    return;
+  }
+  node.textContent = `♥ ${bpm}`;
 }
 
 function moveSelectedExercise(uid, direction) {
@@ -2932,11 +3158,18 @@ function moveSelectedExercise(uid, direction) {
   const targetIndex = currentIndex + direction;
   if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selected.length) return;
 
+  const live = workoutIsLive();
   const title = findExerciseTitle(uid);
-  const previousTitleTop = title ? title.getBoundingClientRect().top : null;
+  const previousTitleTop = !live && title ? title.getBoundingClientRect().top : null;
   [selected[currentIndex], selected[targetIndex]] = [selected[targetIndex], selected[currentIndex]];
   renderSelectedExercises();
   saveWorkoutDraft();
+  if (live) {
+    const card = findExerciseCard(uid);
+    card?.classList.add("exercise-moved");
+    window.setTimeout(() => card?.classList.remove("exercise-moved"), 500);
+    return;
+  }
   keepExerciseTitleInView(uid, previousTitleTop, direction);
 }
 
@@ -2958,6 +3191,12 @@ function keepExerciseTitleInView(uid, previousTitleTop, direction) {
   const card = findExerciseCard(uid);
   const title = findExerciseTitle(uid);
   if (!card || !title) return;
+  if (!document.querySelector("#planEditor")?.hidden) {
+    title.scrollIntoView({ block: "nearest" });
+    card.classList.add("exercise-moved");
+    window.setTimeout(() => card.classList.remove("exercise-moved"), 500);
+    return;
+  }
 
   // Карточки разной высоты, поэтому якорь — именно название перемещаемого
   // упражнения. Оно остаётся на той же высоте экрана после перестановки.
@@ -3037,6 +3276,29 @@ function isExerciseComplete(item) {
   return item.sets.length > 0 && item.sets.every((set) => set.done);
 }
 
+// Ощущение подхода вместо ручного RPE. RPE в истории остаётся: его выводим из метки,
+// аналитика и тренер дальше работают с числом.
+const SET_FEEL = [
+  { value: "very-easy", label: "совсем легко", rpe: 5 },
+  { value: "easy", label: "легко", rpe: 6 },
+  { value: "normal", label: "в самый раз", rpe: 7 },
+  { value: "solid", label: "плотно", rpe: 8 },
+  { value: "hard", label: "тяжело", rpe: 9 },
+  { value: "skip", label: "пропустил", rpe: "" },
+];
+
+function feelRpe(mark) {
+  const level = SET_FEEL.find((item) => item.value === (mark || "normal"));
+  return level ? level.rpe : 7;
+}
+
+function feelOptions(mark) {
+  const current = SET_FEEL.some((item) => item.value === mark) ? mark : "normal";
+  return SET_FEEL.map((item) =>
+    `<option value="${item.value}" ${item.value === current ? "selected" : ""}>${item.label}</option>`
+  ).join("");
+}
+
 function renderSetRow(uid, index, set, exercise) {
   const row = document.createElement("div");
   row.className = `set-row${set.done ? " set-done" : ""}`;
@@ -3058,14 +3320,8 @@ function renderSetRow(uid, index, set, exercise) {
         <button type="button" data-adjust="reps" data-delta="1">+</button>
       </span>
     </label>
-    <label>RPE<input type="number" step="0.5" min="1" max="10" placeholder="7-10" value="${set.rpe}" data-field="rpe" /></label>
-    <label>Метка
-      <select data-field="mark">
-        <option value="easy" ${set.mark === "easy" ? "selected" : ""}>легко</option>
-        <option value="normal" ${!set.mark || set.mark === "normal" ? "selected" : ""}>норм</option>
-        <option value="hard" ${set.mark === "hard" ? "selected" : ""}>тяжело</option>
-        <option value="skip" ${set.mark === "skip" ? "selected" : ""}>скип</option>
-      </select>
+    <label class="feel-cell">Как зашло
+      <select data-field="mark">${feelOptions(set.mark)}</select>
     </label>
     <button class="delete-set" type="button" aria-label="Убрать подход" title="Убрать подход">×</button>
   `;
@@ -3074,10 +3330,12 @@ function renderSetRow(uid, index, set, exercise) {
     const updateSet = () => {
       const item = selected.find((selectedItem) => selectedItem.uid === uid);
       item.sets[index][input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
+      if (input.dataset.field === "mark") item.sets[index].rpe = feelRpe(input.value);
       if (input.dataset.field === "done") {
         // Метка времени подхода — основа для разбора пульса по упражнениям и отдыху.
         item.sets[index].doneAt = input.checked ? Date.now() : null;
         if (input.checked) {
+          item.sets[index].rpe = feelRpe(item.sets[index].mark);
           startRest();
           if (isExerciseComplete(item)) {
             const upcoming = selected.find((entry) => entry.uid !== item.uid && !isExerciseComplete(entry));
@@ -4192,6 +4450,10 @@ function startLiveBandHr() {
   stopLiveBandHr();
   pollLiveBandHr();
   liveBandHrTimer = window.setInterval(pollLiveBandHr, 2000);
+  if (musicBridge()) {
+    refreshMusic();
+    musicTimer = window.setInterval(refreshMusic, 4000);
+  }
 }
 
 function stopLiveBandHr() {
@@ -4199,7 +4461,99 @@ function stopLiveBandHr() {
     window.clearInterval(liveBandHrTimer);
     liveBandHrTimer = null;
   }
+  if (musicTimer) {
+    window.clearInterval(musicTimer);
+    musicTimer = null;
+  }
+  if (elements.musicCard) elements.musicCard.hidden = true;
 }
+
+function musicBridge() {
+  return window.Capacitor?.isNativePlatform?.() ? window.Capacitor?.Plugins?.MusicBridge || null : null;
+}
+
+async function refreshMusic() {
+  const bridge = musicBridge();
+  if (!bridge?.state || document.hidden) return;
+  try {
+    musicState = await bridge.state();
+  } catch {
+    musicState = null;
+  }
+  renderMusicCard();
+}
+
+function renderMusicCard() {
+  const node = elements.musicCard;
+  if (!node) return;
+  const state = musicState;
+  if (!state || !workoutIsLive()) {
+    node.hidden = true;
+    return;
+  }
+  node.hidden = false;
+  if (!state.granted) {
+    node.innerHTML = `
+      <div class="music-head"><span>Музыка</span></div>
+      <p class="music-note">Чтобы листать треки YouTube Music отсюда, дай Trainy доступ к уведомлениям.</p>
+      <button class="button ghost" type="button" data-music="access">Дать доступ</button>
+    `;
+    return;
+  }
+  if (!state.active) {
+    node.innerHTML = `
+      <div class="music-head"><span>Музыка</span></div>
+      <p class="music-note">Плеер не запущен.</p>
+      <button class="button ghost" type="button" data-music="open">Открыть YouTube Music</button>
+    `;
+    return;
+  }
+  const moreOpen = Boolean(node.querySelector(".music-more")?.open);
+  const queue = Array.isArray(state.queue) ? state.queue : [];
+  const queueHtml = queue.length
+    ? `<ol class="music-queue">${queue
+        .map(
+          (item) =>
+            `<li><button type="button" data-music="queue" data-id="${escapeHtml(String(item.id))}"><strong>${escapeHtml(item.title || "Без названия")}</strong>${item.artist ? `<span>${escapeHtml(item.artist)}</span>` : ""}</button></li>`
+        )
+        .join("")}</ol>`
+    : `<p class="music-note">${state.queueKnown ? "Очередь закончилась." : "Плеер не отдаёт очередь."}</p>`;
+  node.innerHTML = `
+    <div class="music-head">
+      <span>Музыка</span>
+      <div class="music-now">
+        <strong>${escapeHtml(state.title || "Без названия")}</strong>
+        ${state.artist ? `<span>${escapeHtml(state.artist)}</span>` : ""}
+      </div>
+    </div>
+    <div class="music-controls">
+      <button class="button ghost" type="button" data-music="prev" aria-label="Предыдущий трек">⏮</button>
+      <button class="button primary" type="button" data-music="toggle" aria-label="${state.playing ? "Пауза" : "Играть"}">${state.playing ? "⏸" : "▶"}</button>
+      <button class="button ghost" type="button" data-music="next" aria-label="Следующий трек">⏭</button>
+    </div>
+    <details class="music-more"${moreOpen ? " open" : ""}>
+      <summary>Дальше в очереди</summary>
+      ${queueHtml}
+    </details>
+  `;
+}
+
+elements.musicCard?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-music]");
+  const bridge = musicBridge();
+  if (!button || !bridge) return;
+  event.preventDefault();
+  const action = button.dataset.music;
+  try {
+    if (action === "access") await bridge.openAccess();
+    else if (action === "open") await bridge.openPlayer();
+    else if (action === "queue") await bridge.control({ action, id: Number(button.dataset.id) });
+    else await bridge.control({ action });
+  } catch (error) {
+    showToast(error?.message || "Плеер не ответил");
+  }
+  window.setTimeout(refreshMusic, 600);
+});
 
 async function pollLiveBandHr() {
   applyLockDones();
@@ -4208,10 +4562,20 @@ async function pollLiveBandHr() {
   if (!node || !api?.liveHeartRate || !api.isNative?.()) return;
   try {
     const live = await api.liveHeartRate();
-    if (!live?.bpm) return;
-    node.hidden = false;
-    node.textContent = `${live.bpm}`;
-    liveBandHr = { bpm: live.bpm, at: Date.now() };
+    if (!live?.bpm || !live.at) {
+      if (liveBandHr && Date.now() - liveBandHr.at > 20 * 60 * 1000) {
+        liveBandHr = null;
+        node.hidden = true;
+        node.textContent = "";
+        paintSetHeart();
+        updateNativeWidget();
+      }
+      return;
+    }
+    liveBandHr = { bpm: live.bpm, at: live.at };
+    const stale = Date.now() - live.at > 20000;
+    node.hidden = stale;
+    node.textContent = stale ? "" : `${live.bpm}`;
     paintSetHeart();
     updateNativeWidget();
   } catch {
@@ -4273,47 +4637,15 @@ function renderCoach() {
   elements.readinessPill.className = `pill ${readiness === "good" ? "good" : readiness === "bad" ? "bad" : "warn"}`;
   renderWearableHint();
 
-  const scheduleCard = scheduleCoachCardHtml();
-
+  const todayItems = itemsForDate(formatInputDate(new Date()));
   const fatigue = fatigueScore(state.workouts);
-  const next = nextSessionSuggestion(state.workouts, readiness, fatigue);
-  elements.coachBox.innerHTML = scheduleCard + next.map((item) => `
+  const next = recommendationCards(todayItems, readiness, fatigue);
+  elements.coachBox.innerHTML = next.map((item) => `
     <article class="coach-card">
-      <strong>${item.title}</strong>
-      <p>${item.text}</p>
+      <strong>${escapeHtml(item.title)}</strong>
+      <p>${escapeHtml(item.text)}</p>
     </article>
   `).join("");
-}
-
-function scheduleCoachCardHtml() {
-  const today = formatInputDate(new Date());
-  const next = nextScheduledDate();
-
-  if (!next) {
-    return `
-      <article class="coach-card schedule-card">
-        <strong>Календарь пуст</strong>
-        <p>Отметь дни во вкладке «Календарь» — вручную или через повторяющееся расписание (пн/ср/пт), и план с рекомендациями привяжутся к ближайшей дате.</p>
-      </article>
-    `;
-  }
-
-  const diffDays = Math.round((new Date(next) - new Date(today)) / 86400000);
-  const weekday = new Date(next).toLocaleDateString("ru-RU", { weekday: "long" });
-  const when =
-    diffDays === 0 ? "сегодня" : diffDays === 1 ? "завтра" : `${formatDate(next)}, ${weekday} (через ${diffDays} дн.)`;
-  const doneToday = workoutDateSet().has(today);
-
-  return `
-    <article class="coach-card schedule-card">
-      <strong>Следующая тренировка: ${when}</strong>
-      <p>${doneToday && diffDays === 0
-        ? "Сегодня уже есть сохранённая тренировка — отдыхай или сделай лёгкое кардио."
-        : diffDays === 0
-          ? "День тренировки по твоему календарю. План и веса уже в форме — жми «Начать тренировку»."
-          : "До неё восстанавливаемся: сон, шаги, лёгкая растяжка. План в форме уже подготовлен под эту дату."}</p>
-    </article>
-  `;
 }
 
 // ── AI-тренер: чат-агент с инструментами ────────────────────────────
@@ -5121,6 +5453,7 @@ function commitPlanEdit(message) {
   renderSelectedExercises();
   persistAiPlan();
   saveWorkoutDraft();
+  if (workoutIsLive()) showToast("Тренер поменял текущую тренировку");
   return `${message} Сейчас: ${planOrderText()}.`;
 }
 
@@ -5395,10 +5728,30 @@ async function callOpenAiDirect(key, messages, tools, toolChoice) {
   throw new Error("OpenAI не отвечает, попробуй чуть позже");
 }
 
-async function callOpenAi(messages, toolChoice, deferredTool = "") {
+function withLiveWorkoutContext(messages) {
+  if (!workoutIsLive()) return messages;
+  const lastUser = messages.map((message) => message.role).lastIndexOf("user");
+  if (lastUser < 0) return messages;
+  const note = [
+    "",
+    "[Приложение: тренировка идёт прямо сейчас.",
+    `Текущий список: ${planOrderText()}.`,
+    "Просьбу добавить, заменить, убрать или переставить упражнение выполняй сразу точечным инструментом:",
+    "add_exercise_to_plan, update_exercise_in_plan, remove_exercise_from_plan, reorder_plan. set_planned_workout сейчас недоступен.]",
+  ].join("\n");
+  return messages.map((message, index) =>
+    index === lastUser ? { ...message, content: `${message.content || ""}\n${note}` } : message
+  );
+}
+
+async function callOpenAi(rawMessages, toolChoice, deferredTool = "") {
+  const live = workoutIsLive();
+  const messages = withLiveWorkoutContext(rawMessages);
   const tools = toolChoice
     ? AI_TOOL_DEFS.filter((tool) => tool.function.name === toolChoice.function.name)
-    : AI_TOOL_DEFS.filter((tool) => tool.function.name !== deferredTool);
+    : AI_TOOL_DEFS.filter((tool) =>
+      tool.function.name !== deferredTool && !(live && tool.function.name === "set_planned_workout")
+    );
   const key = getAiApiKey();
   if (key) return callOpenAiDirect(key, messages, tools, toolChoice);
 
@@ -5675,74 +6028,150 @@ async function runAiChatCycle(options = {}) {
   }
 }
 
-function nextSessionSuggestion(workouts, readiness, fatigue) {
-  const items = [];
-  const recentGroups = groupCounts(workouts.slice(-2));
-  const pushedRecently = fatigue >= 7;
-
-  if (readiness === "bad" || pushedRecently) {
-    items.push({
-      title: "Сегодня лучше лайт",
-      text: "20-30 минут спокойного кардио, мобилити, кор без отказа. Если очень хочется железо: 2-3 упражнения по RPE 6-7.",
-    });
-  } else if ((recentGroups["Грудь"] || 0) + (recentGroups["Плечи"] || 0) > 4) {
-    items.push({
-      title: "Следующая тренировка: ноги + спина",
-      text: "Жим ногами, гравитрон, горизонтальная тяга, сгибание ног, Dead Bug. Жимы оставить в покое.",
-    });
-  } else {
-    items.push({
-      title: "Следующая тренировка: полный корпус",
-      text: "Один жим, одна тяга, одно упражнение на ноги, кор и короткое кардио. Почти все подходы держать на RPE 7-8.",
-    });
-  }
-
-  items.push({
-    title: `Индекс усталости: ${fatigue}/10`,
-    text: fatigue >= 7
-      ? "Слишком много тяжелых сигналов за последние тренировки. На этой неделе лучше снизить объем на 20-30%."
-      : "Нагрузка выглядит терпимо. Прогрессировать можно маленькими шагами, без отказа.",
-  });
-
-  const progress = suggestProgressions(workouts).slice(0, 3);
-  if (progress.length) {
-    items.push({
-      title: "Подсказки по весам",
-      text: progress.join(" "),
-    });
-  }
-
-  return items;
+function recommendationCards(todayItems, readiness, fatigue) {
+  const last = lastWorkoutBeforeToday();
+  const signals = last ? noteSignals(last) : {};
+  const todayName = todayItems.length ? trainingTitle(todayItems) : "";
+  const hitsToday = commentHitsToday(signals, todayName);
+  const easeOff = readiness === "bad" || signals.wiped || fatigue >= 8 || (signals.pain && hitsToday);
+  return [
+    todayAdviceCard(todayItems, last, signals, easeOff, todayName),
+    {
+      title: `Индекс усталости: ${fatigue}/10`,
+      text: fatigueText(fatigue, signals),
+    },
+  ];
 }
 
-function suggestProgressions(workouts) {
-  const latestByExercise = new Map();
-  workouts.slice().reverse().forEach((workout) => {
-    workout.exercises.forEach((item) => {
-      if (!latestByExercise.has(item.exerciseId)) latestByExercise.set(item.exerciseId, item);
-    });
+function todayAdviceCard(todayItems, last, signals, easeOff, todayName) {
+  const lastLine = last
+    ? `Прошлая ${formatDate(last.date)} — ${trainingTitle(last.exercises || [])}${lastRpeBit(last)}.`
+    : "Рядом нет сохранённой тренировки.";
+
+  if (!todayItems.length) {
+    return {
+      title: "На сегодня список не собран",
+      text: `${lastLine} Собери упражнения на эту дату — тон подстроится под них.`,
+    };
+  }
+
+  const carry = carryLine(signals, todayName);
+  if (easeOff) {
+    const cut = signals.pain && commentHitsToday(signals, todayName)
+      ? "Жимовые и то, что задевает эту зону, оставь в плане, но RPE 6–7. Если в рабочем подходе тянет — остановись, не добивай."
+      : "Список не переписывай: RPE 6–7, без шага вверх и без отказа. Где уже тяжело на разминке — сними один подход.";
+    return {
+      title: `Сегодня ${todayName}: спокойнее`,
+      text: `${lastLine} ${carry}${cut}`,
+    };
+  }
+
+  if (signals.easy && !signals.pain) {
+    return {
+      title: `Сегодня ${todayName}`,
+      text: `${lastLine} ${carry}Если рабочий подход легче 7, добавь маленький шаг только в нём. Отказ не нужен.`,
+    };
+  }
+
+  return {
+    title: `Сегодня ${todayName}`,
+    text: `${lastLine} ${carry}Иди по плану: RPE 7–8, последний повтор с запасом. Веса из списка вверх не крути.`,
+  };
+}
+
+function fatigueText(fatigue) {
+  const recent = recentWorkoutWindow();
+  const rpes = recent.map((workout) => averageWorkoutRpe(workout)).filter(Boolean);
+  const avg = rpes.length ? rpes.reduce((sum, value) => sum + value, 0) / rpes.length : 0;
+  const from = recent[0] ? formatDate(recent[0].date) : "";
+  const base = recent.length
+    ? `${recent.length} ${plural(recent.length, "тренировка", "тренировки", "тренировок")} с ${from}${avg ? `, средний RPE ${avg.toFixed(1)}` : ""}`
+    : "Свежих тренировок мало";
+  if (fatigue >= 8) return `${base}. Усталость высокая: сегодня объём не добавляй.`;
+  if (fatigue >= 6) return `${base}. Запас тонкий: план можно закрыть, рекорд не нужен.`;
+  return `${base}. Восстановление нормальное, сегодняшний список можно сделать целиком.`;
+}
+
+function carryLine(signals, todayName) {
+  if (!signals) return "";
+  const focus = signals.focus || [];
+  const hits = focus.filter((part) => todayAreas(todayName).includes(part));
+  const where = focus.slice(0, 2).join(" и ");
+  if (signals.pain && hits.length) return `Из комментария на сегодня влияет: ${hits.slice(0, 2).join(" и ")}. `;
+  if (signals.pain && where) return `Комментарий про ${where} на сегодняшнюю ${todayName.toLowerCase()} не переносится. `;
+  if (signals.pain) return "В комментарии есть про тело, без одной зоны. ";
+  if (signals.pump && !hits.length) return `Забитость с прошлой сессии на сегодняшнюю ${todayName.toLowerCase()} не влияет. `;
+  if (signals.wiped) return "Прошлая сессия была тяжёлой. ";
+  if (signals.easy && hits.length) return "По этой зоне в прошлый раз был запас. ";
+  return "";
+}
+
+function commentHitsToday(signals, todayName) {
+  if (!signals?.pain) return false;
+  const focus = signals.focus || [];
+  if (!focus.length) return true;
+  return focus.some((part) => todayAreas(todayName).includes(part));
+}
+
+function todayAreas(title) {
+  const text = String(title || "").toLowerCase();
+  const areas = new Set();
+  if (text.includes("грудь")) ["грудь", "плечи"].forEach((area) => areas.add(area));
+  if (text.includes("плеч")) areas.add("плечи");
+  if (text.includes("спин")) ["спина", "руки"].forEach((area) => areas.add(area));
+  if (text.includes("рук")) areas.add("руки");
+  if (text.includes("ног")) areas.add("ноги");
+  if (text.includes("верх")) ["грудь", "спина", "плечи", "руки"].forEach((area) => areas.add(area));
+  if (text.includes("всё")) ["грудь", "спина", "плечи", "руки", "ноги"].forEach((area) => areas.add(area));
+  if (text.includes("кор")) areas.add("кор");
+  return [...areas];
+}
+
+function commentFocus(text) {
+  const areas = [];
+  const add = (area) => { if (!areas.includes(area)) areas.push(area); };
+  if (/тяг|спин|широк/.test(text)) add("спина");
+  if (/бицепс/.test(text) && !/бедр/.test(text)) add("руки");
+  if (/трицепс|локт/.test(text)) add("руки");
+  if (/груд|жим\s+л[её]ж|наклонн/.test(text)) add("грудь");
+  if (/плеч|дельт/.test(text)) add("плечи");
+  if (/ног|бедр|квадр|ягоди|икр|колен/.test(text)) add("ноги");
+  if (/кор|пресс/.test(text)) add("кор");
+  return areas;
+}
+
+function lastWorkoutBeforeToday() {
+  const today = formatInputDate(new Date());
+  return [...state.workouts].reverse().find((workout) => workout.date < today) || null;
+}
+
+function recentWorkoutWindow() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 10);
+  const iso = formatInputDate(cutoff);
+  return state.workouts.filter((workout) => workout.date >= iso && workout.date < formatInputDate(new Date())).slice(-3);
+}
+
+function noteSignals(workout) {
+  const text = `${workout?.afterNotes || ""} ${workout?.notes || ""}`.toLowerCase();
+  const painBits = text.split(/[.!?\n]+/).map((part) => part.trim()).filter((part) => {
+    if (!part) return false;
+    if (/не\s+проблем|без\s+боли|не\s+бол|не\s+тян|нормально|всё ок|все ок/.test(part)) return false;
+    if (/забил|забились|подзабив/.test(part) && !/боль|болит|тянуло|потянул|травм/.test(part)) return false;
+    return /боль|болит|болел|болело|колен|плеч|локт|сустав|тянет|тянуло|потянул|ныл|ныло|травм/.test(part);
   });
+  return {
+    pain: painBits.length > 0,
+    pump: /забил|забились|подзабив/.test(text),
+    wiped: workout?.sessionEffort === "too-hard" || /устал|перебор|выжат|разбит|не восстановил/.test(text),
+    easy: workout?.sessionEffort === "fresh" || /легко|бодро|\bзапас\b/.test(text),
+    focus: commentFocus(text),
+  };
+}
 
-  return [...latestByExercise.entries()].map(([exerciseId, item]) => {
-    const exercise = findExercise(exerciseId);
-    if (exercise.cardio || exercise.bodyweight) return null;
-
-    const best = bestSet(item);
-    const avgRpe = average(item.sets.map((set) => set.rpe).filter(Boolean));
-    if (!best || !avgRpe) return null;
-
-    if (avgRpe <= 7.5) {
-      const next = best.weight + exercise.step;
-      return `${exercise.name}: можно попробовать ${formatNumber(next)} ${exercise.unit}.`;
-    }
-
-    if (avgRpe >= 9) {
-      const next = best.weight - exercise.step;
-      return `${exercise.name}: лучше откатить к ${formatNumber(next)} ${exercise.unit}.`;
-    }
-
-    return `${exercise.name}: повторить ${formatNumber(best.weight)} ${exercise.unit} и добрать качество.`;
-  }).filter(Boolean);
+function lastRpeBit(workout) {
+  const rpe = averageWorkoutRpe(workout);
+  return rpe ? `, RPE ${rpe}` : "";
 }
 
 function renderCharts() {
@@ -6015,13 +6444,25 @@ function groupCounts(workouts) {
 }
 
 function fatigueScore(workouts) {
-  const recent = workouts.slice(-4);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 10);
+  const iso = formatInputDate(cutoff);
+  const today = formatInputDate(new Date());
+  const recent = workouts.filter((workout) => workout.date >= iso && workout.date < today).slice(-3);
   if (!recent.length) return 3;
 
-  const avgRpe = average(recent.flatMap((workout) => workout.exercises.flatMap((exercise) => exercise.sets.map((set) => set.rpe).filter(Boolean)))) || 7;
-  const sessions = getRecentWeekCount(workouts);
-  const heavyBonus = recent.filter((workout) => (averageWorkoutRpe(workout) || 0) >= 8.5).length;
-  return Math.min(10, Math.max(1, Math.round(avgRpe - 2 + sessions * 0.6 + heavyBonus)));
+  const avgRpe = average(recent.flatMap((workout) =>
+    (workout.exercises || []).flatMap((exercise) => (exercise.sets || []).map((set) => set.rpe).filter(Boolean))
+  )) || 7;
+  let score = avgRpe - 1.5;
+  recent.forEach((workout) => {
+    const signals = noteSignals(workout);
+    if (workout.sessionEffort === "too-hard") score += 1.5;
+    else if (workout.sessionEffort === "hard") score += 0.7;
+    if (signals.pain) score += 1.5;
+    if ((averageWorkoutRpe(workout) || 0) >= 8.5) score += 0.8;
+  });
+  return Math.min(10, Math.max(1, Math.round(score)));
 }
 
 function getRecentWeekCount(workouts) {
