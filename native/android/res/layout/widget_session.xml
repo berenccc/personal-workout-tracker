@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<LinearLayout
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/widget_eyebrow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Сегодня"
+        android:textAllCaps="true"
+        android:textColor="#C8F135"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:lineSpacingMultiplier="0.95"
+        android:maxLines="2"
+        android:text="Тренировка"
+        android:textColor="#F2F3F5"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- Chronometer тикает сам в лаунчере: приложению не нужно будить виджет. -->
+    <Chronometer
+        android:id="@+id/widget_timer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#F2F3F5"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- weight=1: строка забирает свободную высоту и первой ужимается,
+         поэтому кнопка и «последняя сессия» не срезаются на маленьком виджете. -->
+    <TextView
+        android:id="@+id/widget_meta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="top"
+        android:lineSpacingMultiplier="1.05"
+        android:maxLines="2"
+        android:text="7 упр."
+        android:textColor="#9BA1AB"
+        android:textSize="11sp" />
+
+    <LinearLayout
+        android:id="@+id/widget_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:orientation="vertical" />
+
+    <TextView
+        android:id="@+id/widget_last"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Последняя сессия"
+        android:textColor="#9BA1AB"
+        android:textSize="11sp" />
+
+    <TextView
+        android:id="@+id/widget_start"
+            android:clickable="true"
+            android:focusable="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/widget_btn"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingVertical="9dp"
+        android:text="Начать"
+        android:textColor="#10130A"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+</LinearLayout>
+</FrameLayout>

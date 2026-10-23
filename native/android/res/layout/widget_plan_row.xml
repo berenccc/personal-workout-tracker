@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_plan_row"
+    style="@style/WidgetPlanRow">
+
+    <TextView
+        android:id="@+id/widget_plan_name"
+        style="@style/WidgetPlanName"
+        android:text="Упражнение" />
+
+    <TextView
+        android:id="@+id/widget_plan_detail"
+        style="@style/WidgetPlanDetail"
+        android:text="3×10 · 60 кг" />
+</LinearLayout>

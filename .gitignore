@@ -10,6 +10,8 @@
 !training-tracker.css
 !training-tracker.js
 !exercise-catalog.js
+!wearable.js
+!privacypolicy.html
 !cloud.js
 !supabase-config.js
 !supabase/
@@ -25,6 +27,7 @@
 !tools/
 !tools/build-exercise-catalog.py
 !tools/sync-android-web.js
+!tools/bump-version.py
 !.cursor/
 !.cursor/rules/
 !.cursor/rules/*.mdc
@@ -45,6 +48,9 @@
 !www/index.html
 !ios-native/
 !ios-native/*.swift
+!native/
+!native/android/
+!native/android/**
 !qa/
 !qa/*.md
 !tests/

@@ -41,13 +41,21 @@ def first_exercise_value(page: Page) -> str:
     return page.evaluate(
         """
         () => {
-          const select = document.querySelector("#exerciseSelect");
-          if (!select || !select.options || !select.options.length) return "";
-          const option = [...select.options].find((item) => item.value);
-          return option ? option.value : "";
+          const button = document.querySelector("#exercisePickList [data-exercise-id]");
+          return button ? button.dataset.exerciseId : "";
         }
         """
     )
+
+
+def add_plan_exercise(page: Page, exercise_id: str | None = None) -> str:
+    if not exercise_id:
+        exercise_id = first_exercise_value(page)
+    page.click("#openPlanEditor")
+    page.click("#openExercisePicker")
+    page.click(f'#exercisePickList [data-exercise-id="{exercise_id}"]')
+    page.click("#closePlanEditor")
+    return exercise_id
 
 
 def test_app_opens_without_login(local_server, browser_context):
@@ -64,12 +72,9 @@ def test_app_opens_without_login(local_server, browser_context):
 
 
 def finish_quick_workout(page: Page, after_notes: str = "qa-run") -> None:
+    exercise_id = add_plan_exercise(page)
+    assert exercise_id, "Каталог упражнений не подгрузился"
     page.click("#startWorkoutButton")
-    exercise_id = first_exercise_value(page)
-    assert exercise_id, "No exercise option found"
-
-    page.select_option("#exerciseSelect", exercise_id)
-    page.click("#addExerciseButton")
     expect(page.locator(".exercise-card")).to_have_count(1)
 
     page.evaluate(

@@ -1,16 +1,16 @@
-const CACHE_NAME = "training-tracker-v176";
+const CACHE_NAME = "training-tracker-v177";
 const ASSETS = [
-  "./training-tracker.html?v=176",
-  "./training-tracker.css?v=176",
-  "./training-tracker.js?v=176",
-  "./wearable.js?v=176",
-  "./exercise-catalog.js?v=176",
-  "./supabase-config.js?v=176",
-  "./cloud.js?v=176",
-  "./manifest.webmanifest?v=176",
-  "./apple-touch-icon.png?v=176",
-  "./icon-192.png?v=176",
-  "./icon-512.png?v=176",
+  "./training-tracker.html?v=177",
+  "./training-tracker.css?v=177",
+  "./training-tracker.js?v=177",
+  "./wearable.js?v=177",
+  "./exercise-catalog.js?v=177",
+  "./supabase-config.js?v=177",
+  "./cloud.js?v=177",
+  "./manifest.webmanifest?v=177",
+  "./apple-touch-icon.png?v=177",
+  "./icon-192.png?v=177",
+  "./icon-512.png?v=177",
   "./icon-192.svg",
   "./icon-512.svg",
 ];
@@ -23,7 +23,10 @@ self.addEventListener("message", (event) => {
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    // addAll отклоняет всю установку, если хоть один файл не скачался.
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(ASSETS.map((asset) => cache.add(asset)))
+    )
   );
   self.skipWaiting();
 });
@@ -45,7 +48,7 @@ self.addEventListener("fetch", (event) => {
       fetch(event.request)
         .then((response) => response)
         .catch(() =>
-          caches.match("./training-tracker.html?v=176").then((cached) => cached || caches.match("./training-tracker.html"))
+          caches.match("./training-tracker.html?v=177").then((cached) => cached || caches.match("./training-tracker.html"))
         )
     );
     return;
@@ -54,8 +57,15 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        // Кэшируем только свои файлы и CDN-библиотеку: ответы API с данными пользователя
+        // и ошибки 404 в офлайн-кэш попадать не должны.
+        const url = new URL(event.request.url);
+        const isOwn = url.origin === self.location.origin && response.ok;
+        const isCdn = url.hostname === "cdn.jsdelivr.net";
+        if (isOwn || isCdn) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
         return response;
       })
       .catch(() =>

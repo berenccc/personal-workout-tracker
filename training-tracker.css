@@ -77,7 +77,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   max-width: 100%;
   font: inherit;
   touch-action: manipulation;
@@ -350,6 +351,12 @@ h3 {
   filter: brightness(1.08);
 }
 
+.button:active,
+.icon-button:active {
+  transform: scale(0.98);
+  filter: brightness(1.16);
+}
+
 .stats-grid,
 .layout,
 .chart-grid,
@@ -435,10 +442,27 @@ h3 {
 }
 
 .workout-panel input,
-.workout-panel select {
+.workout-panel select,
+.workout-panel textarea {
   border-color: var(--workout-line);
   background: var(--workout-card-2);
   color: var(--workout-text);
+}
+
+.workout-panel.is-active .form-row {
+  flex-wrap: wrap;
+}
+
+.after-notes {
+  flex: 1 1 100%;
+  grid-column: 1 / -1;
+}
+
+#afterNotesInput {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.4;
 }
 
 .workout-panel .button.secondary,
@@ -1021,12 +1045,99 @@ h3 {
   white-space: nowrap;
 }
 
-.overview-card > span {
+.overview-card > span,
+.plan-open-head > span {
   color: var(--workout-muted);
   font-size: 12px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.plan-open-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.plan-gear {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.plan-gear svg {
+  width: 18px;
+  height: 18px;
+}
+
+.plan-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.plan-editor[hidden] {
+  display: none;
+}
+
+.plan-editor-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.plan-editor-card {
+  position: absolute;
+  right: 12px;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: min(86vh, 760px);
+  overflow: auto;
+  border-radius: 18px;
+  padding: 14px;
+  background: #17191e;
+}
+
+.plan-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.plan-editor-head strong {
+  font-size: 18px;
+}
+
+.plan-editor-host {
+  display: grid;
+  gap: 8px;
+}
+
+.exercise-pick-list {
+  display: grid;
+  gap: 4px;
+}
+
+.exercise-pick-option {
+  border: 0;
+  border-radius: 12px;
+  padding: 14px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+}
+
+#planEditor:not([hidden]) #selectedExercises {
+  display: grid;
 }
 
 .plan-summary {
@@ -1115,6 +1226,7 @@ h3 {
   border-radius: 18px;
   padding: 12px;
   background: var(--workout-card);
+  overflow: hidden;
 }
 
 .workout-panel.is-active .session-timer {
@@ -1145,26 +1257,6 @@ h3 {
   font-size: 28px;
   line-height: 1;
   letter-spacing: -0.04em;
-}
-
-.band-nudge {
-  display: none;
-  margin: -4px 0 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--accent-line);
-  border-radius: 12px;
-  background: var(--accent-soft);
-  color: var(--workout-muted);
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.band-nudge:not([hidden]) {
-  display: block;
-}
-
-.band-nudge strong {
-  color: var(--text);
 }
 
 .timer-button {
@@ -1260,7 +1352,8 @@ h3 {
 .workout-panel:not(.is-active) #workoutForm .active-helper,
 .workout-panel:not(.is-active) #workoutForm .save-hint,
 .workout-panel:not(.is-active) #workoutForm > .form-row,
-.workout-panel:not(.is-active) #workoutForm .mobile-actions {
+.workout-panel:not(.is-active) #workoutForm .mobile-actions,
+.workout-panel:not(.is-active) #selectedExercises {
   display: none;
 }
 
@@ -1284,7 +1377,8 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -1355,6 +1449,17 @@ select {
 .workout-panel .exercise-card.exercise-moved {
   outline: 2px solid var(--accent-line);
   outline-offset: 1px;
+}
+
+.workout-panel .exercise-card.exercise-current {
+  border-color: var(--accent-line);
+}
+
+.workout-panel .form,
+.workout-panel .selected-exercises,
+.workout-panel .set-row {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .exercise-index {
@@ -1485,9 +1590,15 @@ select {
 
 .stepper {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px 34px;
+  grid-template-columns: minmax(0, 1fr) 32px 32px;
   min-width: 0;
+  max-width: 100%;
   gap: 5px;
+}
+
+.stepper input {
+  width: 100%;
+  min-width: 0;
 }
 
 .stepper button {
@@ -2846,9 +2957,8 @@ select {
     border-radius: 12px;
   }
 
-  .set-row label:nth-of-type(4),
-  .set-row label:nth-of-type(5) {
-    grid-column: span 1;
+  .set-row label.feel-cell {
+    grid-column: 1 / -1;
   }
 
   .set-done {
@@ -3212,6 +3322,7 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 14px;
 }
 
 .day-detail {
@@ -3223,8 +3334,17 @@ select {
 .day-detail-card {
   border: 1px solid var(--accent-line);
   border-radius: 12px;
-  padding: 12px 13px;
+  padding: 12px 13px 16px;
   background: var(--panel-2);
+}
+
+.widget-ack {
+  animation: widget-ack 680ms ease;
+}
+
+@keyframes widget-ack {
+  0% { filter: brightness(1.55); }
+  100% { filter: brightness(1); }
 }
 
 .day-detail-head {
@@ -3410,11 +3530,31 @@ body {
 .set-focus {
   display: grid;
   gap: 10px;
-  padding: 16px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.04);
   scroll-margin-top: 96px;
+  overflow-x: clip;
+}
+
+.set-head {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 76px);
+  z-index: 6;
+  margin: -12px -12px 0;
+  padding: 12px 12px 8px;
+  border-radius: 18px 18px 0 0;
+  background: #16181d;
+}
+
+.set-focus .set-row,
+.set-focus .stepper,
+.set-focus .set-current {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .set-kicker,
@@ -3427,8 +3567,9 @@ body {
 
 .set-name {
   margin: 0;
-  font-size: 30px;
-  line-height: 1.12;
+  font-size: 22px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .set-hr.is-live {
@@ -3439,8 +3580,10 @@ body {
 
 .rest-timer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   padding: 10px 12px;
   border-radius: 14px;
   background: var(--accent-soft, rgba(200, 241, 53, 0.12));
@@ -3466,6 +3609,125 @@ body {
 
 .set-rest-list {
   margin-top: 14px;
+}
+
+.set-all {
+  border: 1px solid var(--workout-line, var(--line));
+  border-radius: 14px;
+  padding: 0 10px;
+}
+
+.set-all[open] {
+  padding-bottom: 10px;
+}
+
+.set-all summary {
+  cursor: pointer;
+  padding: 10px 0;
+  color: var(--workout-muted, var(--muted));
+  font-weight: 700;
+}
+
+.set-all-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.set-all .add-set {
+  width: 100%;
+}
+
+.live-add-exercise {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.set-row .feel-cell {
+  grid-column: 1 / -1;
+}
+
+.music-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--workout-line, var(--line));
+  border-radius: 16px;
+}
+
+.music-card[hidden] {
+  display: none;
+}
+
+.music-head {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.music-head > span {
+  color: var(--workout-muted, var(--muted));
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.music-now strong,
+.music-now span,
+.music-queue strong,
+.music-queue span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.music-now span,
+.music-queue span,
+.music-note {
+  color: var(--workout-muted, var(--muted));
+  font-size: 13px;
+}
+
+.music-note {
+  margin: 0;
+}
+
+.music-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.music-controls .button {
+  min-height: 44px;
+  font-size: 18px;
+}
+
+.music-more summary {
+  cursor: pointer;
+  color: var(--workout-muted, var(--muted));
+  font-weight: 700;
+}
+
+.music-queue {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.music-queue button {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--workout-line, var(--line));
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
 }
 
 .set-rest-list summary {

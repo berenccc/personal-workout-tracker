@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_start_name">Тренировки · Старт</string>
+    <string name="widget_start_desc">Две клетки: ближайшая тренировка и кнопка старта</string>
+    <string name="widget_session_name">Тренировки · Сессия</string>
+    <string name="widget_session_desc">Квадрат 2×2: план, последний результат и старт</string>
+    <string name="widget_week_name">Тренировки · Неделя</string>
+    <string name="widget_week_desc">Три клетки: дни недели, план и итог последней</string>
+    <string name="widget_overview_name">Тренировки · Обзор</string>
+    <string name="widget_overview_desc">Четыре клетки: план, сон, серия и результаты</string>
+</resources>

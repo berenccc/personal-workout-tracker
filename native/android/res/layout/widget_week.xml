@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<LinearLayout
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <LinearLayout android:id="@+id/widget_cell_0" style="@style/WidgetDayCell"><TextView android:id="@+id/widget_day_0" style="@style/WidgetDayLetter" android:text="П" /><TextView android:id="@+id/widget_date_0" style="@style/WidgetDayDate" android:text="28" /></LinearLayout>
+        <LinearLayout android:id="@+id/widget_cell_1" style="@style/WidgetDayCell"><TextView android:id="@+id/widget_day_1" style="@style/WidgetDayLetter" android:text="В" /><TextView android:id="@+id/widget_date_1" style="@style/WidgetDayDate" android:text="29" /></LinearLayout>
+        <LinearLayout android:id="@+id/widget_cell_2" style="@style/WidgetDayCell"><TextView android:id="@+id/widget_day_2" style="@style/WidgetDayLetter" android:text="С" /><TextView android:id="@+id/widget_date_2" style="@style/WidgetDayDate" android:text="30" /></LinearLayout>
+        <LinearLayout android:id="@+id/widget_cell_3" style="@style/WidgetDayCell"><TextView android:id="@+id/widget_day_3" style="@style/WidgetDayLetter" android:text="Ч" /><TextView android:id="@+id/widget_date_3" style="@style/WidgetDayDate" android:text="1" /></LinearLayout>
+        <LinearLayout android:id="@+id/widget_cell_4" style="@style/WidgetDayCell"><TextView android:id="@+id/widget_day_4" style="@style/WidgetDayLetter" android:text="П" /><TextView android:id="@+id/widget_date_4" style="@style/WidgetDayDate" android:text="2" /></LinearLayout>
+        <LinearLayout android:id="@+id/widget_cell_5" style="@style/WidgetDayCell"><TextView android:id="@+id/widget_day_5" style="@style/WidgetDayLetter" android:text="С" /><TextView android:id="@+id/widget_date_5" style="@style/WidgetDayDate" android:text="3" /></LinearLayout>
+        <LinearLayout android:id="@+id/widget_cell_6" style="@style/WidgetDayCell"><TextView android:id="@+id/widget_day_6" style="@style/WidgetDayLetter" android:text="В" /><TextView android:id="@+id/widget_date_6" style="@style/WidgetDayDate" android:text="4" /></LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_eyebrow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Сегодня"
+        android:textAllCaps="true"
+        android:textColor="#C8F135"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Тренировка"
+        android:textColor="#F2F3F5"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+    <!-- Chronometer тикает сам в лаунчере: приложению не нужно будить виджет. -->
+    <Chronometer
+        android:id="@+id/widget_timer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#F2F3F5"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/widget_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical" />
+
+    <!-- weight=1: строка забирает свободную высоту и первой ужимается, кнопки не срезаются. -->
+    <TextView
+        android:id="@+id/widget_last"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="top"
+        android:maxLines="1"
+        android:text="Последняя сессия"
+        android:textColor="#9BA1AB"
+        android:textSize="11sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_start"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_btn"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingVertical="9dp"
+            android:text="Начать"
+            android:textColor="#10130A"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_last_btn"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_btn_ghost"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingVertical="9dp"
+            android:text="Итог"
+            android:textColor="#F2F3F5"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>
+</FrameLayout>

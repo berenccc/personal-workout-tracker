@@ -46,12 +46,7 @@ if (fs.existsSync(workouts)) {
 }
 
 let html = fs.readFileSync(path.join(root, "training-tracker.html"), "utf8");
-html = html.replace(
-  /<script>\s*const APP_VERSION[\s\S]*?<\/script>/,
-  `<script>
-      const APP_VERSION = "v164-android";
-    </script>`
-);
+html = html.replace(/const APP_VERSION = "(v\d+)";/, 'const APP_VERSION = "$1-android";');
 fs.writeFileSync(path.join(www, "index.html"), html);
 
 const nativeDir = path.join(root, "native", "android");

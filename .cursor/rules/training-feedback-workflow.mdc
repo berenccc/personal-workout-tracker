@@ -1,21 +1,21 @@
 ---
-description: Update workout app feedback after reviewing completed training
+description: Review completed workouts and plan the next one for the Trainy app
 alwaysApply: true
 ---
 
 # Training Feedback Workflow
 
-When the user asks to evaluate a completed workout, treat the app's recommendation block as the persistent output.
+Personal workout data, hardcoded plans and hardcoded feedback were removed from the code in v106. The app now stores workouts locally and in Supabase cloud sync, and builds the `Рекомендация` block itself (`renderCoach()` → `recommendationCards()` in `training-tracker.js`). Do not re-add personal history, plans or feedback files to the repo.
 
-- Read the latest workout data from `data/workouts.json` first when available; otherwise use the user's pasted report.
+When the user asks to evaluate a completed workout:
+
+- Use the user's pasted report or exported JSON; a local-only `data/workouts.json` may exist but is not in git and can be stale.
 - Always include the full picture: `afterNotes`, pre-workout `notes`, exercise list, done/skipped sets, weights, reps, RPE, marks, duration, readiness, and session effort.
 - Account for Windows/PowerShell encoding issues: do not trust visually garbled Cyrillic like `����`; verify UTF-8 content through JSON parsing, codepoints, `ensure_ascii`, or a non-PowerShell read path before judging comments.
-- Give feedback in chat on recovery, workout quality, notable issues, RPE/load management, user comments, and the next session.
-- Update `training-feedback.js` so the app shows this feedback in the `Рекомендация` block.
-- If the next workout plan should change, update `loadMondayFunctionalPlan()` or the relevant plan data in `training-tracker.js`.
-- Check that `training-history.js` contains the recent workouts used for the analysis; if it lags behind `data/workouts.json` or the remote GitHub data, update it too so history, analytics, and recommendations agree.
-- When app-visible JS/CSS/data changes should show up immediately, bump the cache query version, `APP_VERSION`, and service worker cache name across `training-tracker.html`, `sw.js`, `index.html`, `cache-reset.html`, and `manifest.webmanifest`.
-- Build plans from the user's actual exercise arsenal and recent weekly load, not just the last workout. Avoid unavailable or disliked movements when known: no `reverse-fly` if the gym lacks it, and no `farmer-carry` unless the user explicitly wants it.
-- Include small progressive overload where appropriate: add a little weight or 1-2 reps over time when RPE stays around 7-8, but do not force progress into RPE 9-10 or failure.
-- Keep the feedback concise and actionable for mobile viewing: 3-5 short cards max.
+- Give feedback in chat on recovery, workout quality, notable issues, RPE/load management, user comments, and the next session. Keep it concise for mobile: 3-5 short points.
+- Give the next plan in chat in a form the user can enter via the plan editor or the in-app AI coach. Change `recommendationCards()` only for general logic improvements, not for one person's specific session.
+- Build plans from the user's actual exercise arsenal and recent weekly load, not just the last workout. Avoid unavailable or disliked movements when known: no `reverse-fly` (not in the gym), no `farmer-carry` unless the user explicitly wants it.
+- Include small progressive overload where appropriate: add a little weight or 1-2 reps over time when RPE stays around 7-8, but do not force progress into RPE 9-10 or failure. A deliberate heavy top set is the user's choice.
 - Preserve the user's goal: stay fit, look/feel good, avoid burnout, and avoid unnecessary failure work.
+
+When app-visible JS/CSS changes should show up immediately, run `python tools/bump-version.py`: it bumps the cache query version, `APP_VERSION`, the service worker cache name and the Capacitor app name in one go. Files the app loads must be whitelisted in `.gitignore`, otherwise GitHub Pages serves 404 for them.
