@@ -64,6 +64,16 @@ if (process.argv[2] && fs.existsSync(nativeDir)) {
     fs.copyFileSync(manifest, path.join(destRoot, "android", "app", "src", "main", "AndroidManifest.xml"));
   }
   copyDir(path.join(nativeDir, "res"), path.join(destRoot, "android", "app", "src", "main", "res"));
+
+  // Номер в «О приложении» должен совпадать с версией сайта, иначе не понять, что установлено.
+  const version = html.match(/const APP_VERSION = "v(\d+)/)?.[1];
+  const gradle = path.join(destRoot, "android", "app", "build.gradle");
+  if (version && fs.existsSync(gradle)) {
+    const source = fs.readFileSync(gradle, "utf8")
+      .replace(/versionCode \d+/, `versionCode ${version}`)
+      .replace(/versionName "[^"]*"/, `versionName "${version}"`);
+    fs.writeFileSync(gradle, source);
+  }
 }
 
 console.log(`synced web assets -> ${www}`);

@@ -23,6 +23,7 @@ RULES = {
     "cache-reset.html": [(r"\?v=\d+", "?v={v}")],
     "manifest.webmanifest": [(r"\?v=\d+", "?v={v}")],
     "capacitor.config.json": [(r'("appName": "[^"]*?v)\d+"', r'\g<1>{v}"')],
+    "native/android/res/values/strings.xml": [(r'(name="(?:app_name|title_activity_main)">[^<]*?v)\d+<', r"\g<1>{v}<")],
 }
 
 
