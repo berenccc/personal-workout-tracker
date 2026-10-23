@@ -117,3 +117,44 @@ def test_ai_can_add_exercise_during_live_workout(local_server, browser_context):
     )
     assert result == {"count": 2, "cards": 2}
     assert not errors
+
+
+def test_widget_gets_rest_countdown_points(local_server, browser_context):
+    page = browser_context.new_page()
+    page.add_init_script(
+        """
+        window.__widgetPayloads = [];
+        window.Capacitor = {
+          isNativePlatform: () => true,
+          Plugins: {
+            WidgetBridge: {
+              setWidgetData: async ({ json }) => { window.__widgetPayloads.push(JSON.parse(json)); },
+            },
+          },
+        };
+        """
+    )
+    start_live(page, local_server)
+
+    payload = page.evaluate(
+        """
+        () => {
+          startRest(90);
+          return window.__widgetPayloads.at(-1);
+        }
+        """
+    )
+    assert payload["isActive"] is True
+    assert payload["restUntilMs"] - payload["restStartedAtMs"] == 90_000
+    assert "отдых" not in payload["activeEyebrow"]
+
+    payload = page.evaluate(
+        """
+        () => {
+          adjustRest("skip");
+          return window.__widgetPayloads.at(-1);
+        }
+        """
+    )
+    assert payload["restUntilMs"] == 0
+    assert payload["restStartedAtMs"] == 0

@@ -44,6 +44,14 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:visibility="gone" />
+    <Chronometer
+        android:id="@+id/widget_rest"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#C8F135"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <!-- weight=1: строка забирает свободную высоту и первой ужимается,
          поэтому кнопка и «последняя сессия» не срезаются на маленьком виджете. -->

@@ -61,6 +61,14 @@
         android:textSize="22sp"
         android:textStyle="bold"
         android:visibility="gone" />
+    <Chronometer
+        android:id="@+id/widget_rest"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#C8F135"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <!-- Фиксированные две строки: иначе календарь прыгает, когда у дня текст короче или длиннее. -->
     <TextView

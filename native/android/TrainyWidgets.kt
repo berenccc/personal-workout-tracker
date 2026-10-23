@@ -131,6 +131,7 @@ private fun fixedHeightDp(layoutId: Int): Int = when (layoutId) {
 // Строка выше голого текста: 12sp, вертикальные отступы и разделитель.
 // При 16dp список был длиннее виджета, и кнопки «Начать» / «Результаты» обрезались.
 private const val LIST_LINE_DP = 26
+private const val REST_LINE_DP = 20
 
 // Акцент виджета повторяет цвет, выбранный в приложении (Кабинет → акцент).
 private class AccentTheme(
@@ -206,6 +207,18 @@ private fun bind(context: Context, layoutId: Int, data: JSONObject, heightDp: In
     } else {
         views.setChronometer(R.id.widget_timer, SystemClock.elapsedRealtime(), null, false)
     }
+    // Отдых считается так же, обратным отсчётом. Когда он закончится,
+    // WorkoutNotice перерисует виджет и строка исчезнет.
+    val restLeft = if (viewingLive) data.optLong("restUntilMs", 0L) - System.currentTimeMillis() else 0L
+    val resting = restLeft > 0L
+    views.setViewVisibility(R.id.widget_rest, if (resting) View.VISIBLE else View.GONE)
+    views.setChronometerCountDown(R.id.widget_rest, resting)
+    if (resting) {
+        views.setChronometer(R.id.widget_rest, SystemClock.elapsedRealtime() + restLeft, "Отдых %s", true)
+        views.setTextColor(R.id.widget_rest, accent.color)
+    } else {
+        views.setChronometer(R.id.widget_rest, SystemClock.elapsedRealtime(), null, false)
+    }
 
     views.setOnClickPendingIntent(R.id.widget_root, click(context, layoutId, primaryAction))
     views.setOnClickPendingIntent(R.id.widget_start, click(context, layoutId, primaryAction))
@@ -273,7 +286,7 @@ private fun bind(context: Context, layoutId: Int, data: JSONObject, heightDp: In
     }
     val rows = if (viewingLive || picked == null) data.optJSONArray("planRows") else picked.optJSONArray("rows")
     val footer = if (viewingLive || picked == null) data.optJSONArray("footerLines") else picked.optJSONArray("foot")
-    bindList(views, layoutId, data, heightDp, muted, rows, footer)
+    bindList(views, layoutId, data, if (resting && heightDp > 0) heightDp - REST_LINE_DP else heightDp, muted, rows, footer)
     return views
 }
 

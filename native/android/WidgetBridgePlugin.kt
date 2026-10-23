@@ -169,6 +169,7 @@ object WorkoutNotice {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pollJob: Job? = null
+    private var restJob: Job? = null
     private var lastData: JSONObject? = null
 
     // bpm и время самого замера (не время опроса): Mi Fitness пишет пульс пачками.
@@ -183,6 +184,7 @@ object WorkoutNotice {
         }
         lastData = data
         val app = context.applicationContext
+        scheduleRestEnd(app, data)
         if (canPost(app)) {
             // Служба держит процесс живым при заблокированном экране и показывает
             // уведомление, которое Nubia не прячет, в отличие от тихого notify.
@@ -191,7 +193,23 @@ object WorkoutNotice {
         if (pollJob?.isActive != true) startPolling(app)
     }
 
+    // Обратный отсчёт после нуля уходит в минус, поэтому в конце отдыха
+    // уведомление и виджеты перерисовываются обратно на время тренировки.
+    private fun scheduleRestEnd(context: Context, data: JSONObject) {
+        restJob?.cancel()
+        val left = data.optLong("restUntilMs", 0L) - System.currentTimeMillis()
+        if (left <= 0L) return
+        restJob = scope.launch {
+            delay(left + 300L)
+            val current = lastData ?: return@launch
+            notify(context, current)
+            TrainyWidgetProvider.refreshAll(context)
+        }
+    }
+
     fun stop(context: Context) {
+        restJob?.cancel()
+        restJob = null
         pollJob?.cancel()
         pollJob = null
         lastData = null
@@ -302,7 +320,11 @@ object WorkoutNotice {
         channel.setShowBadge(false)
         manager.createNotificationChannel(channel)
 
-        val startedAt = data.optLong("startedAtMs", 0L).takeIf { it > 0L } ?: System.currentTimeMillis()
+        val now = System.currentTimeMillis()
+        val startedAt = data.optLong("startedAtMs", 0L).takeIf { it > 0L } ?: now
+        val restUntil = data.optLong("restUntilMs", 0L).takeIf { it > now } ?: 0L
+        val resting = restUntil > 0L
+        val restStart = data.optLong("restStartedAtMs", 0L).takeIf { resting && it in 1 until restUntil } ?: now
         val pending = WidgetStore.readLockDones(context)
         val current = nextLockSet(context, data, pending)
         val title = current?.optString("name")?.takeIf { it.isNotBlank() } ?: pulseTitle(data)
@@ -313,7 +335,9 @@ object WorkoutNotice {
                 if (data.optJSONArray("liveSets") != null) "Все подходы закрыты" else data.optString("noticeText", "")
             }
         val upcoming = upcomingName(data, current)
-        val sub = listOf(pulseTitle(data), upcoming?.let { "Дальше: $it" }.orEmpty())
+        // Во время отдыха системный таймер считает отдых, а время тренировки уходит в подпись.
+        val restLabel = if (resting) "Отдых · идёт ${(now - startedAt) / 60_000L} мин" else ""
+        val sub = listOf(restLabel, pulseTitle(data), upcoming?.let { "Дальше: $it" }.orEmpty())
             .filter { it.isNotBlank() }
             .joinToString(" · ")
         val open = PendingIntent.getActivity(
@@ -329,15 +353,16 @@ object WorkoutNotice {
         )
         // Карточку как у плеера на экране блокировки система рисует только для
         // уведомления с медиа-сессией. Звука нет, кнопки — подход и упражнения.
-        val session = WorkoutMedia.update(context, title, text, sub, open, current != null)
+        val session = WorkoutMedia.update(context, title, text, sub, open, current != null, restStart, restUntil)
         val built = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_workout)
             .setContentTitle(title)
             .setContentText(text)
             .setSubText(sub)
-            .setWhen(startedAt)
+            .setWhen(if (resting) restUntil else startedAt)
             .setShowWhen(true)
             .setUsesChronometer(true)
+            .setChronometerCountDown(resting)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_WORKOUT)
@@ -467,20 +492,28 @@ object WorkoutMedia {
         text: String,
         sub: String,
         open: PendingIntent,
-        canMark: Boolean
+        canMark: Boolean,
+        restStart: Long,
+        restUntil: Long
     ): MediaSession {
         val current = ensure(context)
         current.setSessionActivity(open)
-        current.setMetadata(
-            MediaMetadata.Builder()
-                .putString(MediaMetadata.METADATA_KEY_TITLE, title)
-                .putString(MediaMetadata.METADATA_KEY_ARTIST, text)
-                .putString(MediaMetadata.METADATA_KEY_ALBUM, sub)
-                .build()
-        )
+        val now = System.currentTimeMillis()
+        val resting = restUntil > now
+        // С длительностью и позицией карточка плеера рисует полосу отдыха и двигает её сама.
+        val metadata = MediaMetadata.Builder()
+            .putString(MediaMetadata.METADATA_KEY_TITLE, title)
+            .putString(MediaMetadata.METADATA_KEY_ARTIST, text)
+            .putString(MediaMetadata.METADATA_KEY_ALBUM, sub)
+        if (resting) metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, restUntil - restStart)
+        current.setMetadata(metadata.build())
         val state = PlaybackState.Builder()
             .setActions(PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS)
-            .setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 0f)
+        if (resting) {
+            state.setState(PlaybackState.STATE_PLAYING, now - restStart, 1f)
+        } else {
+            state.setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 0f)
+        }
         if (canMark) {
             state.addCustomAction(
                 PlaybackState.CustomAction.Builder(DONE, "Подход сделан", R.drawable.ic_lock_done).build()

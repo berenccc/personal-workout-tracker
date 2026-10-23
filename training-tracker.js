@@ -563,6 +563,7 @@ let isFinishingWorkout = false;
 let finishArmedUntil = 0;
 let focusUid = null;
 let restUntil = 0;
+let restStartedAt = 0;
 let restTick = null;
 // Стабильный id на сессию: повторное "Завершить" перезапишет запись, а не создаст дубль.
 let workoutSessionUid = makeUid();
@@ -1199,6 +1200,7 @@ function resetWorkoutTimer() {
     elements.bandLiveHr.textContent = "";
   }
   restUntil = 0;
+  restStartedAt = 0;
   focusUid = null;
   setAllOpen = false;
   finishArmedUntil = 0;
@@ -1228,6 +1230,7 @@ function buildWorkoutDraft() {
     isActive: elements.workoutPanel.classList.contains("is-active"),
     focusUid,
     restUntil,
+    restStartedAt,
     timer: {
       startedAt: workoutTimer.startedAt,
       stoppedAt: workoutTimer.stoppedAt,
@@ -1267,6 +1270,7 @@ function restoreWorkoutDraft() {
     selected = draft.selected;
     focusUid = selected.some((item) => item.uid === draft.focusUid) ? draft.focusUid : null;
     restUntil = Number(draft.restUntil) > Date.now() ? Number(draft.restUntil) : 0;
+    restStartedAt = restUntil ? Number(draft.restStartedAt) || Date.now() : 0;
 
     if (draft.isActive || draft.timer?.startedAt) {
       elements.workoutPanel.classList.add("is-active");
@@ -1279,16 +1283,7 @@ function restoreWorkoutDraft() {
         workoutTimer.intervalId = window.setInterval(renderWorkoutTimer, 1000);
         startLiveBandHr();
       }
-      if (restUntil && !restTick) {
-        restTick = window.setInterval(() => {
-          if (restUntil <= Date.now()) {
-            restUntil = 0;
-            window.clearInterval(restTick);
-            restTick = null;
-          }
-          paintRestTimer();
-        }, 250);
-      }
+      ensureRestTick();
       renderWorkoutTimer();
       setSyncStatus("Восстановил незавершенную тренировку с этого устройства.");
     }
@@ -2341,7 +2336,8 @@ function updateNativeWidget() {
     nextDate: nextIso || "",
     isActive: active,
     activeTimer: formatDuration(getWorkoutDurationMs()),
-    restTimer: active ? restTimerText() : "",
+    // Отдых тоже отсчитывается на стороне Android, по этим двум точкам.
+    restStartedAtMs: active && restUntil > Date.now() ? restStartedAt : 0,
     restUntilMs: active && restUntil > Date.now() ? restUntil : 0,
     // Виджет тикает сам через Chronometer, поэтому ему нужна точка старта, а не текст.
     startedAtMs: active ? workoutTimer.startedAt : 0,
@@ -2547,11 +2543,8 @@ function widgetNotice() {
   const bpm = freshLiveHr();
   const progress = `${doneSets}/${sets.length} подходов`;
   const currentName = current ? findExercise(current.exerciseId)?.name : null;
-  const workoutTime = formatDuration(getWorkoutDurationMs());
-  const rest = restTimerText();
-  const timing = rest ? `${workoutTime} · отдых ${rest}` : workoutTime;
   return {
-    activeEyebrow: bpm ? `Идёт ${timing} · ♥ ${bpm}` : `Идёт ${timing}`,
+    activeEyebrow: bpm ? `Идёт тренировка · ♥ ${bpm}` : "Идёт тренировка",
     noticeTitle: bpm ? `♥ ${bpm} · ${progress}` : `Тренировка · ${progress}`,
     noticeProgress: progress,
     noticeText: currentName ? `Сейчас: ${currentName}` : "Все подходы закрыты",
@@ -2579,10 +2572,7 @@ function widgetProgressLine() {
   const doneExercises = selected.filter((item) => item.sets.every((set) => set.done)).length;
   const current = focusExercise();
   const currentName = current ? findExercise(current.exerciseId)?.name : null;
-  const workoutTime = formatDuration(getWorkoutDurationMs());
-  const rest = restTimerText();
   return [
-    rest ? `⏱ ${workoutTime} · отдых ${rest}` : `⏱ ${workoutTime}`,
     `${doneSets}/${sets.length} подх. · ${doneExercises}/${selected.length} упр.`,
     currentName ? `Сейчас: ${currentName}` : "Все подходы закрыты",
   ].join("\n");
@@ -3077,20 +3067,24 @@ function setFocusExercise(uid) {
 }
 
 function startRest(seconds = 90) {
-  restUntil = Date.now() + seconds * 1000;
-  if (!restTick) {
-    restTick = window.setInterval(() => {
-      if (restUntil <= Date.now()) {
-        restUntil = 0;
-        window.clearInterval(restTick);
-        restTick = null;
-        if (navigator.vibrate) navigator.vibrate(30);
-      }
-      paintRestTimer();
-    }, 250);
-  }
+  restStartedAt = Date.now();
+  restUntil = restStartedAt + seconds * 1000;
+  ensureRestTick();
   paintRestTimer();
   updateNativeWidget();
+}
+
+function ensureRestTick() {
+  if (restTick || !restUntil) return;
+  restTick = window.setInterval(() => {
+    if (restUntil <= Date.now()) {
+      restUntil = 0;
+      window.clearInterval(restTick);
+      restTick = null;
+      if (navigator.vibrate) navigator.vibrate(30);
+    }
+    paintRestTimer();
+  }, 250);
 }
 
 function adjustRest(action) {
@@ -3113,12 +3107,6 @@ function adjustRest(action) {
 
 function restSecondsLeft() {
   return Math.max(0, Math.ceil((restUntil - Date.now()) / 1000));
-}
-
-function restTimerText() {
-  const seconds = restSecondsLeft();
-  if (!seconds) return "";
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
 function paintRestTimer() {
