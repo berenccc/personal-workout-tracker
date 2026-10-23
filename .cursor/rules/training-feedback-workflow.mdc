@@ -18,4 +18,4 @@ When the user asks to evaluate a completed workout:
 - Include small progressive overload where appropriate: add a little weight or 1-2 reps over time when RPE stays around 7-8, but do not force progress into RPE 9-10 or failure. A deliberate heavy top set is the user's choice.
 - Preserve the user's goal: stay fit, look/feel good, avoid burnout, and avoid unnecessary failure work.
 
-When app-visible JS/CSS changes should show up immediately, run `python tools/bump-version.py`: it bumps the cache query version, `APP_VERSION`, the service worker cache name and the Capacitor app name in one go. Files the app loads must be whitelisted in `.gitignore`, otherwise GitHub Pages serves 404 for them.
+When app-visible JS/CSS changes should show up immediately, run `python tools/bump-version.py`: it bumps the cache query version, `APP_VERSION`, the service worker cache name and the Capacitor app name in one go. GitHub Pages publishes the whole repo, so keep personal data and secrets in the ignored paths listed in `.gitignore`.
