@@ -162,6 +162,7 @@ function clearWorkoutDraft() {
 
 function renderWorkoutTimer() {
   elements.workoutTimerDisplay.textContent = formatDuration(getWorkoutDurationMs());
+  paintLiveStrip();
 }
 
 function getWorkoutDurationMs() {

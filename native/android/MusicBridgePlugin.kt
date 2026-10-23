@@ -1,7 +1,10 @@
 package com.trainy.app
 
+import android.app.SearchManager
 import android.content.ComponentName
 import android.content.Intent
+import android.os.Bundle
+import android.provider.MediaStore
 import android.media.AudioManager
 import android.media.MediaMetadata
 import android.media.session.MediaController
@@ -85,13 +88,36 @@ class MusicBridgePlugin : Plugin() {
     @PluginMethod
     fun control(call: PluginCall) {
         val current = controller()
+        val action = call.getString("action")
+        val query = call.getString("query").orEmpty().trim()
+        if (action == "search" && query.isBlank()) {
+            call.reject("Пустой запрос")
+            return
+        }
+        val searchable = ((current?.playbackState?.actions ?: 0L) and PlaybackState.ACTION_PLAY_FROM_SEARCH) != 0L
+        if (action == "search" && !searchable) {
+            // Плеер не запущен или не принимает поиск через сессию: просим YouTube Music
+            // найти и сразу включить, как это делает Ассистент.
+            val intent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
+                .setPackage(ytMusic)
+                .putExtra(SearchManager.QUERY, query)
+                .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            runCatching { context.startActivity(intent) }
+                .onSuccess { call.resolve() }
+                .onFailure { call.reject("YouTube Music не установлен") }
+            return
+        }
         if (current == null) {
             call.reject("Плеер не найден")
             return
         }
         val controls = current.transportControls
-        when (call.getString("action")) {
+        when (action) {
             "next" -> controls.skipToNext()
+            "play" -> controls.play()
+            "pause" -> controls.pause()
+            "search" -> controls.playFromSearch(query, Bundle())
             "prev" -> controls.skipToPrevious()
             "toggle" -> {
                 if (current.playbackState?.state == PlaybackState.STATE_PLAYING) controls.pause() else controls.play()

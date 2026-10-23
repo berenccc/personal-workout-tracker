@@ -91,3 +91,45 @@ def test_music_bar_stays_out_of_the_way_without_player(local_server, browser_con
     page.wait_for_timeout(500)
     expect(page.locator("#musicBar")).to_be_hidden()
     assert page.evaluate("() => document.documentElement.classList.contains('has-music-bar')") is False
+
+
+def test_live_strip_and_ai_tools_during_workout(local_server, browser_context):
+    from test_trainy_regression import add_plan_exercise, prepare_local_stub
+
+    page, errors = open_with_music(browser_context, local_server)
+    prepare_local_stub(page)
+    page.reload(wait_until="domcontentloaded")
+    add_plan_exercise(page)
+    page.click("#startWorkoutButton")
+
+    strip = page.locator("#musicBar .live-strip")
+    expect(strip).to_be_visible()
+    expect(strip.locator("[data-live-time]")).to_contain_text("⏱")
+    page.evaluate("() => startRest(90)")
+    expect(strip.locator("[data-live-rest]")).to_contain_text("отдых 1:")
+
+    page.click('.bottom-nav-btn[data-target="ai"]')
+    expect(strip).to_be_visible()
+    strip.click()
+    expect(page.locator('.bottom-nav-btn[data-target="workout"]')).to_have_class("bottom-nav-btn is-active")
+
+    status = page.evaluate("() => executeAiTool('get_live_status', {})")
+    assert "Тренировка идёт" in status
+    assert "Till I Collapse" in status
+    assert "Отдых: осталось" in status
+
+    page.evaluate("() => { window.__musicCalls = []; }")
+    result = page.evaluate("() => executeAiTool('control_music', { action: 'search', query: 'Eminem' })")
+    assert result.startswith("Готово")
+    assert page.evaluate("() => window.__musicCalls") == [{"action": "search", "query": "Eminem"}]
+
+    page.evaluate("() => { window.__musicCalls = []; }")
+    page.evaluate("() => executeAiTool('control_music', { action: 'setVolume', percent: 60 })")
+    assert page.evaluate("() => window.__musicCalls") == [{"action": "volumeSet", "value": 9}]
+
+    page.locator('#musicBar [data-music="expand"]').click()
+    page.fill("#musicBar [data-music-search] input", "фонк")
+    page.evaluate("() => { window.__musicCalls = []; }")
+    page.press("#musicBar [data-music-search] input", "Enter")
+    assert last_call(page) == {"action": "search", "query": "фонк"}
+    assert not errors

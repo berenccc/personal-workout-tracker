@@ -26,7 +26,7 @@
 }
 
 html.has-music-bar {
-  --music-bar-h: 52px;
+  --music-bar-h: var(--top-bar-h, 52px);
 }
 
 html.keyboard-open {
@@ -3822,6 +3822,61 @@ html.keyboard-open .music-bar {
 
 .music-more .music-link {
   justify-self: start;
+}
+
+.music-search {
+  display: flex;
+  gap: 8px;
+}
+
+.music-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 16px;
+}
+
+.live-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(720px, calc(100vw - 16px));
+  height: 30px;
+  margin: 0 auto;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+}
+
+.live-strip .live-time {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.live-strip .live-rest {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.live-strip .live-hr {
+  margin-left: auto;
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.live-strip [hidden] {
+  display: none;
 }
 
 .set-rest-list summary {

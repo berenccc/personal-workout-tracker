@@ -265,6 +265,31 @@ const AI_TOOL_DEFS = [
   {
     type: "function",
     function: {
+      name: "get_live_status",
+      description: "Что происходит прямо сейчас: текущее время, идёт ли тренировка и сколько длится, остаток отдыха, пульс с браслета, текущее упражнение и подход, прогресс по подходам, что играет в YouTube Music и громкость.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "control_music",
+      description: "Управление музыкой в YouTube Music на телефоне. Используй, когда просят переключить трек, поставить на паузу, сделать громче/тише или включить конкретного артиста, трек, плейлист или настроение (search).",
+      parameters: {
+        type: "object",
+        properties: {
+          action: { type: "string", enum: AI_MUSIC_ACTIONS },
+          query: { type: "string", description: "Для search: что включить, например «Eminem», «плейлист для качалки», «фонк»." },
+          steps: { type: "integer", description: "Для volumeUp/volumeDown: на сколько делений, 1-10. По умолчанию 1." },
+          percent: { type: "integer", description: "Для setVolume: громкость в процентах, 0-100." },
+        },
+        required: ["action"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "get_recent_workouts",
       description: "История тренировок. С параметром count возвращает подробно последние 1–12 сессий. С параметром days возвращает компактную историю за период до 365 дней; используй days=365 для прогресса, плато, рекордов и долгосрочного планирования.",
       parameters: {
@@ -805,7 +830,31 @@ function commitPlanEdit(message) {
   return `${message} Сейчас: ${planOrderText()}.`;
 }
 
+function liveStatusForAi() {
+  const now = new Date();
+  const clock = `Сейчас ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}.`;
+  if (!workoutIsLive()) return [clock, "Тренировка не идёт.", nowPlayingForAi()].join("\n");
+  const sets = selected.flatMap((item) => item.sets);
+  const current = focusExercise();
+  const nextSet = current?.sets.find((set) => !set.done && set.mark !== "skip");
+  const restLeft = restSecondsLeft();
+  const bpm = freshLiveHr();
+  return [
+    clock,
+    `Тренировка идёт ${formatDuration(getWorkoutDurationMs())}, сделано ${sets.filter((set) => set.done).length} из ${sets.length} подходов.`,
+    current
+      ? `Текущее упражнение: ${findExercise(current.exerciseId)?.name || current.exerciseId}${nextSet ? `, следующий подход ${formatNumber(nextSet.weight)}×${nextSet.reps}` : ", все подходы закрыты"}.`
+      : "Все упражнения закрыты.",
+    restLeft > 0 ? `Отдых: осталось ${restLeft} с.` : "Отдых сейчас не идёт.",
+    bpm ? `Пульс: ${bpm} уд/мин.` : "Свежего пульса с браслета нет.",
+    nowPlayingForAi(),
+  ].join("\n");
+}
+
 function executeAiTool(name, args) {
+  if (name === "get_live_status") return liveStatusForAi();
+  if (name === "control_music") return aiMusicControl(args);
+
   if (name === "get_recent_workouts") {
     const requestedDays = Number(args.days);
     if (Number.isFinite(requestedDays) && requestedDays > 0) {
@@ -1085,7 +1134,11 @@ function withLiveWorkoutContext(messages) {
     "[Приложение: тренировка идёт прямо сейчас.",
     `Текущий список: ${planOrderText()}.`,
     "Просьбу добавить, заменить, убрать или переставить упражнение выполняй сразу точечным инструментом:",
-    "add_exercise_to_plan, update_exercise_in_plan, remove_exercise_from_plan, reorder_plan. set_planned_workout сейчас недоступен.]",
+    "add_exercise_to_plan, update_exercise_in_plan, remove_exercise_from_plan, reorder_plan. set_planned_workout сейчас недоступен.",
+    "Просьбы про музыку (переключи, громче, включи что-то) выполняй через control_music, не переспрашивая.",
+    "Отвечай особенно коротко: человек между подходами.",
+    "Статус на момент сообщения:",
+    `${liveStatusForAi()}]`,
   ].join("\n");
   return messages.map((message, index) =>
     index === lastUser ? { ...message, content: `${message.content || ""}\n${note}` } : message
@@ -1149,7 +1202,7 @@ async function runAiConversation({ requiredTool = "", onIntermediateText } = {})
       for (const call of message.tool_calls) {
         let result;
         try {
-          result = executeAiTool(call.function.name, JSON.parse(call.function.arguments || "{}"));
+          result = await executeAiTool(call.function.name, JSON.parse(call.function.arguments || "{}"));
         } catch (error) {
           result = `Ошибка инструмента: ${error.message}`;
         }
