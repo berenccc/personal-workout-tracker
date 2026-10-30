@@ -59,19 +59,37 @@ public class MainActivity extends BridgeActivity {
                 WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
             );
             Insets ime = windowInsets.getInsets(WindowInsetsCompat.Type.ime());
-            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-            mlp.leftMargin = bars.left;
-            mlp.topMargin = bars.top;
-            mlp.rightMargin = bars.right;
-            mlp.bottomMargin = Math.max(bars.bottom, ime.bottom);
-            v.setLayoutParams(mlp);
-
-            float density = v.getResources().getDisplayMetrics().density;
-            final int cssIme = Math.round(ime.bottom / Math.max(density, 0.01f));
-            v.post(() -> notifyKeyboardInset(cssIme));
+            v.removeCallbacks(pendingImeHide);
+            // При смене языка Gboard перезапускает ввод и на миг прячет клавиатуру.
+            // Если сразу ужать WebView и перестроить страницу, переключение срывается,
+            // поэтому скрытие применяем с задержкой, а возврат клавиатуры его отменяет.
+            if (ime.bottom == 0 && lastImeBottom > 0) {
+                pendingImeHide = () -> applyInsets(v, bars, 0);
+                v.postDelayed(pendingImeHide, IME_HIDE_DELAY_MS);
+            } else {
+                applyInsets(v, bars, ime.bottom);
+            }
             return WindowInsetsCompat.CONSUMED;
         });
         ViewCompat.requestApplyInsets(webView);
+    }
+
+    private static final long IME_HIDE_DELAY_MS = 250;
+    private int lastImeBottom = 0;
+    private Runnable pendingImeHide = () -> {};
+
+    private void applyInsets(View v, Insets bars, int imeBottom) {
+        lastImeBottom = imeBottom;
+        ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+        mlp.leftMargin = bars.left;
+        mlp.topMargin = bars.top;
+        mlp.rightMargin = bars.right;
+        mlp.bottomMargin = Math.max(bars.bottom, imeBottom);
+        v.setLayoutParams(mlp);
+
+        float density = v.getResources().getDisplayMetrics().density;
+        final int cssIme = Math.round(imeBottom / Math.max(density, 0.01f));
+        v.post(() -> notifyKeyboardInset(cssIme));
     }
 
     private void notifyKeyboardInset(int cssIme) {

@@ -1,32 +1,32 @@
-const CACHE_NAME = "training-tracker-v181";
+const CACHE_NAME = "training-tracker-v182";
 const ASSETS = [
-  "./training-tracker.html?v=181",
-  "./training-tracker.css?v=181",
-  "./js/config.js?v=181",
-  "./js/exercises.js?v=181",
-  "./js/calendar.js?v=181",
-  "./js/theme.js?v=181",
-  "./js/storage.js?v=181",
-  "./js/session.js?v=181",
-  "./js/plan.js?v=181",
-  "./js/widget.js?v=181",
-  "./js/stats.js?v=181",
-  "./js/workout.js?v=181",
-  "./js/band.js?v=181",
-  "./js/music.js?v=181",
-  "./js/coach.js?v=181",
-  "./js/ai.js?v=181",
-  "./js/history.js?v=181",
-  "./js/utils.js?v=181",
-  "./js/app.js?v=181",
-  "./wearable.js?v=181",
-  "./exercise-catalog.js?v=181",
-  "./supabase-config.js?v=181",
-  "./cloud.js?v=181",
-  "./manifest.webmanifest?v=181",
-  "./apple-touch-icon.png?v=181",
-  "./icon-192.png?v=181",
-  "./icon-512.png?v=181",
+  "./training-tracker.html?v=182",
+  "./training-tracker.css?v=182",
+  "./js/config.js?v=182",
+  "./js/exercises.js?v=182",
+  "./js/calendar.js?v=182",
+  "./js/theme.js?v=182",
+  "./js/storage.js?v=182",
+  "./js/session.js?v=182",
+  "./js/plan.js?v=182",
+  "./js/widget.js?v=182",
+  "./js/stats.js?v=182",
+  "./js/workout.js?v=182",
+  "./js/band.js?v=182",
+  "./js/music.js?v=182",
+  "./js/coach.js?v=182",
+  "./js/ai.js?v=182",
+  "./js/history.js?v=182",
+  "./js/utils.js?v=182",
+  "./js/app.js?v=182",
+  "./wearable.js?v=182",
+  "./exercise-catalog.js?v=182",
+  "./supabase-config.js?v=182",
+  "./cloud.js?v=182",
+  "./manifest.webmanifest?v=182",
+  "./apple-touch-icon.png?v=182",
+  "./icon-192.png?v=182",
+  "./icon-512.png?v=182",
   "./icon-192.svg",
   "./icon-512.svg",
 ];
@@ -64,7 +64,7 @@ self.addEventListener("fetch", (event) => {
       fetch(event.request)
         .then((response) => response)
         .catch(() =>
-          caches.match("./training-tracker.html?v=181").then((cached) => cached || caches.match("./training-tracker.html"))
+          caches.match("./training-tracker.html?v=182").then((cached) => cached || caches.match("./training-tracker.html"))
         )
     );
     return;

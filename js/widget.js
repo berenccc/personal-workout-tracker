@@ -346,6 +346,7 @@ function liveSetRows() {
         id: `${item.uid}:${index}`,
         name: (exercise?.name || item.exerciseId).split(" / ")[0],
         step: `Подход ${index + 1} из ${item.sets.length}`,
+        pos: `${index + 1}/${item.sets.length}`,
         detail: lockSetDetail(exercise, set),
         done: Boolean(set.done),
       });

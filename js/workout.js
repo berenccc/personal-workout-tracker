@@ -23,6 +23,33 @@ function renderSelectedExercises(options = {}) {
 }
 
 let setAllOpen = false;
+let setSwitchOpen = false;
+
+function setSwitchOptions(current) {
+  return selected
+    .filter((entry) => entry.uid !== current.uid)
+    .map((entry) => {
+      const done = entry.sets.filter((set) => set.done).length;
+      const complete = isExerciseComplete(entry);
+      return `
+        <button class="set-switch-option${complete ? " is-done" : ""}" type="button" data-switch-uid="${entry.uid}">
+          <span>${escapeHtml(findExercise(entry.exerciseId)?.name || entry.exerciseId)}</span>
+          <small>${complete ? "✓ " : ""}${done}/${entry.sets.length}</small>
+        </button>`;
+    })
+    .join("");
+}
+
+// Упражнение не по плану встаёт перед текущим: недоделанное остаётся следующим в «Дальше».
+function makeAddedExerciseCurrent(uid) {
+  const added = selected.findIndex((item) => item.uid === uid);
+  const current = focusExercise();
+  if (added < 0) return;
+  const [item] = selected.splice(added, 1);
+  const at = current && current.uid !== uid ? selected.indexOf(current) : -1;
+  selected.splice(at >= 0 ? at : selected.length, 0, item);
+  setFocusExercise(uid);
+}
 
 function collapsedPlanHost() {
   const details = document.createElement("details");
@@ -68,8 +95,15 @@ function renderSetFocus() {
 
   card.innerHTML = `
     <div class="set-head">
-      <p class="set-kicker">Подход ${setIndex + 1} из ${item.sets.length}</p>
+      <div class="set-head-row">
+        <p class="set-kicker">Подход ${setIndex + 1} из ${item.sets.length}</p>
+        <button class="set-switch-toggle" type="button" aria-expanded="${setSwitchOpen}">Сменить</button>
+      </div>
       <h3 class="set-name">${escapeHtml(exercise.name)}</h3>
+    </div>
+    <div class="set-switch"${setSwitchOpen ? "" : " hidden"}>
+      ${setSwitchOptions(item)}
+      <button class="set-switch-option set-switch-new" type="button" data-switch-new>+ Другое упражнение</button>
     </div>
     <p class="set-sub">${escapeHtml(exerciseSubtitle(exercise, item))}</p>
     <p class="set-hr" id="setHrReadout" hidden></p>
@@ -96,6 +130,22 @@ function renderSetFocus() {
   });
   card.querySelector(".set-all").addEventListener("toggle", (event) => {
     setAllOpen = event.currentTarget.open;
+  });
+  card.querySelector(".set-switch-toggle").addEventListener("click", (event) => {
+    setSwitchOpen = !setSwitchOpen;
+    card.querySelector(".set-switch").hidden = !setSwitchOpen;
+    event.currentTarget.setAttribute("aria-expanded", String(setSwitchOpen));
+  });
+  card.querySelector(".set-switch").addEventListener("click", (event) => {
+    const option = event.target.closest("[data-switch-uid], [data-switch-new]");
+    if (!option) return;
+    setSwitchOpen = false;
+    if (option.dataset.switchUid) {
+      setFocusExercise(option.dataset.switchUid);
+      return;
+    }
+    renderSelectedExercises();
+    openExercisePicker({ makeCurrent: true });
   });
   card.querySelector(".add-set").addEventListener("click", () => {
     const last = item.sets.at(-1) || { weight: 0, reps: 10, rpe: "" };

@@ -22,6 +22,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.HealthConnectClient
@@ -337,6 +338,10 @@ object WorkoutNotice {
         val upcoming = upcomingName(data, current)
         // Во время отдыха системный таймер считает отдых, а время тренировки уходит в подпись.
         val restLabel = if (resting) "Отдых · идёт ${(now - startedAt) / 60_000L} мин" else ""
+        val mediaTitle = current?.let { set ->
+            listOf(set.optString("name"), set.optString("pos")).filter { it.isNotBlank() }.joinToString(" · ")
+        }?.takeIf { it.isNotBlank() } ?: title
+        val mediaDetail = current?.optString("detail")?.takeIf { it.isNotBlank() } ?: text
         val sub = listOf(restLabel, pulseTitle(data), upcoming?.let { "Дальше: $it" }.orEmpty())
             .filter { it.isNotBlank() }
             .joinToString(" · ")
@@ -353,7 +358,9 @@ object WorkoutNotice {
         )
         // Карточку как у плеера на экране блокировки система рисует только для
         // уведомления с медиа-сессией. Звука нет, кнопки — подход и упражнения.
-        val session = WorkoutMedia.update(context, title, text, sub, open, current != null, restStart, restUntil)
+        val session = WorkoutMedia.update(
+            context, mediaTitle, mediaDetail, sub, open, current != null, startedAt, restStart, restUntil
+        )
         val built = Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_workout)
             .setContentTitle(title)
@@ -466,7 +473,57 @@ object WorkoutNotice {
 // Сессия только ради карточки на экране блокировки: звука нет, фокус аудио не берём.
 object WorkoutMedia {
     private const val DONE = "trainy_set_done"
+    private const val TICK_MS = 1_000L
     private var session: MediaSession? = null
+
+    private class Card(
+        val title: String,
+        val detail: String,
+        val sub: String,
+        val startedAt: Long,
+        val restStart: Long,
+        val restUntil: Long,
+    )
+
+    @Volatile private var card: Card? = null
+    private var power: PowerManager? = null
+    private val handler = Handler(Looper.getMainLooper())
+
+    // Карточка плеера показывает только заголовок и одну строку и не умеет в Chronometer,
+    // поэтому время тренировки и отдыха вписываем в эту строку сами раз в секунду.
+    private val tick = object : Runnable {
+        override fun run() {
+            val current = session ?: return
+            val live = card ?: return
+            if (power?.isInteractive != false) current.setMetadata(metadata(live))
+            handler.postDelayed(this, TICK_MS)
+        }
+    }
+
+    private fun clock(ms: Long): String {
+        val total = (ms.coerceAtLeast(0L) + 500L) / 1000L
+        val hours = total / 3600L
+        val minutes = total % 3600L / 60L
+        val seconds = total % 60L
+        return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds) else "%d:%02d".format(minutes, seconds)
+    }
+
+    private fun metadata(live: Card): MediaMetadata {
+        val now = System.currentTimeMillis()
+        val resting = live.restUntil > now
+        val line = listOf(
+            "⏱ ${clock(now - live.startedAt)}",
+            if (resting) "отдых ${clock(live.restUntil - now)}" else "",
+            live.detail,
+        ).filter { it.isNotBlank() }.joinToString(" · ")
+        // С длительностью и позицией карточка плеера рисует полосу отдыха и двигает её сама.
+        val builder = MediaMetadata.Builder()
+            .putString(MediaMetadata.METADATA_KEY_TITLE, live.title)
+            .putString(MediaMetadata.METADATA_KEY_ARTIST, line)
+            .putString(MediaMetadata.METADATA_KEY_ALBUM, live.sub)
+        if (resting) builder.putLong(MediaMetadata.METADATA_KEY_DURATION, live.restUntil - live.restStart)
+        return builder.build()
+    }
 
     private fun ensure(context: Context): MediaSession {
         session?.let { return it }
@@ -489,24 +546,24 @@ object WorkoutMedia {
     fun update(
         context: Context,
         title: String,
-        text: String,
+        detail: String,
         sub: String,
         open: PendingIntent,
         canMark: Boolean,
+        startedAt: Long,
         restStart: Long,
         restUntil: Long
     ): MediaSession {
         val current = ensure(context)
+        if (power == null) power = context.applicationContext.getSystemService(PowerManager::class.java)
         current.setSessionActivity(open)
         val now = System.currentTimeMillis()
         val resting = restUntil > now
-        // С длительностью и позицией карточка плеера рисует полосу отдыха и двигает её сама.
-        val metadata = MediaMetadata.Builder()
-            .putString(MediaMetadata.METADATA_KEY_TITLE, title)
-            .putString(MediaMetadata.METADATA_KEY_ARTIST, text)
-            .putString(MediaMetadata.METADATA_KEY_ALBUM, sub)
-        if (resting) metadata.putLong(MediaMetadata.METADATA_KEY_DURATION, restUntil - restStart)
-        current.setMetadata(metadata.build())
+        val live = Card(title, detail, sub, startedAt, restStart, restUntil)
+        card = live
+        current.setMetadata(metadata(live))
+        handler.removeCallbacks(tick)
+        handler.postDelayed(tick, TICK_MS)
         val state = PlaybackState.Builder()
             .setActions(PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS)
         if (resting) {
@@ -524,6 +581,8 @@ object WorkoutMedia {
     }
 
     fun release() {
+        handler.removeCallbacks(tick)
+        card = null
         session?.isActive = false
         session?.release()
         session = null

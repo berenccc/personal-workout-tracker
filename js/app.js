@@ -175,10 +175,16 @@ function bindEvents() {
   elements.exercisePickList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-exercise-id]");
     if (!button) return;
+    const makeCurrent = pickerMakesCurrent && workoutIsLive();
     const uid = addExercise(button.dataset.exerciseId);
+    closeExercisePicker();
+    if (makeCurrent) {
+      makeAddedExerciseCurrent(uid);
+      showToast(`Сейчас: ${findExercise(button.dataset.exerciseId).name}`);
+      return;
+    }
     renderSelectedExercises();
     saveWorkoutDraft();
-    closeExercisePicker();
     if (workoutIsLive()) {
       showToast(`Добавлено в конец: ${findExercise(button.dataset.exerciseId).name}`);
       return;

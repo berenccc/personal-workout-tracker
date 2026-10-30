@@ -39,9 +39,13 @@ function closePlanEditor() {
   renderCoach();
 }
 
-function openExercisePicker() {
+let pickerMakesCurrent = false;
+
+// Также висит прямо на click, поэтому options может оказаться событием.
+function openExercisePicker(options = {}) {
   const sheet = document.querySelector("#exercisePickerSheet");
   if (!sheet) return;
+  pickerMakesCurrent = options?.makeCurrent === true;
   if (elements.exerciseSearchInput) elements.exerciseSearchInput.value = "";
   renderExercisePicker();
   sheet.hidden = false;
@@ -51,6 +55,7 @@ function openExercisePicker() {
 function closeExercisePicker() {
   const sheet = document.querySelector("#exercisePickerSheet");
   if (sheet) sheet.hidden = true;
+  pickerMakesCurrent = false;
 }
 
 let chartExerciseId = "";

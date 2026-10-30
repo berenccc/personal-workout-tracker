@@ -2635,7 +2635,7 @@ textarea {
 @media (max-width: 620px) {
   .app {
     width: min(100vw - 16px, 1180px);
-    padding: 8px 0;
+    padding: calc(8px + var(--music-bar-h)) 0 8px;
   }
 
   .hero,
@@ -3581,6 +3581,77 @@ body {
   overflow-wrap: anywhere;
 }
 
+.set-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.set-switch-toggle {
+  flex: none;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.set-switch-toggle[aria-expanded="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.set-switch {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 10px;
+}
+
+.set-switch[hidden] {
+  display: none;
+}
+
+.set-switch-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.set-switch-option small {
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.set-switch-option.is-done {
+  opacity: 0.55;
+}
+
+.set-switch-option.set-switch-new {
+  justify-content: center;
+  border-style: dashed;
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
 .set-hr.is-live {
   color: var(--accent, #c8f135);
   font-size: 28px;
@@ -4121,4 +4192,15 @@ html.keyboard-open .ai-chat-composer .button {
 
 .gym-item input:disabled + span {
   opacity: 0.7;
+}
+
+/* Своя стрелка вместо системной: Android WebView прижимает её вплотную к рамке. */
+select:not([multiple]) {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%239ba1ab' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
 }
